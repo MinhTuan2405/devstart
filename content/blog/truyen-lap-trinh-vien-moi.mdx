@@ -1,0 +1,56 @@
+---
+title: "Con bug đầu tiên trong cuộc đời lập trình viên"
+description: "Câu chuyện hài hước về lần đầu gặp bug và mất 3 tiếng để tìm ra nguyên nhân chỉ là... thiếu dấu chấm phẩy."
+slug: "con-bug-dau-tien"
+category: "truyen"
+tags: ["câu chuyện", "bug", "người mới"]
+keywords: ["câu chuyện lập trình viên mới", "bug đầu tiên", "học lập trình từ đầu"]
+publishedAt: "2024-01-22"
+readingTime: "4 phút"
+coverImage: "/images/blog/bug.jpg"
+---
+
+## Ngày thứ 3 học lập trình
+
+Hôm đó là ngày thứ 3 trong hành trình học lập trình của tôi. Sau 2 ngày đọc lý thuyết, tôi quyết định viết chương trình đầu tiên — một cái calculator đơn giản.
+
+"Dễ ợt!" — tôi nghĩ thầm.
+
+## Viết code xong, tự tin nhấn Run
+
+```python
+def tinh_tong(a, b)
+    return a + b
+
+print(tinh_tong(5, 3))
+```
+
+Nhấn Run. Terminal hiện đỏ lòm:
+
+```
+SyntaxError: expected ':'
+```
+
+"Syntax... Error? Cái gì thế?" — Tôi không hiểu gì cả.
+
+## 3 tiếng sau...
+
+Tôi Google. Tôi đọc Stack Overflow. Tôi copy-paste error message. Tôi thử đủ mọi cách.
+
+Cuối cùng, một comment trên Stack Overflow nói: **"Bạn thiếu dấu hai chấm ở cuối dòng def"**.
+
+```python
+def tinh_tong(a, b):  # <- Dấu : ở đây!
+    return a + b
+```
+
+Tôi thêm dấu `:`. Chạy lại. Kết quả: `8`.
+
+## Bài học rút ra
+
+1. **Đọc kỹ error message** — nó luôn gợi ý nguyên nhân
+2. **Đừng sợ bug** — bug là bạn, không phải kẻ thù
+3. **Ai cũng từng gặp bug ngớ ngẩn** — kể cả senior developer
+4. **Google là công cụ số 1** của mọi lập trình viên
+
+Và đó là cách tôi mất 3 tiếng cho một dấu hai chấm. Nhưng tôi nhớ mãi, và không bao giờ quên nữa. 😄

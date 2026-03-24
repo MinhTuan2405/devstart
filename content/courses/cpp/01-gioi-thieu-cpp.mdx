@@ -1,0 +1,52 @@
+---
+title: "Giới thiệu C++ - Ngôn ngữ lập trình mạnh mẽ"
+description: "Tìm hiểu C++ là gì, tại sao nên học C++, và cách thiết lập môi trường lập trình C++."
+slug: "gioi-thieu-cpp"
+course: "cpp"
+order: 1
+duration: "12 phút"
+difficulty: "Trung bình"
+keywords: ["c++ là gì", "học c++", "cài đặt c++", "lập trình c++ cho người mới"]
+publishedAt: "2024-01-18"
+---
+
+## C++ là gì?
+
+C++ là ngôn ngữ lập trình được phát triển bởi Bjarne Stroustrup vào năm 1979. Đây là phiên bản mở rộng của ngôn ngữ C, bổ sung thêm lập trình hướng đối tượng (OOP).
+
+C++ được sử dụng trong:
+
+- **Game engine** (Unreal Engine, Unity backend)
+- **Hệ điều hành** (Windows, Linux kernel modules)
+- **Lập trình thi đấu** (competitive programming)
+- **Ứng dụng hiệu năng cao** (trading systems, embedded)
+
+## Cài đặt môi trường
+
+**Trên Windows:**
+1. Tải và cài [MinGW](https://www.mingw-w64.org/) hoặc Visual Studio
+2. Thêm đường dẫn vào PATH
+3. Kiểm tra: `g++ --version`
+
+**IDE gợi ý:** VS Code + extension C/C++, hoặc Code::Blocks
+
+## Chương trình Hello World
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Xin chào, mình là C++!" << endl;
+    return 0;
+}
+```
+
+Biên dịch và chạy:
+
+```bash
+g++ hello.cpp -o hello
+./hello
+```
+
+Ở bài tiếp theo, chúng ta sẽ học về **biến và kiểu dữ liệu** trong C++.

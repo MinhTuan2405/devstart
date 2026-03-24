@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://devstart.vn/sitemap.xml

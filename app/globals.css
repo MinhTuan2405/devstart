@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #2563EB;
+  --color-secondary: #10B981;
+  --color-bg: #FFFFFF;
+  --color-bg-alt: #F8FAFC;
+  --color-text: #0F172A;
+  --color-text-muted: #475569;
+  --color-code-bg: #1E293B;
+}
+
+body {
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-family: var(--font-be-vietnam), 'Be Vietnam Pro', sans-serif;
+}
+
+code, pre {
+  font-family: var(--font-jetbrains), 'JetBrains Mono', monospace;
+}
+
+/* Hero gradient animation */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 25%, #eff6ff 50%, #faf5ff 75%, #eff6ff 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 3s ease-in-out 1.5s infinite;
+}
+
+/* Card glow on hover */
+.card-glow {
+  transition: all 0.3s ease;
+}
+
+.card-glow:hover {
+  box-shadow: 0 20px 40px -12px rgba(37, 99, 235, 0.15);
+  transform: translateY(-4px);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #2563EB 0%, #7c3aed 50%, #2563EB 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Pattern background */
+.pattern-dots {
+  background-image: radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Prose styles */
+.prose pre {
+  background: var(--color-code-bg);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  overflow-x: auto;
+  border: 1px solid #334155;
+}
+
+.prose code {
+  font-size: 0.875rem;
+}
+
+.prose pre code {
+  color: #e2e8f0;
+}
+
+.prose :not(pre) > code {
+  background: #f1f5f9;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.prose img {
+  border-radius: 0.75rem;
+}
+
+.prose h2,
+.prose h3 {
+  scroll-margin-top: 5rem;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(37, 99, 235, 0.15);
+  color: #1e3a5f;
+}

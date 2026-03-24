@@ -1,0 +1,66 @@
+---
+title: "Biến và kiểu dữ liệu trong C++"
+description: "Học cách khai báo biến, các kiểu dữ liệu cơ bản trong C++: int, float, char, string, bool."
+slug: "bien-va-kieu-du-lieu-cpp"
+course: "cpp"
+order: 2
+duration: "15 phút"
+difficulty: "Trung bình"
+keywords: ["biến c++", "kiểu dữ liệu c++", "int float char c++"]
+publishedAt: "2024-01-19"
+---
+
+## Khai báo biến trong C++
+
+Khác với Python, C++ yêu cầu bạn phải khai báo kiểu dữ liệu khi tạo biến:
+
+```cpp
+int tuoi = 20;
+float diem = 8.5;
+char kyTu = 'A';
+string ten = "Minh";
+bool daPass = true;
+```
+
+## Các kiểu dữ liệu cơ bản
+
+| Kiểu | Kích thước | Ví dụ |
+|------|-----------|-------|
+| `int` | 4 bytes | `42` |
+| `float` | 4 bytes | `3.14f` |
+| `double` | 8 bytes | `3.14159` |
+| `char` | 1 byte | `'A'` |
+| `string` | varies | `"Hello"` |
+| `bool` | 1 byte | `true` |
+
+## Nhập xuất dữ liệu
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    string ten;
+    int tuoi;
+
+    cout << "Nhap ten: ";
+    cin >> ten;
+
+    cout << "Nhap tuoi: ";
+    cin >> tuoi;
+
+    cout << "Xin chao " << ten << ", ban " << tuoi << " tuoi!" << endl;
+    return 0;
+}
+```
+
+## Hằng số
+
+Dùng `const` để tạo giá trị không thay đổi:
+
+```cpp
+const float PI = 3.14159;
+const int MAX_STUDENTS = 50;
+```
+
+Bài tiếp theo sẽ hướng dẫn bạn về **câu lệnh điều kiện** trong C++!

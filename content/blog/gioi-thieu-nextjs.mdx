@@ -1,0 +1,58 @@
+---
+title: "Next.js là gì? Tại sao nên dùng Next.js để làm web?"
+description: "Giới thiệu Next.js — framework React phổ biến nhất. Tìm hiểu ưu điểm, tính năng nổi bật và khi nào nên dùng."
+slug: "gioi-thieu-nextjs"
+category: "gioi-thieu"
+tags: ["nextjs", "react", "framework", "web development"]
+keywords: ["nextjs là gì", "học nextjs", "next.js cho người mới", "react framework"]
+publishedAt: "2024-01-25"
+readingTime: "6 phút"
+coverImage: "/images/blog/nextjs.jpg"
+---
+
+## Next.js là gì?
+
+Next.js là một framework dựa trên React, được phát triển bởi Vercel. Nó giúp bạn xây dựng website nhanh hơn với nhiều tính năng có sẵn mà React thuần không có.
+
+## Tại sao Next.js phổ biến?
+
+### 1. SEO tốt hơn React thuần
+
+React thuần render phía client (CSR) — Google bot khó đọc nội dung. Next.js hỗ trợ:
+
+- **SSR** (Server-Side Rendering): Render HTML trên server
+- **SSG** (Static Site Generation): Tạo HTML tĩnh khi build
+- **ISR** (Incremental Static Regeneration): Tự cập nhật trang tĩnh
+
+### 2. Routing tự động
+
+Tạo file trong thư mục `app/` — Next.js tự tạo route tương ứng:
+
+```
+app/page.tsx        → /
+app/blog/page.tsx   → /blog
+app/blog/[id]/page.tsx → /blog/123
+```
+
+### 3. Tối ưu hiệu năng
+
+- **Image Optimization**: Tự động resize, lazy load ảnh
+- **Font Optimization**: Load font tối ưu
+- **Code Splitting**: Chỉ load code cần thiết cho mỗi trang
+
+### 4. Full-stack capability
+
+Next.js hỗ trợ API Routes, Server Actions — bạn có thể viết cả backend trong cùng project.
+
+## Khi nào nên dùng Next.js?
+
+- Website cần SEO (blog, landing page, e-commerce)
+- Ứng dụng web cần tốc độ cao
+- Khi bạn muốn dùng React nhưng cần thêm tính năng
+
+## Khi nào KHÔNG nên dùng?
+
+- App đơn giản kiểu SPA (dùng Vite + React)
+- App mobile (dùng React Native)
+
+Next.js là lựa chọn tuyệt vời cho người muốn xây dựng website hiện đại với hiệu năng tốt và SEO mạnh mẽ!

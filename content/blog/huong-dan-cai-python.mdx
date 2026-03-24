@@ -1,0 +1,70 @@
+---
+title: "Hướng dẫn cài đặt Python chi tiết trên Windows, macOS, Linux"
+description: "Hướng dẫn từng bước cài đặt Python trên mọi hệ điều hành. Kèm cách kiểm tra và chạy chương trình đầu tiên."
+slug: "huong-dan-cai-python"
+category: "huong-dan"
+tags: ["python", "cài đặt", "hướng dẫn", "người mới"]
+keywords: ["cài đặt python", "hướng dẫn cài python", "python windows", "python mac"]
+publishedAt: "2024-01-20"
+readingTime: "5 phút"
+coverImage: "/images/blog/python-install.jpg"
+---
+
+## Tại sao cần cài Python?
+
+Python không có sẵn trên mọi máy tính. Để viết và chạy code Python, bạn cần cài đặt trình thông dịch Python (Python interpreter).
+
+## Cài đặt trên Windows
+
+1. Truy cập [python.org/downloads](https://python.org/downloads)
+2. Nhấn nút **Download Python 3.x.x** (bản mới nhất)
+3. Chạy file `.exe` vừa tải
+4. **Quan trọng**: Tick vào ô **"Add Python to PATH"**
+5. Nhấn **Install Now**
+
+Kiểm tra:
+
+```bash
+python --version
+```
+
+## Cài đặt trên macOS
+
+Cách 1 — Dùng Homebrew (khuyến nghị):
+
+```bash
+brew install python
+```
+
+Cách 2 — Tải từ python.org và cài như ứng dụng bình thường.
+
+## Cài đặt trên Linux (Ubuntu/Debian)
+
+Python thường đã có sẵn. Kiểm tra:
+
+```bash
+python3 --version
+```
+
+Nếu chưa có:
+
+```bash
+sudo apt update
+sudo apt install python3 python3-pip
+```
+
+## Chạy chương trình đầu tiên
+
+Tạo file `hello.py`:
+
+```python
+print("Cài đặt Python thành công!")
+```
+
+Chạy:
+
+```bash
+python hello.py
+```
+
+Nếu thấy dòng chữ "Cài đặt Python thành công!" — bạn đã sẵn sàng để học Python rồi!

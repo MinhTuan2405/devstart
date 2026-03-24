@@ -1,0 +1,76 @@
+---
+title: "Biến và kiểu dữ liệu trong Python"
+description: "Tìm hiểu cách khai báo biến, các kiểu dữ liệu cơ bản trong Python: số, chuỗi, boolean, list."
+slug: "bien-va-kieu-du-lieu"
+course: "python"
+order: 2
+duration: "15 phút"
+difficulty: "Dễ"
+keywords: ["biến python", "kiểu dữ liệu python", "int float string python"]
+publishedAt: "2024-01-16"
+---
+
+## Biến là gì?
+
+Biến giống như một chiếc hộp để chứa dữ liệu. Trong Python, bạn không cần khai báo kiểu — Python tự nhận biết.
+
+```python
+ten = "Minh"
+tuoi = 20
+diem = 8.5
+da_tot_nghiep = False
+```
+
+## Các kiểu dữ liệu cơ bản
+
+| Kiểu | Ví dụ | Mô tả |
+|------|-------|-------|
+| `int` | `42` | Số nguyên |
+| `float` | `3.14` | Số thực |
+| `str` | `"Hello"` | Chuỗi ký tự |
+| `bool` | `True` / `False` | Đúng / Sai |
+
+Kiểm tra kiểu dữ liệu:
+
+```python
+x = 10
+print(type(x))  # <class 'int'>
+
+y = "Xin chào"
+print(type(y))  # <class 'str'>
+```
+
+## Quy tắc đặt tên biến
+
+- Bắt đầu bằng chữ cái hoặc dấu `_`
+- Không bắt đầu bằng số
+- Phân biệt chữ hoa / thường (`name` khác `Name`)
+- Không dùng từ khóa Python (`if`, `for`, `class`...)
+
+```python
+# Đúng
+my_name = "An"
+_count = 0
+student1 = "Bình"
+
+# Sai
+1student = "Bình"  # Bắt đầu bằng số
+class = "12A"      # Từ khóa Python
+```
+
+## Ép kiểu dữ liệu
+
+Chuyển đổi giữa các kiểu:
+
+```python
+# String -> Int
+so = int("42")
+
+# Int -> String
+text = str(100)
+
+# String -> Float
+diem = float("8.5")
+```
+
+Ở bài tiếp theo, chúng ta sẽ học về **vòng lặp** — cách để máy tính lặp lại công việc thay bạn!
