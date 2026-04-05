@@ -8,6 +8,7 @@ import Sidebar from '@/components/layout/Sidebar'
 import LessonNav from '@/components/course/LessonNav'
 import BlogCard from '@/components/blog/BlogCard'
 import Badge, { getDifficultyVariant } from '@/components/ui/Badge'
+import { toAbsoluteUrl } from '@/lib/seo'
 
 interface PageProps {
   params: { slug: string }
@@ -29,13 +30,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: `${lesson.frontmatter.title} | DevStart`,
       description: lesson.frontmatter.description,
-      url: `https://devstart.vn/khoa-hoc/python/${params.slug}`,
+      url: `/khoa-hoc/python/${params.slug}`,
       siteName: 'DevStart',
       locale: 'vi_VN',
       type: 'article',
+      publishedTime: lesson.frontmatter.publishedAt,
+      modifiedTime: lesson.frontmatter.publishedAt,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${lesson.frontmatter.title} | DevStart`,
+      description: lesson.frontmatter.description,
     },
     alternates: {
-      canonical: `https://devstart.vn/khoa-hoc/python/${params.slug}`,
+      canonical: `/khoa-hoc/python/${params.slug}`,
     },
   }
 }
@@ -54,8 +62,10 @@ export default function PythonLessonPage({ params }: PageProps) {
     headline: lesson.frontmatter.title,
     description: lesson.frontmatter.description,
     datePublished: lesson.frontmatter.publishedAt,
+    dateModified: lesson.frontmatter.publishedAt,
     author: { '@type': 'Organization', name: 'DevStart' },
-    url: `https://devstart.vn/khoa-hoc/python/${params.slug}`,
+    mainEntityOfPage: toAbsoluteUrl(`/khoa-hoc/python/${params.slug}`),
+    url: toAbsoluteUrl(`/khoa-hoc/python/${params.slug}`),
   }
 
   return (

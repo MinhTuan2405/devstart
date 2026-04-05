@@ -10,12 +10,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Giới thiệu công nghệ | DevStart',
     description: 'Giới thiệu các công nghệ, framework, và công cụ lập trình mới nhất.',
-    url: 'https://devstart.vn/blog/gioi-thieu',
+    url: '/blog/gioi-thieu',
     siteName: 'DevStart',
     locale: 'vi_VN',
     type: 'website',
   },
-  alternates: { canonical: 'https://devstart.vn/blog/gioi-thieu' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Giới thiệu công nghệ | DevStart',
+    description: 'Giới thiệu các công nghệ, framework, và công cụ lập trình mới nhất.',
+  },
+  alternates: { canonical: '/blog/gioi-thieu' },
 }
 
 export default function GioiThieuPage() {

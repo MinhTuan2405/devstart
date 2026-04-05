@@ -10,12 +10,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Hướng dẫn lập trình | DevStart',
     description: 'Các bài hướng dẫn lập trình chi tiết, dễ hiểu cho người mới bắt đầu.',
-    url: 'https://devstart.vn/blog/huong-dan',
+    url: '/blog/huong-dan',
     siteName: 'DevStart',
     locale: 'vi_VN',
     type: 'website',
   },
-  alternates: { canonical: 'https://devstart.vn/blog/huong-dan' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Hướng dẫn lập trình | DevStart',
+    description: 'Các bài hướng dẫn lập trình chi tiết, dễ hiểu cho người mới bắt đầu.',
+  },
+  alternates: { canonical: '/blog/huong-dan' },
 }
 
 export default function HuongDanPage() {

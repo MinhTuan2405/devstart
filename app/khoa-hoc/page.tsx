@@ -11,13 +11,19 @@ export const metadata: Metadata = {
     title: 'Khóa học lập trình miễn phí | DevStart',
     description:
       'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS. Phù hợp cho người mới bắt đầu.',
-    url: 'https://devstart.vn/khoa-hoc',
+    url: '/khoa-hoc',
     siteName: 'DevStart',
     locale: 'vi_VN',
     type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Khóa học lập trình miễn phí | DevStart',
+    description:
+      'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS. Phù hợp cho người mới bắt đầu.',
+  },
   alternates: {
-    canonical: 'https://devstart.vn/khoa-hoc',
+    canonical: '/khoa-hoc',
   },
 }
 

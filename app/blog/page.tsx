@@ -11,12 +11,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Blog lập trình | DevStart',
     description: 'Blog hướng dẫn lập trình, câu chuyện lập trình viên, giới thiệu công nghệ mới.',
-    url: 'https://devstart.vn/blog',
+    url: '/blog',
     siteName: 'DevStart',
     locale: 'vi_VN',
     type: 'website',
   },
-  alternates: { canonical: 'https://devstart.vn/blog' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Blog lập trình | DevStart',
+    description: 'Blog hướng dẫn lập trình, câu chuyện lập trình viên, giới thiệu công nghệ mới.',
+  },
+  alternates: { canonical: '/blog' },
 }
 
 export default function BlogPage() {

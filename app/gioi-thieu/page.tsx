@@ -6,12 +6,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Giới thiệu | DevStart',
     description: 'DevStart là nền tảng học lập trình miễn phí cho người mới bắt đầu.',
-    url: 'https://devstart.vn/gioi-thieu',
+    url: '/gioi-thieu',
     siteName: 'DevStart',
     locale: 'vi_VN',
     type: 'website',
   },
-  alternates: { canonical: 'https://devstart.vn/gioi-thieu' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Giới thiệu | DevStart',
+    description: 'DevStart là nền tảng học lập trình miễn phí cho người mới bắt đầu.',
+  },
+  alternates: { canonical: '/gioi-thieu' },
 }
 
 export default function AboutPage() {

@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { getAllBlogPosts, getBlogPostBySlug, getRelatedBlogPosts } from '@/lib/mdx'
 import { renderMarkdownToHtml } from '@/lib/markdown'
 import BlogCard from '@/components/blog/BlogCard'
+import { toAbsoluteUrl } from '@/lib/seo'
 
 interface PageProps {
   params: { slug: string }
@@ -19,6 +20,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = getBlogPostBySlug(params.slug)
   if (!post) return { title: 'Bài viết không tồn tại' }
 
+  const coverImage = post.frontmatter.coverImage
+    ? /^https?:\/\//i.test(post.frontmatter.coverImage)
+      ? post.frontmatter.coverImage
+      : toAbsoluteUrl(post.frontmatter.coverImage)
+    : null
+
   return {
     title: post.frontmatter.title,
     description: post.frontmatter.description,
@@ -26,15 +33,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: `${post.frontmatter.title} | DevStart`,
       description: post.frontmatter.description,
-      url: `https://devstart.vn/blog/${params.slug}`,
+      url: `/blog/${params.slug}`,
       siteName: 'DevStart',
       locale: 'vi_VN',
       type: 'article',
-      ...(post.frontmatter.coverImage && {
-        images: [{ url: post.frontmatter.coverImage }],
+      publishedTime: post.frontmatter.publishedAt,
+      modifiedTime: post.frontmatter.publishedAt,
+      ...(coverImage && {
+        images: [{ url: coverImage }],
       }),
     },
-    alternates: { canonical: `https://devstart.vn/blog/${params.slug}` },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${post.frontmatter.title} | DevStart`,
+      description: post.frontmatter.description,
+      ...(coverImage && {
+        images: [coverImage],
+      }),
+    },
+    alternates: { canonical: `/blog/${params.slug}` },
   }
 }
 
@@ -56,10 +73,14 @@ export default function BlogPostPage({ params }: PageProps) {
     headline: post.frontmatter.title,
     description: post.frontmatter.description,
     datePublished: post.frontmatter.publishedAt,
+    dateModified: post.frontmatter.publishedAt,
     author: { '@type': 'Organization', name: 'DevStart' },
-    url: `https://devstart.vn/blog/${post.slug}`,
+    mainEntityOfPage: toAbsoluteUrl(`/blog/${post.slug}`),
+    url: toAbsoluteUrl(`/blog/${post.slug}`),
     ...(post.frontmatter.coverImage && {
-      image: post.frontmatter.coverImage,
+      image: /^https?:\/\//i.test(post.frontmatter.coverImage)
+        ? post.frontmatter.coverImage
+        : toAbsoluteUrl(post.frontmatter.coverImage),
     }),
   }
 

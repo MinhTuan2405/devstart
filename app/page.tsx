@@ -1,24 +1,66 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import CourseCard from '@/components/course/CourseCard'
 import BlogCard from '@/components/blog/BlogCard'
 import { getAllCourseSummaries } from '@/lib/courses'
 import { getAllBlogPosts } from '@/lib/mdx'
+import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, SITE_NAME, toAbsoluteUrl } from '@/lib/seo'
+
+export const metadata: Metadata = {
+  title: DEFAULT_TITLE,
+  description: DEFAULT_DESCRIPTION,
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    url: '/',
+    siteName: SITE_NAME,
+    locale: 'vi_VN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
+}
 
 export default function HomePage() {
   const courses = getAllCourseSummaries()
   const recentPosts = getAllBlogPosts().slice(0, 3)
+  const homeUrl = toAbsoluteUrl('/')
+  const blogUrl = toAbsoluteUrl('/blog')
+  const organizationId = `${homeUrl}#organization`
+  const webSiteId = `${homeUrl}#website`
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'DevStart',
-    url: 'https://devstart.vn',
-    description: 'Nền tảng học lập trình miễn phí cho người mới bắt đầu',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: 'https://devstart.vn/blog?q={search_term_string}',
-      'query-input': 'required name=search_term_string',
-    },
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': organizationId,
+        name: SITE_NAME,
+        url: homeUrl,
+      },
+      {
+        '@type': 'WebSite',
+        '@id': webSiteId,
+        name: SITE_NAME,
+        url: homeUrl,
+        inLanguage: 'vi-VN',
+        description: 'Nền tảng học lập trình miễn phí cho người mới bắt đầu',
+        publisher: {
+          '@id': organizationId,
+        },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${blogUrl}?q={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
+    ],
   }
 
   return (

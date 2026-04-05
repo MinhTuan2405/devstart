@@ -10,12 +10,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Truyện lập trình | DevStart',
     description: 'Câu chuyện hài hước, trải nghiệm thực tế từ hành trình học lập trình.',
-    url: 'https://devstart.vn/blog/truyen',
+    url: '/blog/truyen',
     siteName: 'DevStart',
     locale: 'vi_VN',
     type: 'website',
   },
-  alternates: { canonical: 'https://devstart.vn/blog/truyen' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Truyện lập trình | DevStart',
+    description: 'Câu chuyện hài hước, trải nghiệm thực tế từ hành trình học lập trình.',
+  },
+  alternates: { canonical: '/blog/truyen' },
 }
 
 export default function TruyenPage() {

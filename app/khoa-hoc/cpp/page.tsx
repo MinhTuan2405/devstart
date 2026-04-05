@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import LessonCard from '@/components/course/LessonCard'
 import { getCourseWithLessons } from '@/lib/courses'
 import Link from 'next/link'
+import { toAbsoluteUrl } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Học C++ cơ bản cho người mới bắt đầu',
@@ -11,12 +12,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Học C++ cơ bản cho người mới bắt đầu | DevStart',
     description: 'Khóa học C++ miễn phí. Ngôn ngữ mạnh mẽ cho lập trình hệ thống.',
-    url: 'https://devstart.vn/khoa-hoc/cpp',
+    url: '/khoa-hoc/cpp',
     siteName: 'DevStart',
     locale: 'vi_VN',
     type: 'website',
   },
-  alternates: { canonical: 'https://devstart.vn/khoa-hoc/cpp' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Học C++ cơ bản cho người mới bắt đầu | DevStart',
+    description: 'Khóa học C++ miễn phí. Ngôn ngữ mạnh mẽ cho lập trình hệ thống.',
+  },
+  alternates: { canonical: '/khoa-hoc/cpp' },
 }
 
 export default function CppCoursePage() {
@@ -28,7 +34,7 @@ export default function CppCoursePage() {
     name: 'Học C++ cơ bản cho người mới bắt đầu',
     description: 'Khóa học C++ miễn phí từ cơ bản đến nâng cao.',
     provider: { '@type': 'Organization', name: 'DevStart' },
-    url: 'https://devstart.vn/khoa-hoc/cpp',
+    url: toAbsoluteUrl('/khoa-hoc/cpp'),
   }
 
   return (

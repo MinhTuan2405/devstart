@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import LessonCard from '@/components/course/LessonCard'
 import { getCourseWithLessons } from '@/lib/courses'
 import Link from 'next/link'
+import { toAbsoluteUrl } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Học Python cơ bản cho người mới bắt đầu',
@@ -12,13 +13,19 @@ export const metadata: Metadata = {
     title: 'Học Python cơ bản cho người mới bắt đầu | DevStart',
     description:
       'Khóa học Python miễn phí từ cơ bản đến nâng cao. Phù hợp người chưa có kinh nghiệm lập trình.',
-    url: 'https://devstart.vn/khoa-hoc/python',
+    url: '/khoa-hoc/python',
     siteName: 'DevStart',
     locale: 'vi_VN',
     type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Học Python cơ bản cho người mới bắt đầu | DevStart',
+    description:
+      'Khóa học Python miễn phí từ cơ bản đến nâng cao. Phù hợp người chưa có kinh nghiệm lập trình.',
+  },
   alternates: {
-    canonical: 'https://devstart.vn/khoa-hoc/python',
+    canonical: '/khoa-hoc/python',
   },
 }
 
@@ -31,7 +38,7 @@ export default function PythonCoursePage() {
     name: 'Học Python cơ bản cho người mới bắt đầu',
     description: 'Khóa học Python miễn phí từ cơ bản đến nâng cao.',
     provider: { '@type': 'Organization', name: 'DevStart' },
-    url: 'https://devstart.vn/khoa-hoc/python',
+    url: toAbsoluteUrl('/khoa-hoc/python'),
   }
 
   return (

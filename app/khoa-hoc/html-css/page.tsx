@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import LessonCard from '@/components/course/LessonCard'
 import { getCourseWithLessons } from '@/lib/courses'
 import Link from 'next/link'
+import { toAbsoluteUrl } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Học HTML/CSS cho người mới bắt đầu',
@@ -11,12 +12,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Học HTML/CSS cho người mới bắt đầu | DevStart',
     description: 'Khóa học HTML/CSS miễn phí. Nền tảng để xây dựng giao diện website.',
-    url: 'https://devstart.vn/khoa-hoc/html-css',
+    url: '/khoa-hoc/html-css',
     siteName: 'DevStart',
     locale: 'vi_VN',
     type: 'website',
   },
-  alternates: { canonical: 'https://devstart.vn/khoa-hoc/html-css' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Học HTML/CSS cho người mới bắt đầu | DevStart',
+    description: 'Khóa học HTML/CSS miễn phí. Nền tảng để xây dựng giao diện website.',
+  },
+  alternates: { canonical: '/khoa-hoc/html-css' },
 }
 
 export default function HtmlCssCoursePage() {
@@ -28,7 +34,7 @@ export default function HtmlCssCoursePage() {
     name: 'Học HTML/CSS cho người mới bắt đầu',
     description: 'Khóa học HTML/CSS miễn phí từ cơ bản đến nâng cao.',
     provider: { '@type': 'Organization', name: 'DevStart' },
-    url: 'https://devstart.vn/khoa-hoc/html-css',
+    url: toAbsoluteUrl('/khoa-hoc/html-css'),
   }
 
   return (
