@@ -3,12 +3,14 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getLessonBySlug, getLessonsByCourseName, getRelatedBlogPosts } from '@/lib/mdx'
 import { renderMarkdownToHtml } from '@/lib/markdown'
+import { extractHeadings } from '@/lib/toc'
 import { getAdjacentLessons } from '@/lib/courses'
 import Sidebar from '@/components/layout/Sidebar'
 import LessonNav from '@/components/course/LessonNav'
 import BlogCard from '@/components/blog/BlogCard'
 import Badge, { getDifficultyVariant } from '@/components/ui/Badge'
-import { toAbsoluteUrl } from '@/lib/seo'
+import TableOfContents from '@/components/TableOfContents'
+import { toAbsoluteUrl, SITE_NAME } from '@/lib/seo'
 
 interface PageProps {
   params: { slug: string }
@@ -28,10 +30,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: lesson.frontmatter.description,
     keywords: lesson.frontmatter.keywords,
     openGraph: {
-      title: `${lesson.frontmatter.title} | DevStart`,
+      title: `${lesson.frontmatter.title} | ${SITE_NAME}`,
       description: lesson.frontmatter.description,
       url: `/khoa-hoc/cpp/${params.slug}`,
-      siteName: 'DevStart',
+      siteName: SITE_NAME,
       locale: 'vi_VN',
       type: 'article',
       publishedTime: lesson.frontmatter.publishedAt,
@@ -39,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${lesson.frontmatter.title} | DevStart`,
+      title: `${lesson.frontmatter.title} | ${SITE_NAME}`,
       description: lesson.frontmatter.description,
     },
     alternates: { canonical: `/khoa-hoc/cpp/${params.slug}` },
@@ -53,18 +55,36 @@ export default function CppLessonPage({ params }: PageProps) {
   const allLessons = getLessonsByCourseName('cpp')
   const { prev, next } = getAdjacentLessons('cpp', params.slug)
   const relatedPosts = getRelatedBlogPosts(params.slug, 3)
+  const headings = extractHeadings(lesson.content)
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: lesson.frontmatter.title,
-    description: lesson.frontmatter.description,
-    datePublished: lesson.frontmatter.publishedAt,
-    dateModified: lesson.frontmatter.publishedAt,
-    author: { '@type': 'Organization', name: 'DevStart' },
-    mainEntityOfPage: toAbsoluteUrl(`/khoa-hoc/cpp/${params.slug}`),
-    url: toAbsoluteUrl(`/khoa-hoc/cpp/${params.slug}`),
-  }
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: lesson.frontmatter.title,
+      description: lesson.frontmatter.description,
+      datePublished: lesson.frontmatter.publishedAt,
+      dateModified: lesson.frontmatter.publishedAt,
+      author: { '@type': 'Organization', name: SITE_NAME },
+      mainEntityOfPage: toAbsoluteUrl(`/khoa-hoc/cpp/${params.slug}`),
+      url: toAbsoluteUrl(`/khoa-hoc/cpp/${params.slug}`),
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: toAbsoluteUrl('/') },
+        { '@type': 'ListItem', position: 2, name: 'Khóa học', item: toAbsoluteUrl('/khoa-hoc') },
+        { '@type': 'ListItem', position: 3, name: 'C++', item: toAbsoluteUrl('/khoa-hoc/cpp') },
+        {
+          '@type': 'ListItem',
+          position: 4,
+          name: lesson.frontmatter.title,
+          item: toAbsoluteUrl(`/khoa-hoc/cpp/${params.slug}`),
+        },
+      ],
+    },
+  ]
 
   return (
     <>
@@ -101,6 +121,8 @@ export default function CppLessonPage({ params }: PageProps) {
           <Sidebar lessons={allLessons} courseName="C++" courseSlug="cpp" />
 
           <article className="min-w-0 flex-1">
+            <TableOfContents headings={headings} variant="inline" />
+
             <div
               className="prose prose-slate max-w-none prose-headings:font-bold prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-a:text-blue-600 prose-pre:bg-[#1E293B] prose-pre:rounded-xl prose-pre:border prose-pre:border-slate-700"
               dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(lesson.content) }}
