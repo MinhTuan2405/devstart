@@ -134,7 +134,7 @@ Do not output prose before or after the table unless the user asked for commenta
 5. Select one main keyword.
 6. Select 5-12 subkeywords that support the same page intent.
 7. Build the markdown table.
-8. Save the file as `datetime_topic_kws.md` under `.agents/keyword-research/`.
+8. Save the file as `datetime_topic_kws.md` under `{root}/research/keyword-research/`.
 
 ## Cross-Skill Handoffs
 
