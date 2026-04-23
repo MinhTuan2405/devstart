@@ -1,0 +1,178 @@
+---
+title: "AI vs Machine Learning vs Deep Learning cho người mới"
+description: "Phân biệt AI, Machine Learning và Deep Learning cho người mới bằng ví dụ dễ hiểu, khi nào dùng mỗi cách và mối quan hệ giữa ba khái niệm."
+slug: "ai-vs-machine-learning-vs-deep-learning"
+course: "machine-learning"
+order: 2
+duration: "15 phút"
+difficulty: "Dễ"
+keywords: ["ai vs machine learning vs deep learning", "ai vs machine learning", "machine learning vs deep learning", "phân biệt ai machine learning deep learning", "ai machine learning deep learning là gì", "so sánh ai và machine learning", "so sánh machine learning và deep learning", "ai vs ml vs dl cho người mới", "khi nào dùng machine learning hay deep learning", "ví dụ ai machine learning deep learning"]
+publishedAt: "2026-04-23"
+---
+
+## AI vs machine learning vs deep learning là gì?
+
+AI vs machine learning vs deep learning là ba khái niệm liên quan chặt chẽ nhưng không giống nhau. AI là lĩnh vực rộng nhất, machine learning là một nhánh của AI giúp máy học từ dữ liệu, còn deep learning là một nhánh nhỏ hơn của machine learning, dùng mạng nơ-ron nhiều lớp để học các mẫu phức tạp.
+
+Nếu chỉ cần nhớ một câu cho người mới, hãy nhớ thế này: **AI là mục tiêu làm cho máy thông minh, machine learning là một cách để đạt mục tiêu đó, còn deep learning là cách mạnh hơn cho dữ liệu lớn và bài toán phức tạp**.
+
+## AI là gì?
+
+AI, hay trí tuệ nhân tạo, là khái niệm rộng nói về việc xây dựng hệ thống có thể thực hiện những việc vốn cần trí thông minh của con người, như nhận diện hình ảnh, trả lời câu hỏi, gợi ý sản phẩm hoặc ra quyết định.
+
+Điều quan trọng là AI không phải lúc nào cũng dùng machine learning. Một hệ thống có luật rõ ràng vẫn có thể được xem là AI ở mức đơn giản.
+
+Ví dụ dưới đây là một hệ thống ra quyết định theo luật. Nó không học từ dữ liệu, nhưng vẫn mô phỏng hành vi "thông minh" ở mức cơ bản:
+
+```python
+def goi_y_hanh_dong(nhiet_do, troi_mua):
+    if troi_mua:
+        return "mang ao mua"
+    if nhiet_do > 33:
+        return "uong nuoc mat"
+    return "thoi tiet on"
+
+print(goi_y_hanh_dong(35, False))
+```
+
+Ở đây, hệ thống hoạt động hoàn toàn dựa trên các luật do con người viết sẵn. Nó không tự học thêm gì sau khi chạy.
+
+## Machine learning khác AI như thế nào?
+
+Khi so sánh AI và machine learning, cách hiểu đúng là: machine learning là một cách xây AI bằng dữ liệu. Thay vì viết hết mọi luật, bạn đưa cho hệ thống nhiều ví dụ để nó tự tìm quy luật.
+
+Ví dụ: nếu muốn dự đoán giá nhà, rất khó để viết tay một bộ luật đầy đủ cho mọi khu vực, mọi diện tích, mọi số phòng. Machine learning giải quyết việc này bằng cách học từ dữ liệu nhà đã bán trước đó.
+
+```python
+from sklearn.linear_model import LinearRegression
+
+X = [[30], [40], [50], [60]]  # dien tich
+y = [1.2, 1.6, 2.0, 2.5]      # gia nha ty dong
+
+model = LinearRegression()
+model.fit(X, y)
+
+print(model.predict([[55]]))
+```
+
+Trong ví dụ này:
+
+- AI là mục tiêu: dự đoán giá nhà một cách thông minh.
+- Machine learning là phương pháp: dùng dữ liệu cũ để học quy luật.
+- Mô hình không có sẵn công thức do con người ghi cứng cho từng trường hợp.
+
+Vì vậy, khi ai đó hỏi `ai vs machine learning`, câu trả lời ngắn gọn là: **AI rộng hơn machine learning**.
+
+## Machine learning vs deep learning
+
+Deep learning cũng học từ dữ liệu như machine learning, nhưng nó thường dùng mạng nơ-ron nhiều lớp để học các đặc trưng phức tạp hơn. Đây là lý do deep learning mạnh trong các bài toán như nhận diện ảnh, giọng nói, ngôn ngữ tự nhiên và xe tự lái.
+
+Một mô hình deep learning đơn giản trong Python có thể trông như sau:
+
+```python
+from sklearn.neural_network import MLPClassifier
+
+X = [[0, 0], [0, 1], [1, 0], [1, 1]]
+y = [0, 1, 1, 0]
+
+model = MLPClassifier(hidden_layer_sizes=(4, 4), max_iter=2000, random_state=42)
+model.fit(X, y)
+
+print(model.predict([[1, 0]]))
+```
+
+Bạn chưa cần hiểu sâu mạng nơ-ron ở giai đoạn này. Điều cần nhớ là deep learning thường:
+
+- Cần nhiều dữ liệu hơn.
+- Cần nhiều tài nguyên tính toán hơn.
+- Phù hợp hơn với bài toán phức tạp như ảnh, âm thanh, văn bản.
+
+Ngược lại, machine learning truyền thống thường dễ bắt đầu hơn cho dữ liệu dạng bảng như doanh thu, giá nhà, điểm thi hoặc dữ liệu khách hàng.
+
+## Mối quan hệ giữa AI, ML và DL
+
+Bạn có thể hình dung ba khái niệm này như các vòng tròn lồng nhau:
+
+- AI là vòng tròn lớn nhất.
+- Machine learning nằm bên trong AI.
+- Deep learning nằm bên trong machine learning.
+
+Điều này giúp trả lời luôn câu hỏi `deep learning khác gì ai`: deep learning không phải đối thủ của AI mà là một phần nhỏ của AI, đi qua machine learning.
+
+## Khi nào dùng machine learning hay deep learning?
+
+Đây là câu hỏi rất thực tế với người mới.
+
+Bạn nên nghĩ đến machine learning trước khi:
+
+- Dữ liệu của bạn là bảng, có cột rõ ràng.
+- Số lượng dữ liệu chưa quá lớn.
+- Bạn cần mô hình dễ hiểu, dễ giải thích.
+- Bạn muốn học nền tảng nhanh và triển khai sớm.
+
+Bạn nên nghĩ đến deep learning khi:
+
+- Bài toán liên quan đến ảnh, giọng nói, video hoặc văn bản dài.
+- Bạn có nhiều dữ liệu và tài nguyên tính toán.
+- Bài toán quá phức tạp để đặc trưng thủ công.
+
+Với người mới, lời khuyên tốt nhất là **bắt đầu bằng machine learning trước**, sau đó mới học deep learning. Nếu nhảy vào deep learning quá sớm, bạn sẽ dễ bị ngợp vì vừa phải học dữ liệu, vừa phải học mô hình, vừa phải học toán nền tảng.
+
+## Ví dụ AI, machine learning, deep learning trong thực tế
+
+- Chatbot theo kịch bản câu hỏi có sẵn: AI đơn giản, có thể không dùng machine learning.
+- Hệ thống gợi ý phim dựa trên lịch sử xem: thường dùng machine learning.
+- Nhận diện khuôn mặt trong ảnh: thường dùng deep learning.
+- Phát hiện thư rác bằng dữ liệu email đã gán nhãn: thường dùng machine learning.
+- Nhận dạng giọng nói thành văn bản: thường dùng deep learning.
+
+Nhìn vào ví dụ ai machine learning deep learning trong thực tế sẽ giúp bạn bớt mơ hồ hơn nhiều so với chỉ học định nghĩa.
+
+## Những nhầm lẫn thường gặp
+
+- Nghĩ rằng AI lúc nào cũng đồng nghĩa với deep learning. Thực tế còn nhiều hệ thống AI dùng luật hoặc machine learning đơn giản.
+- Nghĩ rằng deep learning luôn tốt hơn machine learning. Với dữ liệu bảng nhỏ, machine learning truyền thống thường hiệu quả và dễ triển khai hơn.
+- Nghĩ rằng học AI là phải học tất cả cùng lúc. Bạn nên đi theo thứ tự: AI tổng quan, machine learning cơ bản, rồi mới đến deep learning.
+
+## Bài tập thực hành
+
+Hãy chọn 3 ứng dụng quen thuộc, ví dụ Google Maps, TikTok và Gmail. Với mỗi ứng dụng, hãy thử trả lời:
+
+- Đây là AI, machine learning hay deep learning?
+- Nếu có nhiều hơn một đáp án, phần nào của ứng dụng thuộc loại nào?
+- Vì sao bạn nghĩ như vậy?
+
+Bạn cũng có thể chạy thử đoạn code sau để tự phân biệt hệ thống dùng luật với hệ thống học từ dữ liệu:
+
+```python
+def rule_based(score):
+    if score >= 8:
+        return "gioi"
+    return "trung binh"
+
+print(rule_based(9))
+```
+
+Gợi ý: hãy tự hỏi vì sao đoạn code này không phải machine learning dù nó vẫn đưa ra quyết định.
+
+## Câu hỏi thường gặp về AI, machine learning và deep learning
+
+### AI machine learning deep learning là gì theo cách hiểu đơn giản?
+
+AI là khái niệm rộng về máy thông minh. Machine learning là cách để máy học từ dữ liệu. Deep learning là một loại machine learning dùng mạng nơ-ron nhiều lớp.
+
+### So sánh AI và machine learning thế nào cho dễ nhớ?
+
+Hãy nhớ rằng AI là chiếc ô lớn, còn machine learning là một công cụ nằm trong chiếc ô đó. Không phải mọi hệ thống AI đều cần machine learning.
+
+### So sánh machine learning và deep learning khác nhau ở đâu?
+
+Machine learning thường phù hợp với dữ liệu bảng và dễ bắt đầu hơn. Deep learning mạnh hơn ở bài toán ảnh, âm thanh, ngôn ngữ, nhưng thường cần nhiều dữ liệu và tài nguyên hơn.
+
+### AI vs ML vs DL cho người mới nên học theo thứ tự nào?
+
+Bạn nên bắt đầu từ khái niệm AI tổng quan, sau đó học machine learning cơ bản và cuối cùng mới đi vào deep learning. Thứ tự này dễ hiểu và ít gây ngợp nhất.
+
+## Tóm tắt
+
+Trong bài này, bạn đã phân biệt được AI vs machine learning vs deep learning theo cách đơn giản và thực tế. AI là lĩnh vực rộng, machine learning là nhánh học từ dữ liệu, còn deep learning là nhánh sâu hơn dùng mạng nơ-ron. Ở bài tiếp theo, chúng ta sẽ học **quy trình machine learning cơ bản** để biết một dự án ML thường đi qua những bước nào.

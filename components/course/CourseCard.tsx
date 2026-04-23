@@ -29,6 +29,12 @@ const courseColors: Record<string, { bg: string; border: string; iconBg: string;
     iconBg: 'bg-emerald-100',
     btn: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/25',
   },
+  'machine-learning': {
+    bg: 'from-violet-50 to-white',
+    border: 'border-violet-100 hover:border-violet-300',
+    iconBg: 'bg-violet-100',
+    btn: 'bg-violet-600 hover:bg-violet-700 shadow-violet-600/25',
+  },
 }
 
 export default function CourseCard({

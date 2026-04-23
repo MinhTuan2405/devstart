@@ -1,0 +1,235 @@
+---
+title: "Dự án Machine Learning đầu tiên với scikit-learn"
+description: "Hướng dẫn làm dự án machine learning đầu tiên với scikit-learn cho người mới: chuẩn bị dữ liệu, train mô hình, đánh giá kết quả và rút kinh nghiệm."
+slug: "du-an-machine-learning-dau-tien-voi-scikit-learn"
+course: "machine-learning"
+order: 20
+duration: "22 phút"
+difficulty: "Dễ"
+keywords: ["dự án machine learning đầu tiên với scikit learn", "scikit learn cho người mới", "hướng dẫn scikit learn cơ bản", "dự án machine learning cho người mới bắt đầu", "cách làm dự án machine learning đầu tiên", "ví dụ machine learning với scikit learn", "phân loại dữ liệu với scikit learn", "huấn luyện mô hình với scikit learn", "machine learning python scikit learn", "scikit learn là gì", "tutorial scikit learn tiếng việt"]
+publishedAt: "2026-04-23"
+---
+
+## Dự án machine learning đầu tiên với scikit-learn
+
+Dự án machine learning đầu tiên với scikit-learn là cách tốt nhất để ghép toàn bộ kiến thức nhập môn thành một quy trình hoàn chỉnh: đọc dữ liệu, chia train/test, huấn luyện mô hình, đánh giá kết quả và rút ra bài học. Với người mới, mục tiêu của dự án đầu tiên không phải là mô hình mạnh nhất, mà là hiểu được flow làm việc thật sự của machine learning.
+
+Trong bài cuối này, chúng ta sẽ làm một ví dụ nhỏ, rõ ràng và đủ thực tế để bạn thấy `scikit-learn cho người mới` nên bắt đầu từ đâu.
+
+## Scikit-learn là gì?
+
+`Scikit learn là gì`? Đây là thư viện Python rất phổ biến cho machine learning cổ điển. Nó cung cấp sẵn nhiều công cụ như:
+
+- Chia dữ liệu train/test.
+- Tiền xử lý dữ liệu.
+- Huấn luyện mô hình.
+- Đánh giá mô hình.
+
+Điểm mạnh của `scikit-learn` là cú pháp khá nhất quán: nhiều mô hình đều dùng `fit()`, `predict()`, `score()` nên rất phù hợp cho người mới.
+
+## Cách làm dự án machine learning đầu tiên
+
+`Cách làm dự án machine learning đầu tiên` thường gồm 6 bước:
+
+- Chọn bài toán đơn giản.
+- Chuẩn bị dữ liệu.
+- Chia train/test.
+- Huấn luyện mô hình.
+- Đánh giá kết quả.
+- Ghi lại điều học được và bước cải thiện tiếp theo.
+
+Đây chính là phần `hướng dẫn scikit learn cơ bản` mà hầu như ai mới học ML cũng nên trải qua ít nhất một lần.
+
+## Chọn bài toán cho người mới bắt đầu
+
+Với `dự án machine learning cho người mới bắt đầu`, nên chọn bài toán:
+
+- Dữ liệu nhỏ.
+- Dễ hiểu.
+- Dễ đánh giá.
+- Không cần hạ tầng phức tạp.
+
+Ví dụ rất phù hợp là phân loại hoa Iris. Đây là dataset kinh điển và có sẵn trong `scikit-learn`.
+
+## Bước 1: Nạp dữ liệu bằng scikit-learn
+
+Ví dụ nạp dataset Iris:
+
+```python
+from sklearn.datasets import load_iris
+
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+print(X.shape)
+print(y[:5])
+```
+
+Trong ví dụ này:
+
+- `X` là feature đầu vào.
+- `y` là nhãn lớp.
+
+Đây là điểm khởi đầu rất tốt cho một `ví dụ machine learning với scikit learn`.
+
+## Bước 2: Chia train và test
+
+Sau khi có dữ liệu, bạn cần chia train/test để đánh giá mô hình công bằng hơn:
+
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_iris
+
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+print(X_train.shape)
+print(X_test.shape)
+```
+
+Đây là bước mà bạn đã học ở các bài trước: không được train và test trên cùng một tập dữ liệu.
+
+## Bước 3: Huấn luyện mô hình với scikit-learn
+
+`Huấn luyện mô hình với scikit learn` rất gọn nhờ API thống nhất. Ở đây ta dùng `KNeighborsClassifier`:
+
+```python
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+model = KNeighborsClassifier(n_neighbors=3)
+model.fit(X_train, y_train)
+```
+
+Đến đây, bạn đã train xong mô hình đầu tiên trong project.
+
+## Bước 4: Dự đoán và đánh giá kết quả
+
+Sau khi huấn luyện, bạn cần kiểm tra mô hình trên test set:
+
+```python
+from sklearn.metrics import accuracy_score
+
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+
+print(y_pred[:5])
+print("accuracy:", accuracy)
+```
+
+Nếu muốn chi tiết hơn, bạn có thể dùng thêm `precision`, `recall`, `f1 score` cho các bài toán classification phù hợp.
+
+## Bước 5: Thử thay đổi mô hình hoặc tham số
+
+Một dự án machine learning thật không dừng ở lần chạy đầu tiên. Bạn nên thử:
+
+- Đổi số hàng xóm của KNN.
+- Dùng logistic regression.
+- Dùng decision tree.
+- So sánh kết quả giữa các mô hình.
+
+Ví dụ thử số hàng xóm khác nhau:
+
+```python
+from sklearn.neighbors import KNeighborsClassifier
+
+for k in [1, 3, 5]:
+    model = KNeighborsClassifier(n_neighbors=k)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    print(k, accuracy_score(y_test, y_pred))
+```
+
+Đây là bước rất quan trọng vì nó biến bạn từ người chỉ chạy code thành người biết so sánh và suy nghĩ về mô hình.
+
+## Phân loại dữ liệu với scikit-learn trong một flow hoàn chỉnh
+
+Nếu ghép lại, bạn sẽ thấy `phân loại dữ liệu với scikit learn` thường có flow rất rõ:
+
+- Nạp dữ liệu.
+- Chia train/test.
+- Tạo model.
+- `fit()` để học.
+- `predict()` để dự đoán.
+- Dùng metric để đánh giá.
+
+Đây chính là bộ khung bạn có thể tái sử dụng cho rất nhiều dự án khác sau khóa học này.
+
+## Những lỗi thường gặp ở dự án machine learning đầu tiên
+
+- Chọn bài toán quá khó ngay từ đầu.
+- Chỉ quan tâm code chạy được mà không hiểu dữ liệu.
+- Không chia train/test.
+- Chỉ nhìn accuracy rồi kết luận mô hình tốt.
+- Không lưu lại điều đã thử và kết quả nhận được.
+
+Nếu tránh các lỗi này, bạn sẽ tiến bộ rất nhanh ở các project tiếp theo.
+
+## Bài tập thực hành
+
+Hãy hoàn thành mini project sau:
+
+- Dùng dataset Iris.
+- Train ít nhất 2 mô hình khác nhau.
+- So sánh accuracy của chúng.
+- Viết 3 dòng kết luận: mô hình nào tốt hơn, vì sao, và bạn muốn thử gì tiếp theo.
+
+Bạn có thể bắt đầu với phiên bản tối giản sau:
+
+```python
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+
+iris = load_iris()
+X = iris.data
+y = iris.target
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+model = KNeighborsClassifier(n_neighbors=3)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+print(accuracy_score(y_test, y_pred))
+```
+
+## Câu hỏi thường gặp về scikit-learn và dự án đầu tiên
+
+### Scikit-learn là gì?
+
+Scikit-learn là thư viện Python phổ biến cho machine learning cổ điển, cung cấp sẵn nhiều công cụ để xử lý dữ liệu, train mô hình và đánh giá kết quả. Đây là lựa chọn rất tốt cho người mới.
+
+### Scikit learn cho người mới nên bắt đầu từ đâu?
+
+Bạn nên bắt đầu từ dataset có sẵn như Iris, sau đó học flow cơ bản gồm train/test split, fit, predict và đánh giá. Đây là cách học nhanh và ít bị ngợp nhất.
+
+### Dự án machine learning đầu tiên nên làm gì?
+
+Hãy chọn bài toán classification đơn giản, dữ liệu nhỏ và mô hình dễ hiểu như KNN hoặc logistic regression. Mục tiêu là nắm quy trình làm việc, không phải đạt kết quả tối đa ngay.
+
+### Machine learning Python scikit learn có khó không?
+
+Không quá khó nếu bạn đi theo từng bước nhỏ. `Scikit-learn` có API khá nhất quán nên rất phù hợp để làm project đầu tiên và xây nền tảng thực hành.
+
+## Tóm tắt
+
+Trong bài cuối này, bạn đã hoàn thành một dự án machine learning đầu tiên với scikit-learn theo đúng flow cơ bản: nạp dữ liệu, chia train/test, huấn luyện mô hình, dự đoán và đánh giá. Sau 20 bài, bạn đã có nền tảng tốt về khái niệm, mô hình cơ bản, đánh giá mô hình, clustering và quy trình thực hành. Bước tiếp theo tự nhiên nhất là chọn một dataset mới và tự làm lại quy trình này từ đầu để biến kiến thức thành kỹ năng thật.

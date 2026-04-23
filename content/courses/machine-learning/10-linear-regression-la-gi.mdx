@@ -1,0 +1,194 @@
+---
+title: "Linear Regression là gì trong Machine Learning?"
+description: "Giải thích linear regression là gì, cách hoạt động của hồi quy tuyến tính, ví dụ bằng Python và ứng dụng của linear regression cho người mới."
+slug: "linear-regression-la-gi"
+course: "machine-learning"
+order: 10
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["linear regression là gì", "hồi quy tuyến tính là gì", "linear regression trong machine learning", "mô hình linear regression", "cách hoạt động của linear regression", "ví dụ linear regression", "linear regression cho người mới", "ứng dụng của linear regression", "phân biệt linear regression và logistic regression"]
+publishedAt: "2026-04-23"
+---
+
+## Linear regression là gì?
+
+Linear regression là một mô hình machine learning dùng để dự đoán giá trị số liên tục, ví dụ như giá nhà, doanh thu, nhiệt độ hoặc điểm thi. Nói đơn giản, mô hình này cố gắng tìm một đường thẳng hoặc một hàm tuyến tính phù hợp nhất để mô tả mối quan hệ giữa đầu vào và đầu ra.
+
+Với người mới, `linear regression là gì` có thể hiểu ngắn gọn là: mô hình đoán một con số dựa trên các feature đầu vào.
+
+## Hồi quy tuyến tính là gì?
+
+`Hồi quy tuyến tính là gì` chỉ là cách gọi tiếng Việt của linear regression. Từ `regression` ở đây không có nghĩa là "thoái lui", mà là dạng bài toán dự đoán giá trị liên tục.
+
+Ví dụ:
+
+- Dự đoán giá nhà.
+- Dự đoán doanh thu tháng sau.
+- Dự đoán điểm thi cuối kỳ.
+
+Nếu đầu ra là số liên tục, linear regression thường là một điểm bắt đầu rất tốt.
+
+## Cách hoạt động của linear regression
+
+`Cách hoạt động của linear regression` dựa trên việc tìm ra hàm dạng:
+
+- y = a x + b
+
+Trong đó:
+
+- `x` là feature đầu vào.
+- `y` là giá trị cần dự đoán.
+- `a` là hệ số cho biết x ảnh hưởng mạnh thế nào đến y.
+- `b` là hệ số chệch ban đầu.
+
+Ví dụ đơn giản bằng code:
+
+```python
+x = 5
+a = 2
+b = 1
+
+y = a * x + b
+print(y)
+```
+
+Nếu `x` là số giờ học và `y` là điểm thi, mô hình có thể học rằng mỗi giờ học thêm làm điểm tăng lên một mức nào đó.
+
+## Ví dụ linear regression bằng Python
+
+Ví dụ quen thuộc nhất là dự đoán điểm thi dựa trên số giờ học:
+
+```python
+from sklearn.linear_model import LinearRegression
+
+X = [[1], [2], [3], [4], [5]]
+y = [4, 5, 6, 7, 8]
+
+model = LinearRegression()
+model.fit(X, y)
+
+du_doan = model.predict([[6]])
+print(du_doan)
+```
+
+Trong ví dụ này:
+
+- `X` là số giờ học.
+- `y` là điểm thi tương ứng.
+- Mô hình học mối quan hệ tuyến tính giữa hai đại lượng.
+- Sau đó mô hình dự đoán điểm cho học sinh học 6 giờ.
+
+Đây là `ví dụ linear regression` rất phù hợp cho người mới vì trực quan và dễ hình dung.
+
+## Linear regression trong machine learning dùng để làm gì?
+
+`Linear regression trong machine learning` thường được dùng khi bạn cần dự đoán giá trị số.
+
+Ví dụ ứng dụng của linear regression:
+
+- Dự đoán giá nhà từ diện tích, vị trí, số phòng.
+- Dự đoán doanh thu từ chi phí quảng cáo.
+- Dự đoán nhiệt độ ngày mai từ dữ liệu thời tiết.
+- Dự đoán điểm thi từ số giờ học và số buổi nghỉ.
+
+Đây là lý do `ứng dụng của linear regression` xuất hiện rất nhiều trong các bài học nhập môn ML.
+
+## Linear regression học điều gì từ dữ liệu?
+
+Mục tiêu của mô hình là tìm ra các hệ số sao cho dự đoán gần với dữ liệu thật nhất có thể. Nói cách khác, mô hình cố gắng giảm sai số giữa giá trị thật và giá trị dự đoán.
+
+Ví dụ xem hệ số sau khi train:
+
+```python
+from sklearn.linear_model import LinearRegression
+
+X = [[30], [40], [50], [60]]
+y = [1.2, 1.6, 2.0, 2.5]
+
+model = LinearRegression()
+model.fit(X, y)
+
+print("coef:", model.coef_)
+print("intercept:", model.intercept_)
+```
+
+Giá trị `coef_` và `intercept_` cho bạn biết đường thẳng mà mô hình đã học.
+
+## Ưu điểm của linear regression
+
+- Dễ hiểu, dễ giải thích.
+- Huấn luyện nhanh.
+- Phù hợp để học tư duy mô hình hóa.
+- Là baseline rất tốt cho nhiều bài toán regression.
+
+Với người mới, linear regression cho cảm giác "nhìn được mô hình đang làm gì", thay vì chỉ thấy một hộp đen.
+
+## Hạn chế của linear regression
+
+- Giả định quan hệ giữa đầu vào và đầu ra gần tuyến tính.
+- Nhạy với ngoại lệ.
+- Có thể không đủ mạnh cho dữ liệu quá phức tạp.
+
+Nếu dữ liệu có quan hệ cong, gấp khúc hoặc nhiều tương tác phức tạp, linear regression có thể không còn phù hợp.
+
+## Phân biệt linear regression và logistic regression
+
+`Phân biệt linear regression và logistic regression` theo cách dễ nhớ:
+
+- Linear regression dùng để dự đoán số liên tục.
+- Logistic regression dùng để phân loại, ví dụ đậu hay rớt, spam hay không spam.
+
+Hai tên gọi khá giống nhau, nhưng bài toán mà chúng giải quyết lại khác nhau.
+
+## Những lỗi thường gặp khi mới học linear regression
+
+- Dùng linear regression cho bài toán phân loại.
+- Quên kiểm tra quan hệ có đủ tuyến tính hay không.
+- Nghĩ rằng mô hình đơn giản thì luôn kém. Thực ra linear regression rất mạnh trong nhiều bài toán phù hợp.
+- Chỉ train mô hình mà không nhìn sai số dự đoán.
+
+Nếu tránh được những lỗi này, bạn sẽ hiểu linear regression nhanh hơn nhiều.
+
+## Bài tập thực hành
+
+Hãy tự tạo một dataset nhỏ về số giờ học và điểm thi. Sau đó:
+
+- Train một mô hình linear regression.
+- Dự đoán điểm cho một giá trị mới.
+- Tự giải thích ý nghĩa của dự đoán đó.
+
+Bạn có thể bắt đầu với đoạn code sau:
+
+```python
+from sklearn.linear_model import LinearRegression
+
+X = [[2], [4], [6], [8]]
+y = [5, 6, 8, 9]
+
+model = LinearRegression()
+model.fit(X, y)
+
+print(model.predict([[7]]))
+```
+
+## Câu hỏi thường gặp về linear regression
+
+### Linear regression là gì?
+
+Linear regression là mô hình machine learning dùng để dự đoán giá trị số liên tục bằng cách tìm mối quan hệ tuyến tính giữa đầu vào và đầu ra. Đây là một mô hình cơ bản nhưng rất quan trọng trong nhập môn ML.
+
+### Hồi quy tuyến tính là gì?
+
+Hồi quy tuyến tính là tên tiếng Việt của linear regression. Nó thường được dùng cho các bài toán như giá nhà, doanh thu, điểm thi hoặc nhiệt độ.
+
+### Linear regression cho người mới có khó không?
+
+Không quá khó. Đây là một trong những mô hình dễ hiểu nhất vì bạn có thể hình dung nó như việc tìm đường thẳng phù hợp nhất với dữ liệu.
+
+### Phân biệt linear regression và logistic regression thế nào?
+
+Linear regression dự đoán số liên tục, còn logistic regression dự đoán xác suất hoặc nhãn phân loại. Đây là điểm khác nhau quan trọng nhất giữa hai mô hình.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu linear regression là gì, cách hoạt động của hồi quy tuyến tính và khi nào nên dùng mô hình này. Đây là một bước rất tốt để bắt đầu học các mô hình machine learning cơ bản. Ở bài tiếp theo, chúng ta sẽ học **logistic regression** để chuyển từ bài toán dự đoán số sang bài toán phân loại.

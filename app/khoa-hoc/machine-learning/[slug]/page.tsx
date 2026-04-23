@@ -17,12 +17,12 @@ interface PageProps {
 }
 
 export async function generateStaticParams() {
-  const lessons = getLessonsByCourseName('cpp')
+  const lessons = getLessonsByCourseName('machine-learning')
   return lessons.map((lesson) => ({ slug: lesson.slug }))
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const lesson = getLessonBySlug('cpp', params.slug)
+  const lesson = getLessonBySlug('machine-learning', params.slug)
   if (!lesson) return { title: 'Bài học không tồn tại' }
 
   return {
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title: `${lesson.frontmatter.title} | ${SITE_NAME}`,
       description: lesson.frontmatter.description,
-      url: `/khoa-hoc/cpp/${params.slug}`,
+      url: `/khoa-hoc/machine-learning/${params.slug}`,
       siteName: SITE_NAME,
       locale: 'vi_VN',
       type: 'article',
@@ -44,16 +44,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: `${lesson.frontmatter.title} | ${SITE_NAME}`,
       description: lesson.frontmatter.description,
     },
-    alternates: { canonical: `/khoa-hoc/cpp/${params.slug}` },
+    alternates: { canonical: `/khoa-hoc/machine-learning/${params.slug}` },
   }
 }
 
-export default function CppLessonPage({ params }: PageProps) {
-  const lesson = getLessonBySlug('cpp', params.slug)
+export default function MachineLearningLessonPage({ params }: PageProps) {
+  const lesson = getLessonBySlug('machine-learning', params.slug)
   if (!lesson) notFound()
 
-  const allLessons = getLessonsByCourseName('cpp')
-  const { prev, next } = getAdjacentLessons('cpp', params.slug)
+  const allLessons = getLessonsByCourseName('machine-learning')
+  const { prev, next } = getAdjacentLessons('machine-learning', params.slug)
   const relatedPosts = getRelatedBlogPosts(params.slug, 3)
   const headings = extractHeadings(lesson.content)
 
@@ -66,8 +66,8 @@ export default function CppLessonPage({ params }: PageProps) {
       datePublished: lesson.frontmatter.publishedAt,
       dateModified: lesson.modifiedAt,
       author: { '@type': 'Organization', name: SITE_NAME },
-      mainEntityOfPage: toAbsoluteUrl(`/khoa-hoc/cpp/${params.slug}`),
-      url: toAbsoluteUrl(`/khoa-hoc/cpp/${params.slug}`),
+      mainEntityOfPage: toAbsoluteUrl(`/khoa-hoc/machine-learning/${params.slug}`),
+      url: toAbsoluteUrl(`/khoa-hoc/machine-learning/${params.slug}`),
     },
     {
       '@context': 'https://schema.org',
@@ -75,12 +75,17 @@ export default function CppLessonPage({ params }: PageProps) {
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: toAbsoluteUrl('/') },
         { '@type': 'ListItem', position: 2, name: 'Khóa học', item: toAbsoluteUrl('/khoa-hoc') },
-        { '@type': 'ListItem', position: 3, name: 'C++', item: toAbsoluteUrl('/khoa-hoc/cpp') },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: 'Machine Learning',
+          item: toAbsoluteUrl('/khoa-hoc/machine-learning'),
+        },
         {
           '@type': 'ListItem',
           position: 4,
           name: lesson.frontmatter.title,
-          item: toAbsoluteUrl(`/khoa-hoc/cpp/${params.slug}`),
+          item: toAbsoluteUrl(`/khoa-hoc/machine-learning/${params.slug}`),
         },
       ],
     },
@@ -99,7 +104,9 @@ export default function CppLessonPage({ params }: PageProps) {
             <span className="mx-2">/</span>
             <Link href="/khoa-hoc" className="hover:text-blue-600">Khóa học</Link>
             <span className="mx-2">/</span>
-            <Link href="/khoa-hoc/cpp" className="hover:text-blue-600">C++</Link>
+            <Link href="/khoa-hoc/machine-learning" className="hover:text-blue-600">
+              Machine Learning
+            </Link>
             <span className="mx-2">/</span>
             <span className="text-slate-900">{lesson.frontmatter.title}</span>
           </nav>
@@ -118,7 +125,11 @@ export default function CppLessonPage({ params }: PageProps) {
 
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="flex gap-10">
-          <Sidebar lessons={allLessons} courseName="C++" courseSlug="cpp" />
+          <Sidebar
+            lessons={allLessons}
+            courseName="Machine Learning"
+            courseSlug="machine-learning"
+          />
 
           <article className="min-w-0 flex-1">
             <TableOfContents headings={headings} variant="inline" />
@@ -128,7 +139,7 @@ export default function CppLessonPage({ params }: PageProps) {
               dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(lesson.content) }}
             />
 
-            <LessonNav prev={prev} next={next} courseSlug="cpp" />
+            <LessonNav prev={prev} next={next} courseSlug="machine-learning" />
 
             {relatedPosts.length > 0 && (
               <div className="mt-12">

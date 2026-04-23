@@ -1,0 +1,191 @@
+---
+title: "Naive Bayes là gì trong Machine Learning?"
+description: "Giải thích naive bayes là gì, cách hoạt động, công thức cơ bản, ví dụ Python và ứng dụng phân loại văn bản cho người mới."
+slug: "naive-bayes-la-gi"
+course: "machine-learning"
+order: 16
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["naive bayes là gì", "thuật toán naive bayes là gì", "naive bayes trong machine learning", "naive bayes hoạt động như thế nào", "công thức naive bayes", "ví dụ naive bayes", "phân loại văn bản bằng naive bayes", "naive bayes cho người mới", "ưu nhược điểm của naive bayes"]
+publishedAt: "2026-04-23"
+---
+
+## Naive Bayes là gì?
+
+Naive Bayes là một thuật toán machine learning dùng cho bài toán phân loại, dựa trên xác suất Bayes và một giả định đơn giản rằng các feature độc lập với nhau. Từ `naive` có nghĩa là `ngây thơ`, vì mô hình giả định sự độc lập này khá mạnh và thường không hoàn toàn đúng trong thực tế.
+
+Dù giả định đơn giản, `naive bayes là gì` vẫn là một câu hỏi rất đáng học vì mô hình này hoạt động tốt trong nhiều bài toán thực tế, đặc biệt là phân loại văn bản.
+
+## Thuật toán naive bayes là gì?
+
+`Thuật toán naive bayes là gì`? Đây là mô hình dự đoán lớp có xác suất cao nhất dựa trên các feature đầu vào.
+
+Ví dụ:
+
+- Email có phải spam không?
+- Văn bản thuộc chủ đề thể thao hay công nghệ?
+- Một bình luận là tích cực hay tiêu cực?
+
+Tất cả đều là các bài toán phân loại rất phù hợp với Naive Bayes.
+
+## Naive Bayes hoạt động như thế nào?
+
+`Naive Bayes hoạt động như thế nào` có thể hiểu đơn giản như sau:
+
+- Xem xác suất xuất hiện của từng lớp.
+- Xem mỗi feature có khả năng xuất hiện thế nào trong từng lớp.
+- Kết hợp các xác suất đó để tính lớp nào hợp lý nhất.
+
+Ví dụ logic rất cơ bản:
+
+```python
+p_spam = 0.6
+p_not_spam = 0.4
+
+if p_spam > p_not_spam:
+    print("spam")
+else:
+    print("khong_spam")
+```
+
+Đây chưa phải Naive Bayes đầy đủ, nhưng nó giúp bạn hình dung rằng mô hình đang đưa ra quyết định dựa trên xác suất.
+
+## Công thức Naive Bayes
+
+`Công thức naive bayes` nổi tiếng nhất là:
+
+- P(A|B) = P(B|A) x P(A) / P(B)
+
+Trong machine learning, bạn không cần quá lo lắng về công thức ngay từ đầu. Điều cần nhớ là mô hình dùng xác suất hậu nghiệm để xem một mẫu mới có khả năng thuộc lớp nào cao hơn.
+
+Với người mới, cách hiểu thực dụng nhất là: Naive Bayes so sánh xác suất giữa các lớp và chọn lớp có xác suất lớn hơn.
+
+## Ví dụ Naive Bayes bằng Python
+
+Ví dụ phân loại văn bản đơn giản bằng `MultinomialNB`:
+
+```python
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+
+texts = ["mua ngay khuyen mai lon", "mien phi giam gia", "hoc python co ban", "lap trinh python"]
+y = [1, 1, 0, 0]
+
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(texts)
+
+model = MultinomialNB()
+model.fit(X, y)
+
+sample = vectorizer.transform(["khuyen mai mien phi"])
+print(model.predict(sample))
+```
+
+Trong ví dụ này:
+
+- `1` có thể là spam.
+- `0` có thể là không spam.
+- Mô hình học mối liên hệ giữa từ ngữ và nhãn lớp.
+
+Đây là `ví dụ naive bayes` rất quen thuộc vì Naive Bayes đặc biệt mạnh ở bài toán văn bản đơn giản.
+
+## Phân loại văn bản bằng Naive Bayes
+
+`Phân loại văn bản bằng naive bayes` là một ứng dụng nổi tiếng. Vì văn bản có thể biểu diễn bằng tần suất từ, Naive Bayes thường cho kết quả khá tốt với chi phí tính toán thấp.
+
+Ví dụ dùng trong:
+
+- Lọc email spam.
+- Phân loại tin tức.
+- Phân tích cảm xúc cơ bản.
+
+Đây là lý do Naive Bayes vẫn được dạy rộng rãi dù có nhiều mô hình hiện đại hơn.
+
+## Naive Bayes trong machine learning có ưu điểm gì?
+
+- Dễ hiểu và khá nhanh.
+- Huấn luyện nhanh, dự đoán nhanh.
+- Hoạt động tốt với dữ liệu văn bản và bài toán phân loại đơn giản.
+- Thường là baseline tốt cho text classification.
+
+Đây là điểm khiến `naive bayes cho người mới` rất đáng học.
+
+## Nhược điểm của Naive Bayes
+
+`Ưu nhược điểm của naive bayes` cần nhìn cả hạn chế:
+
+- Giả định các feature độc lập, điều này nhiều khi không đúng.
+- Có thể không mạnh bằng các mô hình phức tạp hơn trên dữ liệu khó.
+- Kết quả phụ thuộc khá nhiều vào cách biểu diễn feature.
+
+Tuy vậy, trong nhiều tình huống, một mô hình đơn giản nhưng nhanh và rõ ràng vẫn rất hữu ích.
+
+## Ví dụ Naive Bayes trực quan hơn
+
+Hãy tưởng tượng bạn có một email chứa các từ:
+
+- `khuyen mai`
+- `mien phi`
+- `giam gia`
+
+Nếu các từ này thường xuất hiện trong email spam, Naive Bayes sẽ tăng xác suất lớp spam cho email đó. Mô hình không cần hiểu ngữ nghĩa sâu như con người, nó chỉ cần học các mẫu xác suất từ dữ liệu cũ.
+
+## Những lỗi thường gặp khi mới học Naive Bayes
+
+- Quá lo lắng về công thức trước khi hiểu ý tưởng xác suất.
+- Nghĩ rằng `naive` nghĩa là mô hình yếu và vô dụng.
+- Không hiểu vì sao Naive Bayes hợp với text classification.
+- Dùng mô hình này rồi kỳ vọng nó luôn mạnh hơn mọi mô hình khác.
+
+Nếu tránh được các lỗi đó, bạn sẽ tiếp cận Naive Bayes nhẹ nhàng hơn rất nhiều.
+
+## Bài tập thực hành
+
+Hãy tự tạo một tập văn bản ngắn gồm hai lớp như `spam` và `khong_spam`. Sau đó:
+
+- Biến văn bản thành vector đặc trưng.
+- Train một mô hình Naive Bayes.
+- Thử dự đoán một câu mới.
+
+Bạn có thể bắt đầu với đoạn code sau:
+
+```python
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+
+texts = ["khuyen mai lon", "mien phi qua tang", "hoc python", "lap trinh co ban"]
+y = [1, 1, 0, 0]
+
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(texts)
+
+model = MultinomialNB()
+model.fit(X, y)
+
+sample = vectorizer.transform(["qua tang mien phi"])
+print(model.predict(sample))
+```
+
+Gợi ý: hãy tự hỏi vì sao các từ xuất hiện nhiều trong spam lại làm xác suất spam tăng lên.
+
+## Câu hỏi thường gặp về Naive Bayes
+
+### Naive Bayes là gì?
+
+Naive Bayes là thuật toán phân loại dựa trên xác suất Bayes và giả định rằng các feature độc lập với nhau. Đây là mô hình đơn giản nhưng khá hiệu quả trong nhiều bài toán phân loại.
+
+### Thuật toán Naive Bayes là gì?
+
+Đó là thuật toán chọn lớp có xác suất cao nhất dựa trên dữ liệu đầu vào. Nó thường được dùng trong các bài toán như spam detection hoặc phân loại văn bản.
+
+### Naive Bayes hoạt động như thế nào?
+
+Mô hình tính xác suất cho từng lớp dựa trên các feature rồi so sánh để chọn lớp có khả năng cao nhất. Ý tưởng cốt lõi của nó là dự đoán bằng xác suất.
+
+### Phân loại văn bản bằng Naive Bayes có tốt không?
+
+Với các bài toán văn bản cơ bản, Naive Bayes thường là baseline rất tốt vì nhanh, đơn giản và hiệu quả đáng ngạc nhiên. Đây là lý do nó vẫn được dùng rất nhiều trong giáo dục và thực hành nhập môn.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu Naive Bayes là gì, cách mô hình hoạt động dựa trên xác suất và vì sao nó đặc biệt hữu ích trong phân loại văn bản. Đây là một mô hình cơ bản nhưng rất đáng học trong hành trình machine learning. Ở bài tiếp theo, chúng ta sẽ học **SVM** để thấy một mô hình phân loại mạnh khác hoạt động bằng cách tìm ranh giới phân tách tốt giữa các lớp dữ liệu.

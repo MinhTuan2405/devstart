@@ -1,0 +1,208 @@
+---
+title: "Logistic Regression là gì trong Machine Learning?"
+description: "Giải thích logistic regression là gì, cách hoạt động, dùng để làm gì, ví dụ Python và cách phân biệt logistic regression với linear regression."
+slug: "logistic-regression-la-gi"
+course: "machine-learning"
+order: 11
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["logistic regression là gì", "hồi quy logistic là gì", "logistic regression trong machine learning", "logistic regression dùng để làm gì", "cách hoạt động của logistic regression", "ví dụ logistic regression", "logistic regression cho người mới", "phân biệt logistic regression và linear regression", "khi nào nên dùng logistic regression"]
+publishedAt: "2026-04-23"
+---
+
+## Logistic regression là gì?
+
+Logistic regression là một mô hình machine learning dùng cho bài toán phân loại, đặc biệt là phân loại nhị phân như spam hay không spam, đậu hay rớt, có bệnh hay không có bệnh. Dù tên có chữ `regression`, mô hình này thường được dùng để dự đoán xác suất một mẫu thuộc về lớp nào đó.
+
+Với người mới, `logistic regression là gì` có thể hiểu đơn giản là: mô hình trả lời câu hỏi có hay không, đúng hay sai, 0 hay 1.
+
+## Hồi quy logistic là gì?
+
+`Hồi quy logistic là gì` là cách gọi tiếng Việt của logistic regression. Tên này dễ gây nhầm với linear regression, nhưng mục tiêu của nó khác hẳn.
+
+Ví dụ các bài toán phù hợp:
+
+- Email có phải spam không?
+- Học sinh có đậu không?
+- Khách hàng có rời dịch vụ không?
+
+Các bài toán trên đều có đầu ra là lớp phân loại, không phải số liên tục.
+
+## Logistic regression dùng để làm gì?
+
+`Logistic regression dùng để làm gì`? Mô hình này thường dùng để dự đoán xác suất một sự kiện xảy ra.
+
+Ví dụ:
+
+- Xác suất email là spam.
+- Xác suất khách hàng sẽ mua hàng.
+- Xác suất một người dùng nhấp vào quảng cáo.
+
+Sau khi có xác suất, ta thường đặt một ngưỡng, ví dụ 0.5, để đổi thành nhãn 0 hoặc 1.
+
+## Cách hoạt động của logistic regression
+
+`Cách hoạt động của logistic regression` gồm hai ý đơn giản:
+
+- Tính một giá trị tuyến tính từ các feature.
+- Đưa giá trị đó qua hàm sigmoid để đổi về khoảng từ 0 đến 1.
+
+Ví dụ hàm sigmoid bằng Python:
+
+```python
+import math
+
+z = 2.0
+sigmoid = 1 / (1 + math.exp(-z))
+
+print(sigmoid)
+```
+
+Kết quả là một số nằm giữa 0 và 1. Bạn có thể xem đó như xác suất mô hình dự đoán một mẫu thuộc lớp dương tính.
+
+## Ví dụ logistic regression bằng Python
+
+Ví dụ đơn giản: dự đoán học sinh đậu hay rớt dựa trên số giờ học.
+
+```python
+from sklearn.linear_model import LogisticRegression
+
+X = [[1], [2], [3], [4], [5], [6]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = LogisticRegression()
+model.fit(X, y)
+
+du_doan_nhan = model.predict([[4]])
+du_doan_xac_suat = model.predict_proba([[4]])
+
+print(du_doan_nhan)
+print(du_doan_xac_suat)
+```
+
+Trong ví dụ này:
+
+- `y = 0` có thể hiểu là rớt.
+- `y = 1` có thể hiểu là đậu.
+- `predict()` cho ra nhãn cuối cùng.
+- `predict_proba()` cho ra xác suất mỗi lớp.
+
+Đây là `ví dụ logistic regression` rất phù hợp cho người mới vì dễ thấy sự khác nhau giữa xác suất và nhãn phân loại.
+
+## Logistic regression trong machine learning khác linear regression thế nào?
+
+`Phân biệt logistic regression và linear regression` theo cách ngắn gọn:
+
+- Linear regression dự đoán số liên tục.
+- Logistic regression dự đoán xác suất và nhãn phân loại.
+
+Ví dụ:
+
+- Dự đoán giá nhà: linear regression.
+- Dự đoán spam hay không spam: logistic regression.
+
+Đây là khác biệt cốt lõi mà người mới cần nhớ thật chắc.
+
+## Khi nào nên dùng logistic regression?
+
+`Khi nào nên dùng logistic regression`?
+
+Bạn nên nghĩ tới logistic regression khi:
+
+- Bài toán là classification.
+- Muốn một mô hình đơn giản, dễ giải thích.
+- Dữ liệu không quá phức tạp.
+- Muốn có baseline tốt trước khi thử mô hình mạnh hơn.
+
+Trong nhiều dự án thực tế, logistic regression là một điểm khởi đầu rất hợp lý vì nhanh, rõ ràng và dễ kiểm tra.
+
+## Logistic regression học điều gì?
+
+Mô hình học trọng số cho từng feature để dự đoán xác suất thuộc về lớp dương tính. Nếu một feature có ảnh hưởng mạnh, trọng số tương ứng sẽ phản ánh điều đó.
+
+Ví dụ xem hệ số mô hình:
+
+```python
+from sklearn.linear_model import LogisticRegression
+
+X = [[1], [2], [3], [4], [5], [6]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = LogisticRegression()
+model.fit(X, y)
+
+print("coef:", model.coef_)
+print("intercept:", model.intercept_)
+```
+
+Bạn chưa cần phân tích quá sâu các con số này ở giai đoạn đầu. Chỉ cần hiểu rằng logistic regression cũng đang học các hệ số giống như nhiều mô hình tuyến tính khác.
+
+## Ưu điểm và hạn chế của logistic regression
+
+Ưu điểm:
+
+- Dễ hiểu, dễ giải thích.
+- Huấn luyện nhanh.
+- Phù hợp làm baseline classification.
+- Có thể trả về xác suất.
+
+Hạn chế:
+
+- Có thể không đủ mạnh cho ranh giới phân loại quá phức tạp.
+- Nhạy với chất lượng feature.
+- Cần xử lý dữ liệu tốt để đạt kết quả ổn định.
+
+## Những lỗi thường gặp khi mới học logistic regression
+
+- Nghĩ rằng logistic regression dùng cho dự đoán số liên tục.
+- Chỉ nhìn accuracy mà bỏ qua precision, recall, F1 score.
+- Không hiểu sự khác nhau giữa xác suất và nhãn cuối cùng.
+- Dùng mô hình này cho bài toán quá phi tuyến mà không kiểm tra thêm.
+
+Nếu tránh các lỗi này, bạn sẽ hiểu logistic regression nhanh hơn rất nhiều.
+
+## Bài tập thực hành
+
+Hãy tự tạo một dataset nhỏ với đầu vào là số giờ học và đầu ra là đậu hoặc rớt. Sau đó:
+
+- Train logistic regression.
+- In ra nhãn dự đoán.
+- In ra xác suất dự đoán.
+- Tự giải thích vì sao xác suất và nhãn là hai thứ khác nhau.
+
+Bạn có thể bắt đầu với đoạn code sau:
+
+```python
+from sklearn.linear_model import LogisticRegression
+
+X = [[2], [3], [4], [5], [6], [7]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = LogisticRegression()
+model.fit(X, y)
+
+print(model.predict([[5]]))
+print(model.predict_proba([[5]]))
+```
+
+## Câu hỏi thường gặp về logistic regression
+
+### Logistic regression là gì?
+
+Logistic regression là mô hình machine learning dùng cho bài toán phân loại, đặc biệt là classification nhị phân. Nó dự đoán xác suất rồi chuyển thành nhãn cuối cùng.
+
+### Hồi quy logistic là gì?
+
+Hồi quy logistic là tên tiếng Việt của logistic regression. Dù tên có chữ hồi quy, mô hình này chủ yếu dùng cho phân loại.
+
+### Logistic regression dùng để làm gì?
+
+Nó dùng để dự đoán xác suất một sự kiện xảy ra, ví dụ spam hay không spam, đậu hay rớt, mua hay không mua. Đây là một mô hình rất phổ biến trong nhập môn ML.
+
+### Khi nào nên dùng logistic regression?
+
+Bạn nên dùng logistic regression khi bài toán là classification và cần một mô hình đơn giản, dễ giải thích, dễ triển khai. Nó thường là baseline rất tốt cho người mới.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu logistic regression là gì, cách hoạt động, khi nào nên dùng và nó khác linear regression ở đâu. Đây là một mô hình phân loại nền tảng mà người mới nên nắm rất chắc. Ở bài tiếp theo, chúng ta sẽ học **gradient descent** để hiểu mô hình được tối ưu và học từ dữ liệu như thế nào.

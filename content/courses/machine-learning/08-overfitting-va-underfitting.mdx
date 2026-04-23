@@ -1,0 +1,209 @@
+---
+title: "Overfitting và Underfitting trong Machine Learning"
+description: "Giải thích overfitting và underfitting trong machine learning, cách nhận biết, ví dụ dễ hiểu và cách khắc phục cho người mới."
+slug: "overfitting-va-underfitting"
+course: "machine-learning"
+order: 8
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["overfitting và underfitting trong machine learning", "overfitting là gì", "underfitting là gì", "phân biệt overfitting và underfitting", "cách nhận biết overfitting", "cách khắc phục overfitting", "cách khắc phục underfitting", "bias và variance trong machine learning", "ví dụ overfitting và underfitting", "overfitting trong học máy", "underfitting trong học máy"]
+publishedAt: "2026-04-23"
+---
+
+## Overfitting và underfitting trong machine learning là gì?
+
+Overfitting và underfitting là hai vấn đề rất phổ biến khi huấn luyện mô hình machine learning. `Underfitting` xảy ra khi mô hình quá đơn giản nên học chưa đủ, còn `overfitting` xảy ra khi mô hình học quá sát dữ liệu train đến mức không tổng quát hóa tốt cho dữ liệu mới.
+
+Nếu muốn nhớ nhanh, bạn có thể hiểu như sau:
+
+- Underfitting: học chưa tới.
+- Overfitting: học quá mức.
+
+Mục tiêu của chúng ta là tìm điểm cân bằng ở giữa, nơi mô hình học đủ tốt để làm việc trên dữ liệu mới.
+
+## Underfitting là gì?
+
+`Underfitting là gì`? Đây là trường hợp mô hình quá đơn giản hoặc chưa được huấn luyện đủ nên không nắm được quy luật của dữ liệu. Kết quả là mô hình làm kém ngay cả trên train set.
+
+Ví dụ dễ hiểu: bạn muốn dự đoán một quan hệ phức tạp, nhưng lại dùng một mô hình quá đơn giản. Khi đó mô hình sẽ bỏ lỡ nhiều tín hiệu quan trọng.
+
+Tín hiệu thường thấy của underfitting:
+
+- Điểm train thấp.
+- Điểm validation/test cũng thấp.
+- Dự đoán quá thô và không bám được dữ liệu.
+
+## Overfitting là gì?
+
+`Overfitting là gì`? Đây là khi mô hình học quá sát dữ liệu train, kể cả những nhiễu và chi tiết không quan trọng. Nhìn trên train set thì kết quả rất đẹp, nhưng khi gặp dữ liệu mới thì kết quả giảm mạnh.
+
+Tín hiệu thường thấy của overfitting:
+
+- Điểm train rất cao.
+- Điểm validation/test thấp hơn đáng kể.
+- Mô hình thay đổi mạnh chỉ vì những khác biệt nhỏ trong dữ liệu.
+
+Đây là lý do việc có validation set rất quan trọng: bạn không thể nhận ra overfitting nếu chỉ nhìn vào train set.
+
+## Ví dụ trực quan về overfitting và underfitting
+
+Hãy tưởng tượng bạn cần vẽ một đường đi qua các điểm dữ liệu.
+
+- Nếu đường quá thẳng và bỏ qua nhiều xu hướng quan trọng, đó là underfitting.
+- Nếu đường uốn lượn để đi qua gần như từng điểm một, đó là overfitting.
+- Nếu đường nắm được xu hướng chính mà không bám quá chặt vào từng điểm, đó là trạng thái tốt hơn.
+
+Trong machine learning, mô hình cũng hành xử tương tự như vậy.
+
+## Ví dụ overfitting và underfitting bằng code
+
+Ví dụ sau minh họa một decision tree với độ sâu khác nhau:
+
+```python
+from sklearn.tree import DecisionTreeClassifier
+
+X_train = [[1], [2], [3], [4], [5], [6]]
+y_train = [0, 0, 0, 1, 1, 1]
+
+model_simple = DecisionTreeClassifier(max_depth=1, random_state=42)
+model_simple.fit(X_train, y_train)
+
+model_complex = DecisionTreeClassifier(max_depth=10, random_state=42)
+model_complex.fit(X_train, y_train)
+```
+
+Trong ví dụ này:
+
+- `model_simple` có thể underfit nếu quá đơn giản cho bài toán.
+- `model_complex` có thể overfit nếu học quá sát dữ liệu train.
+
+Điều quan trọng không phải là thuộc lòng tham số `max_depth`, mà là hiểu rằng độ phức tạp mô hình ảnh hưởng trực tiếp đến khả năng underfitting hay overfitting.
+
+## Cách nhận biết overfitting
+
+`Cách nhận biết overfitting` thường dựa trên việc so sánh kết quả giữa train và validation/test.
+
+Ví dụ:
+
+```python
+train_score = 0.99
+validation_score = 0.78
+
+print("train:", train_score)
+print("validation:", validation_score)
+```
+
+Nếu điểm train rất cao nhưng điểm validation thấp hơn nhiều, đó là dấu hiệu cảnh báo rõ ràng. Mô hình đang học quá kỹ dữ liệu train nhưng không áp dụng tốt sang dữ liệu mới.
+
+## Phân biệt overfitting và underfitting
+
+`Phân biệt overfitting và underfitting` theo cách ngắn gọn:
+
+- Underfitting: train thấp, validation thấp.
+- Overfitting: train cao, validation thấp.
+- Mô hình tốt hơn: train khá tốt và validation gần với train.
+
+Bạn không cần lúc nào cũng đạt điểm tuyệt đối. Điều quan trọng hơn là mô hình ổn định và tổng quát hóa tốt.
+
+## Bias và variance trong machine learning
+
+Khi học sâu hơn, bạn sẽ gặp khái niệm `bias và variance trong machine learning`.
+
+- Underfitting thường liên quan đến bias cao: mô hình quá cứng, quá đơn giản.
+- Overfitting thường liên quan đến variance cao: mô hình quá nhạy với dữ liệu train.
+
+Người mới không cần đi quá sâu vào công thức. Chỉ cần nhớ rằng bias và variance là cách giải thích vì sao mô hình học quá ít hoặc quá nhiều.
+
+## Cách khắc phục underfitting
+
+`Cách khắc phục underfitting` thường là làm cho mô hình học được nhiều hơn:
+
+- Dùng mô hình mạnh hơn.
+- Thêm feature hữu ích hơn.
+- Huấn luyện lâu hơn nếu mô hình cần nhiều vòng học.
+- Giảm bớt ràng buộc hoặc regularization quá mạnh.
+
+Ví dụ, nếu bạn dùng mô hình quá đơn giản cho một bài toán phức tạp, việc đổi sang mô hình linh hoạt hơn có thể cải thiện rõ rệt.
+
+## Cách khắc phục overfitting
+
+`Cách khắc phục overfitting` thường là giảm việc mô hình bám quá sát train set:
+
+- Thu thập thêm dữ liệu.
+- Giảm độ phức tạp của mô hình.
+- Dùng regularization.
+- Chọn feature tốt hơn thay vì quá nhiều feature nhiễu.
+- Dùng validation set hoặc cross-validation để chọn mô hình hợp lý.
+
+Trong nhiều bài toán, chỉ cần dữ liệu sạch hơn và feature tốt hơn cũng đã giảm overfitting đáng kể.
+
+## Ví dụ thực tế dễ hình dung
+
+### Underfitting
+
+Bạn muốn dự đoán giá nhà chỉ dựa vào duy nhất `dien_tich`, trong khi thực tế giá còn phụ thuộc vị trí, số phòng, tình trạng nhà, tiện ích xung quanh. Khi đó mô hình dễ underfit vì thông tin quá ít.
+
+### Overfitting
+
+Bạn có dataset nhỏ nhưng tạo ra quá nhiều feature lạ hoặc dùng mô hình quá mạnh. Kết quả là mô hình nhớ gần như từng dòng train, nhưng khi gặp nhà mới thì dự đoán lại kém.
+
+## Những lỗi thường gặp của người mới
+
+- Thấy điểm train cao là nghĩ mô hình tốt.
+- Chỉ đánh giá trên train set.
+- Thêm quá nhiều feature mà không kiểm soát.
+- Đổi mô hình liên tục nhưng không xem lại dữ liệu.
+- Không hiểu vai trò của validation set.
+
+Nếu nhớ được các lỗi này, bạn sẽ tránh được rất nhiều lần "mô hình đẹp giả".
+
+## Bài tập thực hành
+
+Hãy tưởng tượng bạn có một mô hình với kết quả sau:
+
+- Train accuracy: 98%
+- Validation accuracy: 72%
+
+Và một mô hình khác:
+
+- Train accuracy: 68%
+- Validation accuracy: 65%
+
+Hãy tự trả lời:
+
+- Mô hình nào có dấu hiệu overfitting?
+- Mô hình nào có dấu hiệu underfitting?
+- Bạn sẽ thử cải thiện mỗi mô hình theo hướng nào?
+
+Bạn cũng có thể chạy đoạn code sau để tự ghi chú kết luận của mình:
+
+```python
+ket_qua = {
+    "mo_hinh_A": {"train": 0.98, "validation": 0.72},
+    "mo_hinh_B": {"train": 0.68, "validation": 0.65}
+}
+
+print(ket_qua)
+```
+
+## Câu hỏi thường gặp về overfitting và underfitting
+
+### Overfitting là gì?
+
+Overfitting là khi mô hình học quá sát dữ liệu train nên kết quả trên train rất đẹp nhưng khả năng dự đoán dữ liệu mới lại kém. Đây là một vấn đề rất phổ biến trong machine learning.
+
+### Underfitting là gì?
+
+Underfitting là khi mô hình quá đơn giản hoặc học chưa đủ nên không nắm được quy luật dữ liệu. Khi đó cả train và validation đều thường cho kết quả thấp.
+
+### Cách nhận biết overfitting thế nào?
+
+Hãy so sánh điểm train với validation/test. Nếu train rất cao nhưng validation thấp hơn rõ rệt, đó là dấu hiệu overfitting đáng chú ý.
+
+### Cách khắc phục underfitting và overfitting có giống nhau không?
+
+Không. Underfitting thường cần mô hình mạnh hơn hoặc feature tốt hơn, còn overfitting thường cần giảm độ phức tạp, thêm dữ liệu hoặc regularization. Hai vấn đề đi theo hai hướng ngược nhau.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu overfitting và underfitting trong machine learning là gì, cách nhận biết chúng qua kết quả train và validation, cùng những hướng khắc phục cơ bản. Đây là nền tảng rất quan trọng để đọc kết quả mô hình một cách đúng đắn. Ở bài tiếp theo, chúng ta sẽ học **accuracy, precision, recall và F1 score** để biết cách đánh giá mô hình phân loại rõ ràng hơn.

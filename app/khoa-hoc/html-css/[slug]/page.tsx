@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       locale: 'vi_VN',
       type: 'article',
       publishedTime: lesson.frontmatter.publishedAt,
-      modifiedTime: lesson.frontmatter.publishedAt,
+      modifiedTime: lesson.modifiedAt,
     },
     twitter: {
       card: 'summary_large_image',
@@ -64,7 +64,7 @@ export default function HtmlCssLessonPage({ params }: PageProps) {
       headline: lesson.frontmatter.title,
       description: lesson.frontmatter.description,
       datePublished: lesson.frontmatter.publishedAt,
-      dateModified: lesson.frontmatter.publishedAt,
+      dateModified: lesson.modifiedAt,
       author: { '@type': 'Organization', name: SITE_NAME },
       mainEntityOfPage: toAbsoluteUrl(`/khoa-hoc/html-css/${params.slug}`),
       url: toAbsoluteUrl(`/khoa-hoc/html-css/${params.slug}`),

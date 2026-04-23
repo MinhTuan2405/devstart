@@ -1,0 +1,180 @@
+---
+title: "Train, Validation, Test là gì trong Machine Learning?"
+description: "Giải thích train set, validation set, test set là gì, cách chia dữ liệu train validation test và vai trò của từng tập trong machine learning."
+slug: "train-validation-test-la-gi"
+course: "machine-learning"
+order: 5
+duration: "16 phút"
+difficulty: "Dễ"
+keywords: ["train validation test là gì", "train validation test trong machine learning", "sự khác nhau giữa train validation test", "train set validation set test set là gì", "cách chia dữ liệu train validation test", "tỷ lệ chia train validation test", "vai trò của validation set", "vai trò của test set", "overfitting và validation set", "ví dụ train validation test", "train test split là gì"]
+publishedAt: "2026-04-23"
+---
+
+## Train, validation, test là gì?
+
+Train, validation, test là ba phần dữ liệu được tách ra để huấn luyện, điều chỉnh và đánh giá mô hình machine learning. `Train set` dùng để mô hình học, `validation set` dùng để kiểm tra trong lúc tinh chỉnh mô hình, còn `test set` dùng để đánh giá cuối cùng trên dữ liệu mà mô hình chưa từng thấy.
+
+Với người mới, đây là một trong những khái niệm quan trọng nhất. Nếu không tách dữ liệu đúng cách, bạn rất dễ tưởng rằng mô hình làm tốt, nhưng thật ra nó chỉ đang nhớ dữ liệu cũ.
+
+## Vì sao phải chia dữ liệu?
+
+Hãy tưởng tượng bạn cho mô hình học 100 câu hỏi và cũng kiểm tra nó đúng trên 100 câu đó. Kết quả cao chưa chắc có nghĩa là mô hình hiểu tốt. Nó có thể chỉ đang nhớ đáp án.
+
+Trong machine learning cũng vậy. Ta cần chia dữ liệu để trả lời ba câu hỏi khác nhau:
+
+- Mô hình học từ đâu?
+- Mô hình được tinh chỉnh dựa trên dữ liệu nào?
+- Cuối cùng mô hình có thật sự làm tốt trên dữ liệu mới không?
+
+Đó là lý do `train set validation set test set` tồn tại.
+
+## Vai trò của train set
+
+Train set là phần dữ liệu dùng để huấn luyện mô hình. Đây là nơi mô hình nhìn vào feature và label để học quy luật.
+
+Ví dụ đơn giản:
+
+```python
+from sklearn.linear_model import LinearRegression
+
+X_train = [[1], [2], [3], [4]]
+y_train = [2, 4, 6, 8]
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+```
+
+Trong đoạn code trên, mô hình chỉ học từ `X_train` và `y_train`. Nó chưa được đánh giá thật sự tốt hay chưa, mà mới chỉ hoàn thành bước học.
+
+## Vai trò của validation set
+
+Validation set là tập dữ liệu dùng để kiểm tra mô hình trong lúc bạn đang thử nghiệm. Nó giúp bạn so sánh các mô hình, điều chỉnh tham số và phát hiện sớm hiện tượng overfitting.
+
+Ví dụ, bạn muốn so sánh hai mô hình khác nhau hoặc thử nhiều giá trị `max_depth` cho decision tree. Nếu không có validation set, bạn rất dễ tinh chỉnh mô hình theo cảm tính hoặc dựa luôn vào test set, dẫn đến đánh giá bị lệch.
+
+Đây là lý do `vai trò của validation set` rất quan trọng: nó giúp bạn ra quyết định trong quá trình xây mô hình mà không đụng vào test set quá sớm.
+
+## Vai trò của test set
+
+Test set là tập dữ liệu để đánh giá cuối cùng. Bạn chỉ nên dùng nó sau khi đã chọn xong mô hình và hoàn tất tinh chỉnh.
+
+Nói cách khác:
+
+- Train set để học.
+- Validation set để chọn.
+- Test set để chấm điểm cuối cùng.
+
+`Vai trò của test set` là mô phỏng tình huống thực tế: khi mô hình gặp dữ liệu hoàn toàn mới, nó có làm tốt không?
+
+## Sự khác nhau giữa train, validation, test
+
+Nếu muốn nhớ nhanh `sự khác nhau giữa train validation test`, bạn có thể dùng bảng suy nghĩ sau:
+
+- Train: dữ liệu để mô hình học.
+- Validation: dữ liệu để người làm mô hình điều chỉnh và chọn mô hình.
+- Test: dữ liệu để đánh giá cuối cùng, khách quan nhất.
+
+Ba tập này không được trộn lẫn. Nếu dùng test set để chỉnh tham số nhiều lần, test set sẽ không còn "mới" nữa và kết quả đánh giá sẽ không còn đáng tin.
+
+## Cách chia dữ liệu train validation test
+
+Một cách chia dữ liệu phổ biến là:
+
+- 70% train, 15% validation, 15% test
+- 80% train, 10% validation, 10% test
+
+Không có một tỷ lệ duy nhất đúng cho mọi bài toán. `Tỷ lệ chia train validation test` phụ thuộc vào số lượng dữ liệu, độ khó của bài toán và loại mô hình bạn dùng.
+
+Ví dụ chia dữ liệu bằng `train_test_split` hai lần:
+
+```python
+from sklearn.model_selection import train_test_split
+
+X = [[1], [2], [3], [4], [5], [6], [7], [8], [9], [10]]
+y = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+
+X_train, X_temp, y_train, y_temp = train_test_split(
+    X, y, test_size=0.3, random_state=42
+)
+
+X_val, X_test, y_val, y_test = train_test_split(
+    X_temp, y_temp, test_size=0.5, random_state=42
+)
+
+print(len(X_train), len(X_val), len(X_test))
+```
+
+Ở đây:
+
+- `X_train`, `y_train` là train set.
+- `X_val`, `y_val` là validation set.
+- `X_test`, `y_test` là test set.
+
+Đây là một `ví dụ train validation test` rất cơ bản nhưng đủ để người mới hiểu cách chia dữ liệu.
+
+## Train test split là gì?
+
+`Train test split là gì` là câu hỏi rất hay gặp khi mới học. Đây là cách chia dữ liệu thành hai phần: train và test. Cách này đơn giản và đủ dùng cho các bài thực hành đầu tiên.
+
+Tuy nhiên, khi bạn bắt đầu so sánh nhiều mô hình hoặc chỉnh tham số, chỉ có train và test thường chưa đủ. Lúc đó validation set trở nên cần thiết.
+
+## Overfitting và validation set liên quan thế nào?
+
+Giả sử một mô hình làm rất tốt trên train set nhưng kém trên validation set. Đây là dấu hiệu quen thuộc của overfitting: mô hình học quá sát dữ liệu train và không tổng quát hóa tốt.
+
+Validation set giúp bạn phát hiện điều đó sớm, trước khi bước sang đánh giá cuối cùng bằng test set. Vì vậy, nhiều người nói rằng `overfitting và validation set` có quan hệ rất chặt: validation là một công cụ quan trọng để nhận ra mô hình đang học quá mức.
+
+## Những lỗi thường gặp khi chia train validation test
+
+- Chia dữ liệu xong nhưng vẫn vô tình dùng test set để chỉnh tham số.
+- Chuẩn hóa toàn bộ dữ liệu trước khi chia, gây rò rỉ thông tin.
+- Dùng cùng một dữ liệu cho cả train và test.
+- Chỉ nhìn kết quả train mà quên kiểm tra validation hoặc test.
+
+Nếu tránh được bốn lỗi này, chất lượng đánh giá mô hình của bạn sẽ đáng tin hơn rất nhiều.
+
+## Bài tập thực hành
+
+Hãy tự tạo một dataset nhỏ gồm 20 dòng dữ liệu điểm thi. Sau đó:
+
+- Chia dữ liệu thành train, validation và test.
+- In ra số lượng dòng của mỗi tập.
+- Tự giải thích vì sao không nên cho test set tham gia vào bước chọn mô hình.
+
+Bạn có thể bắt đầu với đoạn code mẫu sau:
+
+```python
+from sklearn.model_selection import train_test_split
+
+X = [[i] for i in range(1, 21)]
+y = [i * 2 for i in range(1, 21)]
+
+X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+
+print("train:", len(X_train))
+print("validation:", len(X_val))
+print("test:", len(X_test))
+```
+
+## Câu hỏi thường gặp về train, validation, test
+
+### Train set validation set test set là gì?
+
+Train set là dữ liệu để mô hình học, validation set là dữ liệu để điều chỉnh mô hình, còn test set là dữ liệu để đánh giá cuối cùng. Ba tập này có vai trò khác nhau và không nên dùng thay thế cho nhau.
+
+### Cách chia dữ liệu train validation test thế nào là hợp lý?
+
+Người mới có thể bắt đầu với tỷ lệ 80/10/10 hoặc 70/15/15. Quan trọng hơn tỷ lệ cụ thể là giữ cho test set không bị dùng sai mục đích.
+
+### Validation set có bắt buộc không?
+
+Nếu bạn chỉ làm một ví dụ rất đơn giản, có thể ban đầu chỉ dùng train và test. Nhưng khi bắt đầu so sánh mô hình hoặc chỉnh tham số, validation set gần như là cần thiết.
+
+### Vai trò của test set là gì?
+
+Test set cho bạn cái nhìn khách quan nhất về khả năng tổng quát hóa của mô hình trên dữ liệu mới. Đây là điểm số cuối cùng, không phải nơi để thử đi thử lại nhiều lần.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu train, validation, test là gì, sự khác nhau giữa ba tập dữ liệu này và cách chia dữ liệu hợp lý trong machine learning. Khi nắm chắc phần này, bạn sẽ tránh được nhiều lỗi đánh giá mô hình ngay từ đầu. Ở bài tiếp theo, chúng ta sẽ học **tiền xử lý dữ liệu cho machine learning** để chuẩn bị dữ liệu sạch và phù hợp trước khi huấn luyện.

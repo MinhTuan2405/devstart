@@ -1,0 +1,230 @@
+---
+title: "Quy trình Machine Learning cơ bản cho người mới"
+description: "Tìm hiểu quy trình machine learning cơ bản gồm xác định bài toán, chuẩn bị dữ liệu, train mô hình, đánh giá và cải thiện kết quả."
+slug: "quy-trinh-machine-learning-co-ban"
+course: "machine-learning"
+order: 3
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["quy trình machine learning cơ bản", "quy trình machine learning", "machine learning cơ bản cho người mới", "các bước trong machine learning", "machine learning workflow là gì", "quy trình xây dựng mô hình machine learning", "các bước làm machine learning", "học machine learning bắt đầu từ đâu", "ví dụ quy trình machine learning"]
+publishedAt: "2026-04-23"
+---
+
+## Quy trình machine learning cơ bản là gì?
+
+Quy trình machine learning cơ bản là chuỗi các bước từ xác định bài toán, thu thập và xử lý dữ liệu, huấn luyện mô hình, đánh giá kết quả đến cải thiện mô hình. Với người mới, điều quan trọng không phải nhớ tên thật nhiều thuật toán, mà là hiểu mỗi dự án machine learning thường đi qua các bước nào.
+
+Nếu hiểu đúng machine learning workflow, bạn sẽ biết mình đang ở đâu trong dự án và tránh cảm giác "học rất nhiều mô hình nhưng không biết dùng khi nào".
+
+## Các bước trong machine learning
+
+Một quy trình machine learning cơ bản thường có 6 bước chính:
+
+- Xác định bài toán.
+- Thu thập dữ liệu.
+- Làm sạch và chuẩn bị dữ liệu.
+- Chia dữ liệu để train và test.
+- Huấn luyện mô hình.
+- Đánh giá và cải thiện mô hình.
+
+Trong thực tế, các bước này có thể lặp lại nhiều lần. Machine learning không phải quy trình chạy một lần là xong. Bạn thường phải quay lại sửa dữ liệu, chọn lại feature hoặc đổi mô hình.
+
+## Bước 1: Xác định bài toán
+
+Trước khi viết code, bạn cần trả lời rõ: mô hình sẽ dự đoán cái gì?
+
+Ví dụ:
+
+- Dự đoán giá nhà.
+- Phân loại email spam hay không spam.
+- Dự đoán khách hàng có rời dịch vụ hay không.
+
+Nếu mô tả bài toán mơ hồ, mọi bước sau sẽ dễ sai. Đây là lý do nhiều dự án thất bại không phải vì mô hình yếu, mà vì ngay từ đầu chưa xác định đúng mục tiêu.
+
+Bạn có thể viết bài toán dưới dạng biến đầu vào và đầu ra như sau:
+
+```python
+bai_toan = {
+    "input": ["dien_tich", "so_phong_ngu", "vi_tri"],
+    "output": "gia_nha"
+}
+
+print(bai_toan)
+```
+
+Đoạn code này không phải mô hình, nhưng nó giúp bạn hình dung rất rõ bài toán machine learning đang cần giải.
+
+## Bước 2: Thu thập và hiểu dữ liệu
+
+Dữ liệu là nền tảng của mọi dự án machine learning. Nếu dữ liệu sai, thiếu hoặc lệch quá nhiều, mô hình khó có kết quả tốt.
+
+Ở bước này, bạn cần quan tâm:
+
+- Dữ liệu lấy từ đâu?
+- Có bao nhiêu dòng?
+- Có thiếu giá trị không?
+- Có cột nào vô nghĩa hoặc trùng lặp không?
+- Biến nào là thông tin đầu vào, biến nào là kết quả cần dự đoán?
+
+Ví dụ đọc dữ liệu bằng `pandas`:
+
+```python
+import pandas as pd
+
+data = pd.read_csv("gia_nha.csv")
+
+print(data.head())
+print(data.info())
+```
+
+Mục tiêu của bước này không chỉ là "có file CSV", mà là thật sự hiểu dữ liệu mình đang cầm trên tay.
+
+## Bước 3: Làm sạch và chuẩn bị dữ liệu
+
+Đây là bước rất quan trọng trong quy trình xây dựng mô hình machine learning. Nhiều người mới chỉ thích phần chọn thuật toán, nhưng trên thực tế phần làm dữ liệu thường tốn thời gian nhất.
+
+Các việc thường làm ở bước này:
+
+- Xử lý giá trị thiếu.
+- Xóa dòng lỗi hoặc dữ liệu bất thường.
+- Chuyển dữ liệu chữ sang dạng số nếu cần.
+- Chọn những cột hữu ích cho bài toán.
+
+Ví dụ đơn giản:
+
+```python
+import pandas as pd
+
+data = pd.read_csv("gia_nha.csv")
+data = data.dropna()
+
+X = data[["dien_tich", "so_phong_ngu"]]
+y = data["gia_nha"]
+```
+
+Sau bước này, dữ liệu thường sạch hơn và sẵn sàng cho việc huấn luyện.
+
+## Bước 4: Chia dữ liệu train và test
+
+Bạn không nên huấn luyện và kiểm tra mô hình trên cùng một tập dữ liệu. Nếu làm vậy, mô hình có thể chỉ nhớ dữ liệu cũ mà không thật sự dự đoán tốt cho dữ liệu mới.
+
+Vì vậy, trong các bước làm machine learning, việc chia dữ liệu thành train và test là bắt buộc.
+
+```python
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+```
+
+Ý nghĩa:
+
+- `X_train`, `y_train` dùng để huấn luyện.
+- `X_test`, `y_test` dùng để đánh giá.
+- `test_size=0.2` nghĩa là 20% dữ liệu được giữ lại để kiểm tra.
+
+## Bước 5: Huấn luyện mô hình
+
+Sau khi có dữ liệu sạch và đã chia tập, bạn chọn một mô hình phù hợp rồi cho mô hình học.
+
+Ví dụ với hồi quy tuyến tính:
+
+```python
+from sklearn.linear_model import LinearRegression
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+```
+
+Lúc này, mô hình sẽ học mối quan hệ giữa các biến đầu vào và đầu ra từ dữ liệu huấn luyện. Đây là bước nhiều người gọi là `train model`.
+
+## Bước 6: Đánh giá và cải thiện mô hình
+
+Sau khi train xong, bạn cần kiểm tra mô hình trên dữ liệu mới. Đây là bước cho biết mô hình có thực sự hữu ích hay không.
+
+```python
+from sklearn.metrics import mean_absolute_error
+
+y_pred = model.predict(X_test)
+mae = mean_absolute_error(y_test, y_pred)
+
+print(mae)
+```
+
+Nếu kết quả chưa tốt, bạn có thể:
+
+- Cải thiện dữ liệu.
+- Thêm hoặc bớt feature.
+- Thử mô hình khác.
+- Điều chỉnh tham số.
+
+Đó là lý do quy trình machine learning không đi theo đường thẳng một chiều. Bạn thường phải lặp lại nhiều vòng để cải thiện kết quả.
+
+## Ví dụ quy trình machine learning từ đầu đến cuối
+
+Hãy tưởng tượng bạn muốn dự đoán điểm thi của học sinh:
+
+- Bài toán: dự đoán điểm thi.
+- Dữ liệu đầu vào: số giờ học, số buổi nghỉ, điểm giữa kỳ.
+- Dữ liệu đầu ra: điểm cuối kỳ.
+- Chia train/test.
+- Huấn luyện mô hình.
+- Đánh giá sai số dự đoán.
+
+Nếu sai số còn lớn, bạn quay lại kiểm tra dữ liệu hoặc thêm feature mới. Đây chính là machine learning workflow ở dạng đơn giản nhất.
+
+## Những lỗi thường gặp khi mới học quy trình machine learning
+
+- Bắt đầu bằng thuật toán trước khi hiểu bài toán.
+- Dùng dữ liệu bẩn nhưng vẫn kỳ vọng mô hình tốt.
+- Quên chia train/test.
+- Chỉ nhìn độ chính xác mà không hiểu dữ liệu có bị lệch hay không.
+- Thấy mô hình sai là đổi thuật toán ngay, thay vì kiểm tra dữ liệu trước.
+
+Nếu nhớ được những lỗi này, bạn sẽ tiết kiệm rất nhiều thời gian khi làm bài thực hành đầu tiên.
+
+## Bài tập thực hành
+
+Hãy lấy một bài toán đơn giản như dự đoán điểm thi hoặc giá nhà và tự viết ra 6 bước của quy trình machine learning cơ bản:
+
+- Bài toán là gì?
+- Dữ liệu đầu vào gồm những gì?
+- Dữ liệu đầu ra là gì?
+- Bạn sẽ cần làm sạch dữ liệu thế nào?
+- Bạn sẽ chia train/test ra sao?
+- Bạn sẽ dùng chỉ số nào để đánh giá?
+
+Nếu muốn, bạn có thể dùng mẫu Python sau để tự điền thông tin:
+
+```python
+du_an_ml = {
+    "bai_toan": "du doan diem thi",
+    "features": ["so_gio_hoc", "so_buoi_nghi", "diem_giua_ky"],
+    "label": "diem_cuoi_ky"
+}
+
+print(du_an_ml)
+```
+
+## Câu hỏi thường gặp về quy trình machine learning
+
+### Quy trình machine learning cơ bản gồm mấy bước?
+
+Thường có 5 đến 7 bước tùy cách nhóm, nhưng cốt lõi vẫn là xác định bài toán, chuẩn bị dữ liệu, train mô hình và đánh giá kết quả. Người mới chỉ cần nắm chắc luồng chính này trước.
+
+### Machine learning workflow là gì?
+
+Machine learning workflow là cách gọi tiếng Anh của quy trình làm một dự án machine learning từ đầu đến cuối. Nó nhấn mạnh rằng công việc không chỉ có train mô hình mà còn có dữ liệu, đánh giá và cải thiện.
+
+### Các bước làm machine learning có phải luôn cố định không?
+
+Không. Trên thực tế bạn thường lặp lại nhiều vòng, ví dụ quay lại bước làm sạch dữ liệu sau khi thấy mô hình đánh giá kém. Đây là điều rất bình thường.
+
+### Học machine learning bắt đầu từ đâu trong quy trình này?
+
+Bạn nên bắt đầu bằng cách hiểu bài toán và hiểu dữ liệu. Nếu bỏ qua hai bước này, việc học mô hình về sau sẽ rất rối.
+
+## Tóm tắt
+
+Quy trình machine learning cơ bản giúp bạn nhìn một dự án ML theo đúng thứ tự: xác định bài toán, chuẩn bị dữ liệu, chia train/test, huấn luyện, đánh giá và cải thiện. Khi nắm chắc flow này, bạn sẽ học các mô hình sau dễ hơn rất nhiều. Ở bài tiếp theo, chúng ta sẽ đi sâu vào **dữ liệu trong machine learning**, đặc biệt là ba khái niệm quan trọng: `feature`, `label` và `dataset`.

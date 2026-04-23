@@ -1,0 +1,168 @@
+---
+title: "Clustering trong Machine Learning là gì?"
+description: "Giải thích clustering trong machine learning là gì, khác classification ra sao, dùng để làm gì và các thuật toán phân cụm phổ biến cho người mới."
+slug: "clustering-la-gi"
+course: "machine-learning"
+order: 18
+duration: "17 phút"
+difficulty: "Dễ"
+keywords: ["clustering trong machine learning là gì", "clustering là gì", "clustering machine learning", "phân cụm trong machine learning là gì", "các thuật toán clustering", "ví dụ về clustering trong machine learning", "clustering dùng để làm gì", "sự khác nhau giữa clustering và classification", "clustering cho người mới", "hướng dẫn clustering trong machine learning", "unsupervised learning và clustering"]
+publishedAt: "2026-04-23"
+---
+
+## Clustering trong machine learning là gì?
+
+Clustering trong machine learning là kỹ thuật gom các điểm dữ liệu giống nhau vào cùng một nhóm mà không cần nhãn có sẵn. Tên tiếng Việt thường dùng là `phân cụm`. Nói đơn giản, mô hình sẽ tự tìm xem dữ liệu có thể chia thành những nhóm tự nhiên nào.
+
+Đây là một chủ đề rất quan trọng vì nó đưa bạn từ supervised learning sang `unsupervised learning`, tức là học không giám sát.
+
+## Clustering là gì?
+
+`Clustering là gì`? Hãy tưởng tượng bạn có danh sách khách hàng nhưng chưa biết họ thuộc nhóm nào. Clustering sẽ giúp bạn nhóm những người có hành vi tương tự nhau, ví dụ:
+
+- Nhóm mua hàng thường xuyên.
+- Nhóm chỉ mua khi giảm giá.
+- Nhóm chi tiêu cao.
+
+Điểm đặc biệt là bạn không cần nhãn `nhóm A`, `nhóm B` từ trước. Mô hình sẽ tự tìm cấu trúc trong dữ liệu.
+
+## Phân cụm trong machine learning là gì?
+
+`Phân cụm trong machine learning là gì` là cách gọi tiếng Việt của clustering. Về bản chất, đây là quá trình:
+
+- Đo độ giống nhau giữa các điểm dữ liệu.
+- Gom các điểm giống nhau thành cụm.
+- Tách các cụm khác nhau ra xa nhau hơn.
+
+Đây là một cách rất tự nhiên để khám phá dữ liệu trước khi bạn xây mô hình phức tạp hơn.
+
+## Clustering khác classification thế nào?
+
+`Sự khác nhau giữa clustering và classification` là điểm người mới rất hay nhầm.
+
+- Classification: có nhãn sẵn, mô hình học để dự đoán nhãn đó.
+- Clustering: không có nhãn, mô hình tự tìm nhóm trong dữ liệu.
+
+Ví dụ:
+
+- Nếu bạn có nhãn `spam` và `khong_spam`, đó là classification.
+- Nếu bạn chỉ có tập email và muốn xem chúng tự chia thành mấy nhóm, đó là clustering.
+
+Đây cũng chính là sự khác nhau giữa supervised learning và unsupervised learning ở mức cơ bản.
+
+## Clustering dùng để làm gì?
+
+`Clustering dùng để làm gì`? Một số ứng dụng phổ biến là:
+
+- Phân nhóm khách hàng.
+- Gợi ý sản phẩm hoặc nội dung tương tự.
+- Phát hiện mẫu bất thường ban đầu.
+- Khám phá cấu trúc dữ liệu trước khi phân tích sâu hơn.
+
+Trong thực tế kinh doanh, clustering rất hữu ích khi bạn chưa có nhãn nhưng vẫn muốn khai thác dữ liệu.
+
+## Ví dụ về clustering trong machine learning
+
+Giả sử bạn có dữ liệu khách hàng gồm:
+
+- Số tiền chi tiêu mỗi tháng.
+- Số lần mua hàng.
+
+Nếu vẽ dữ liệu ra, bạn có thể thấy một số nhóm tự nhiên như:
+
+- Nhóm chi tiêu cao, mua nhiều.
+- Nhóm chi tiêu thấp, mua ít.
+- Nhóm mua ít nhưng đơn hàng lớn.
+
+Clustering sẽ giúp mô hình hóa các nhóm đó thay vì bạn tự gắn nhãn thủ công.
+
+## Các thuật toán clustering phổ biến
+
+`Các thuật toán clustering` phổ biến gồm:
+
+- K-means
+- Hierarchical clustering
+- DBSCAN
+
+Với người mới, K-means là điểm bắt đầu dễ học nhất vì ý tưởng trực quan và có sẵn trong `scikit-learn`.
+
+## Hướng dẫn clustering trong machine learning cho người mới
+
+Một flow đơn giản thường là:
+
+- Chọn feature cần phân cụm.
+- Chuẩn hóa dữ liệu nếu cần.
+- Chọn thuật toán clustering.
+- Chạy mô hình.
+- Quan sát các cụm tạo ra có hợp lý không.
+
+Ví dụ minh họa trực giác nhóm dữ liệu bằng Python:
+
+```python
+X = [[1, 2], [2, 2], [2, 3], [8, 8], [9, 8], [8, 9]]
+
+print(X)
+```
+
+Chỉ cần nhìn vào danh sách này, bạn đã có thể đoán dữ liệu có thể chia thành hai nhóm gần nhau. Clustering chính là làm việc đó một cách có hệ thống hơn.
+
+## Ưu điểm của clustering
+
+- Không cần nhãn dữ liệu.
+- Giúp khám phá cấu trúc ẩn trong dữ liệu.
+- Rất hữu ích trong phân tích khách hàng và khám phá dữ liệu.
+- Là bước mở đầu tốt cho nhiều dự án unsupervised learning.
+
+## Hạn chế của clustering
+
+- Không phải lúc nào cụm cũng có ý nghĩa thực tế.
+- Kết quả phụ thuộc vào thuật toán và feature được chọn.
+- Việc đánh giá chất lượng cụm thường khó hơn classification.
+
+Vì vậy, clustering không chỉ là chạy thuật toán rồi tin ngay kết quả. Bạn vẫn cần đọc cụm bằng tư duy dữ liệu.
+
+## Những lỗi thường gặp khi mới học clustering
+
+- Dùng clustering nhưng kỳ vọng ra đúng nhãn thật như classification.
+- Không chuẩn hóa dữ liệu khi khoảng cách là yếu tố quan trọng.
+- Chọn số cụm theo cảm tính mà không kiểm tra thêm.
+- Coi mọi cụm mô hình tạo ra đều có ý nghĩa kinh doanh.
+
+Nếu tránh các lỗi này, bạn sẽ hiểu clustering thực tế hơn rất nhiều.
+
+## Bài tập thực hành
+
+Hãy tưởng tượng bạn có dữ liệu khách hàng gồm 2 cột: `so_lan_mua` và `chi_tieu_thang`. Sau đó:
+
+- Tự đoán dữ liệu có thể có mấy cụm.
+- Nghĩ xem mỗi cụm đại diện cho kiểu khách hàng nào.
+- Chuẩn bị tinh thần để ở bài tiếp theo dùng K-means phân cụm dữ liệu đó.
+
+Bạn có thể bắt đầu với dữ liệu mẫu:
+
+```python
+X = [[1, 2], [2, 1], [2, 2], [8, 8], [9, 8], [8, 9]]
+print(X)
+```
+
+## Câu hỏi thường gặp về clustering
+
+### Clustering là gì?
+
+Clustering là kỹ thuật gom các điểm dữ liệu giống nhau vào cùng một nhóm mà không cần nhãn có sẵn. Đây là một phần quan trọng của unsupervised learning.
+
+### Phân cụm trong machine learning là gì?
+
+Phân cụm là tên tiếng Việt của clustering. Nó giúp bạn tìm cấu trúc nhóm tự nhiên trong dữ liệu.
+
+### Clustering dùng để làm gì?
+
+Clustering thường dùng để phân nhóm khách hàng, khám phá dữ liệu, gợi ý nội dung tương tự hoặc hỗ trợ tìm mẫu bất thường ban đầu. Nó đặc biệt hữu ích khi bạn chưa có nhãn dữ liệu.
+
+### Clustering khác classification thế nào?
+
+Classification dùng dữ liệu có nhãn, còn clustering dùng dữ liệu không có nhãn. Đây là khác biệt quan trọng nhất giữa hai bài toán.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu clustering trong machine learning là gì, vì sao nó thuộc unsupervised learning và nó khác classification ở đâu. Đây là bước chuyển rất quan trọng từ học có giám sát sang học không giám sát. Ở bài tiếp theo, chúng ta sẽ học **K-means** như một thuật toán clustering cơ bản và phổ biến nhất cho người mới.

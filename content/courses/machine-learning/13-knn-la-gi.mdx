@@ -1,0 +1,196 @@
+---
+title: "KNN là gì trong Machine Learning?"
+description: "Giải thích KNN là gì trong machine learning, cách hoạt động của k-nearest neighbors, ví dụ Python và ưu nhược điểm của KNN cho người mới."
+slug: "knn-la-gi"
+course: "machine-learning"
+order: 13
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["knn là gì trong machine learning", "knn là gì", "thuật toán knn là gì", "k nearest neighbors là gì", "knn trong machine learning", "cách hoạt động của knn", "ví dụ thuật toán knn", "knn cho người mới", "ưu nhược điểm của knn", "k nearest neighbors hoạt động như thế nào", "phân loại bằng knn"]
+publishedAt: "2026-04-23"
+---
+
+## KNN là gì trong machine learning?
+
+KNN là một thuật toán machine learning dùng để phân loại hoặc dự đoán dựa trên những điểm dữ liệu gần nhất. `KNN` là viết tắt của `K-Nearest Neighbors`, nghĩa là `k hàng xóm gần nhất`. Nói đơn giản, khi gặp một mẫu mới, mô hình sẽ nhìn xem các điểm gần nó nhất thuộc lớp nào rồi đưa ra quyết định.
+
+Với người mới, đây là một mô hình rất dễ hình dung vì nó hoạt động gần giống cách con người suy nghĩ: một đối tượng mới thường giống với những đối tượng ở gần nó.
+
+## K nearest neighbors là gì?
+
+`K nearest neighbors là gì` chỉ là tên đầy đủ của KNN. Từ `k` là số lượng hàng xóm mà thuật toán sẽ xem xét.
+
+Ví dụ:
+
+- Nếu `k = 3`, mô hình nhìn 3 điểm gần nhất.
+- Nếu `k = 5`, mô hình nhìn 5 điểm gần nhất.
+
+Sau đó nó xem lớp nào xuất hiện nhiều hơn trong nhóm hàng xóm đó để dự đoán cho mẫu mới.
+
+## Cách hoạt động của KNN
+
+`Cách hoạt động của KNN` có thể tóm gọn trong 4 bước:
+
+- Chọn số `k`.
+- Tính khoảng cách từ điểm mới đến các điểm trong tập train.
+- Chọn ra `k` điểm gần nhất.
+- Bỏ phiếu hoặc lấy trung bình để đưa ra kết quả.
+
+Với bài toán phân loại, KNN thường bỏ phiếu đa số. Với bài toán regression, KNN có thể lấy trung bình giá trị của các hàng xóm gần nhất.
+
+Ví dụ đơn giản tính khoảng cách Euclidean:
+
+```python
+import math
+
+x1 = (2, 3)
+x2 = (5, 7)
+
+distance = math.sqrt((x1[0] - x2[0]) ** 2 + (x1[1] - x2[1]) ** 2)
+print(distance)
+```
+
+Bạn chưa cần thuộc công thức ngay. Chỉ cần nhớ rằng KNN phải đo khoảng cách để biết điểm nào là hàng xóm gần nhất.
+
+## Phân loại bằng KNN hoạt động như thế nào?
+
+`Phân loại bằng KNN` thường diễn ra như sau: giả sử bạn có dữ liệu về quả táo và quả cam dựa trên cân nặng và độ ngọt. Khi có một quả mới, KNN sẽ tìm những quả gần nhất trong dữ liệu cũ rồi xem phần lớn chúng là táo hay cam.
+
+Ví dụ bằng Python với `sklearn`:
+
+```python
+from sklearn.neighbors import KNeighborsClassifier
+
+X = [[1, 2], [2, 3], [3, 3], [6, 7], [7, 8], [8, 8]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = KNeighborsClassifier(n_neighbors=3)
+model.fit(X, y)
+
+print(model.predict([[4, 4]]))
+```
+
+Trong ví dụ này:
+
+- `X` là các điểm dữ liệu.
+- `y` là nhãn lớp.
+- `n_neighbors=3` nghĩa là nhìn 3 hàng xóm gần nhất.
+
+Đây là `ví dụ thuật toán knn` rất phù hợp cho người mới vì nó thể hiện rõ ý tưởng bỏ phiếu của các điểm gần nhau.
+
+## KNN trong machine learning dùng để làm gì?
+
+`KNN trong machine learning` thường được dùng cho:
+
+- Phân loại email spam hay không spam.
+- Phân loại hoa, trái cây, sản phẩm.
+- Gợi ý sản phẩm tương tự.
+- Một số bài toán regression đơn giản.
+
+KNN thường phù hợp khi bạn muốn một mô hình dễ hiểu và dữ liệu không quá lớn.
+
+## Chọn giá trị k như thế nào?
+
+Giá trị `k` ảnh hưởng rất nhiều đến kết quả:
+
+- `k` quá nhỏ: mô hình dễ nhạy với nhiễu.
+- `k` quá lớn: mô hình có thể làm mờ ranh giới giữa các lớp.
+
+Ví dụ thử hai giá trị `k` khác nhau:
+
+```python
+from sklearn.neighbors import KNeighborsClassifier
+
+model_k1 = KNeighborsClassifier(n_neighbors=1)
+model_k5 = KNeighborsClassifier(n_neighbors=5)
+
+print(model_k1)
+print(model_k5)
+```
+
+Trong thực tế, bạn thường thử vài giá trị rồi dùng validation set để chọn `k` phù hợp hơn.
+
+## Ưu điểm của KNN
+
+- Dễ hiểu và dễ giải thích.
+- Không cần giai đoạn train phức tạp.
+- Hoạt động tốt với một số bài toán đơn giản.
+- Là mô hình rất tốt để học tư duy khoảng cách trong machine learning.
+
+Đây là lý do `knn cho người mới` thường xuất hiện sớm trong các khóa học nhập môn.
+
+## Nhược điểm của KNN
+
+`Ưu nhược điểm của KNN` cần nhìn cả hai phía. Nhược điểm phổ biến là:
+
+- Chậm khi dữ liệu lớn vì phải so khoảng cách với nhiều điểm.
+- Nhạy với thang đo của feature.
+- Hiệu quả giảm khi số chiều dữ liệu quá cao.
+
+Vì phụ thuộc vào khoảng cách, KNN thường cần chuẩn hóa dữ liệu trước khi dùng.
+
+## Vì sao KNN cần chuẩn hóa dữ liệu?
+
+Giả sử bạn có hai feature:
+
+- Chiều cao: 150 đến 180
+- Thu nhập: 5.000.000 đến 50.000.000
+
+Nếu không chuẩn hóa, feature có giá trị lớn hơn sẽ chi phối khoảng cách. Khi đó KNN có thể nhìn sai đâu là hàng xóm thật sự gần.
+
+Đây là một điểm rất quan trọng khi áp dụng KNN vào dữ liệu thực tế.
+
+## Những lỗi thường gặp khi mới học KNN
+
+- Chọn `k` theo cảm tính mà không kiểm tra validation.
+- Quên chuẩn hóa dữ liệu.
+- Dùng KNN cho tập dữ liệu quá lớn rồi thắc mắc vì sao chậm.
+- Nghĩ rằng KNN luôn tốt chỉ vì dễ hiểu.
+
+Nếu tránh các lỗi này, bạn sẽ dùng KNN hiệu quả hơn nhiều.
+
+## Bài tập thực hành
+
+Hãy tự tạo một dataset nhỏ với 2 feature và 2 lớp. Sau đó:
+
+- Train một mô hình KNN.
+- Thử `k = 1` và `k = 3`.
+- So sánh dự đoán của mô hình.
+
+Bạn có thể bắt đầu với đoạn code sau:
+
+```python
+from sklearn.neighbors import KNeighborsClassifier
+
+X = [[1, 1], [2, 2], [2, 1], [7, 7], [8, 8], [8, 7]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = KNeighborsClassifier(n_neighbors=3)
+model.fit(X, y)
+
+print(model.predict([[3, 2]]))
+```
+
+Gợi ý: hãy thử đổi `n_neighbors` để xem kết quả có thay đổi không.
+
+## Câu hỏi thường gặp về KNN
+
+### KNN là gì?
+
+KNN là thuật toán machine learning dự đoán dựa trên những hàng xóm gần nhất của một điểm dữ liệu mới. Đây là mô hình đơn giản nhưng rất trực quan cho người mới học.
+
+### Thuật toán KNN là gì?
+
+Thuật toán KNN là cách phân loại hoặc regression bằng việc đo khoảng cách từ mẫu mới tới các điểm dữ liệu đã biết. Sau đó mô hình dùng các điểm gần nhất để đưa ra kết quả.
+
+### K nearest neighbors hoạt động như thế nào?
+
+Nó chọn `k` điểm gần nhất với mẫu mới, rồi dùng các điểm đó để bỏ phiếu hoặc tính trung bình. Toàn bộ ý tưởng của KNN xoay quanh khoảng cách giữa các điểm dữ liệu.
+
+### Ưu nhược điểm của KNN là gì?
+
+KNN dễ hiểu, dễ dùng, nhưng có thể chậm trên dữ liệu lớn và nhạy với việc chuẩn hóa feature. Đây là mô hình tốt để học, nhưng không phải lúc nào cũng là lựa chọn tối ưu nhất.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu KNN là gì trong machine learning, cách hoạt động của k-nearest neighbors, vai trò của khoảng cách và cách chọn `k`. Đây là một mô hình rất trực quan để người mới làm quen với classification. Ở bài tiếp theo, chúng ta sẽ học **decision tree** để thấy một cách ra quyết định khác dựa trên các câu hỏi dạng đúng/sai.

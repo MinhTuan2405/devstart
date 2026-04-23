@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       locale: 'vi_VN',
       type: 'article',
       publishedTime: post.frontmatter.publishedAt,
-      modifiedTime: post.frontmatter.publishedAt,
+      modifiedTime: post.modifiedAt,
       ...(coverImage && {
         images: [{ url: coverImage }],
       }),
@@ -77,7 +77,7 @@ export default function BlogPostPage({ params }: PageProps) {
       headline: post.frontmatter.title,
       description: post.frontmatter.description,
       datePublished: post.frontmatter.publishedAt,
-      dateModified: post.frontmatter.publishedAt,
+      dateModified: post.modifiedAt,
       author: { '@type': 'Organization', name: SITE_NAME },
       mainEntityOfPage: toAbsoluteUrl(`/blog/${post.slug}`),
       url: toAbsoluteUrl(`/blog/${post.slug}`),
