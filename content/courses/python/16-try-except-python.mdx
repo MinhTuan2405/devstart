@@ -1,0 +1,103 @@
+---
+title: "Try except trong Python: xử lý lỗi cho người mới"
+description: "Tìm hiểu try except trong Python, cách bắt lỗi phổ biến và giúp chương trình chạy an toàn hơn khi gặp dữ liệu sai."
+slug: "try-except-python"
+course: "python"
+order: 16
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["try except trong python", "xử lý lỗi trong python", "cách dùng try except python", "bắt lỗi python", "try except python cho người mới"]
+publishedAt: "2024-01-30"
+---
+
+## Try except trong Python là gì?
+
+`try except` trong Python là cách giúp chương trình xử lý lỗi mà không bị dừng đột ngột. Khi người dùng nhập sai dữ liệu, file không tồn tại, hoặc phép tính gặp vấn đề, `try except` cho phép bạn bắt lỗi và đưa ra phản hồi rõ ràng hơn.
+
+Đây là kỹ năng rất quan trọng nếu bạn muốn viết chương trình “chịu lỗi” tốt hơn.
+
+## Cú pháp cơ bản của try except trong Python
+
+```python
+try:
+    so = int(input("Nhập một số: "))
+    print(so)
+except ValueError:
+    print("Bạn phải nhập một số nguyên")
+```
+
+Trong ví dụ trên:
+
+- `try` chứa đoạn code có thể gây lỗi.
+- `except` xử lý lỗi nếu lỗi đó thực sự xảy ra.
+
+## Cách dùng try except trong Python với lỗi phổ biến
+
+Bạn có thể bắt nhiều loại lỗi khác nhau.
+
+```python
+try:
+    with open("khong_ton_tai.txt", "r", encoding="utf-8") as file:
+        print(file.read())
+except FileNotFoundError:
+    print("Không tìm thấy file")
+```
+
+Một số lỗi hay gặp với người mới:
+
+- `ValueError`: ép kiểu sai
+- `FileNotFoundError`: file không tồn tại
+- `ZeroDivisionError`: chia cho 0
+
+## Dùng else và finally trong try except Python
+
+```python
+try:
+    a = 10 / 2
+except ZeroDivisionError:
+    print("Khong the chia cho 0")
+else:
+    print("Ket qua:", a)
+finally:
+    print("Da xu ly xong")
+```
+
+- `else` chạy khi không có lỗi.
+- `finally` luôn chạy dù có lỗi hay không.
+
+## Những lỗi thường gặp khi học try except trong Python
+
+- Dùng `except:` quá chung chung.
+- Bắt lỗi nhưng không hiểu lỗi gì vừa xảy ra.
+- Giấu lỗi thật làm chương trình khó debug hơn.
+
+Nên ưu tiên bắt lỗi cụ thể như `ValueError` hoặc `FileNotFoundError` thay vì chỉ viết `except:`.
+
+## Bài tập thực hành
+
+Viết chương trình yêu cầu người dùng nhập 2 số và in kết quả phép chia. Nếu người dùng nhập sai hoặc chia cho 0, hãy báo lỗi thân thiện.
+
+Gợi ý:
+
+```python
+try:
+    a = float(input("Nhập số a: "))
+    b = float(input("Nhập số b: "))
+    print(a / b)
+except ValueError:
+    print("Vui long nhap dung dinh dang so")
+```
+
+## Câu hỏi thường gặp về try except trong Python
+
+### Có nên dùng `except:` cho mọi lỗi không?
+
+Không nên dùng quá rộng nếu bạn chưa thật sự cần. Việc bắt lỗi cụ thể sẽ giúp bạn hiểu vấn đề rõ hơn và tránh che mất lỗi quan trọng khác.
+
+### Khi nào nên dùng `finally`?
+
+Hãy dùng `finally` khi bạn luôn muốn chạy một đoạn code ở cuối, ví dụ đóng kết nối, in thông báo hoàn tất, hoặc dọn dẹp tài nguyên.
+
+## Tóm tắt
+
+Bạn đã học cách dùng `try except` trong Python để bắt lỗi khi nhập dữ liệu, đọc file, hoặc thực hiện phép tính. Ở bài tiếp theo, chúng ta sẽ học **list comprehension** để viết code gọn hơn khi tạo danh sách mới.

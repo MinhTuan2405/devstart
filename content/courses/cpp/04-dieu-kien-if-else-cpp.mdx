@@ -1,0 +1,126 @@
+---
+title: "Câu lệnh if else và switch trong C++"
+description: "Học cách dùng if else và switch trong C++ để xử lý điều kiện, phân nhánh và viết chương trình dễ đọc hơn."
+slug: "dieu-kien-if-else-cpp"
+course: "cpp"
+order: 4
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["câu lệnh if else trong c++", "if else c++ là gì", "switch case trong c++", "điều kiện trong c++", "if else c++ cho người mới"]
+publishedAt: "2024-01-21"
+---
+
+## Câu lệnh if else trong C++ là gì?
+
+`if else` trong C++ giúp chương trình đưa ra quyết định dựa trên điều kiện đúng hay sai. Đây là phần bạn sẽ dùng rất thường xuyên khi kiểm tra điểm số, phân loại dữ liệu, xử lý menu, hoặc giới hạn đầu vào của người dùng.
+
+Nếu chương trình của bạn cần hỏi “nếu điều này đúng thì làm gì?”, thì bạn đang cần `if else`.
+
+## Cú pháp cơ bản của câu lệnh if else trong C++
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int diem = 7;
+
+    if (diem >= 5) {
+        cout << "Ban da dau" << endl;
+    } else {
+        cout << "Ban can on them" << endl;
+    }
+
+    return 0;
+}
+```
+
+Bạn có thể dùng thêm `else if` khi có nhiều trường hợp.
+
+## Cách dùng switch case trong C++
+
+`switch` phù hợp khi bạn cần xử lý nhiều lựa chọn dựa trên một giá trị cụ thể, ví dụ menu số.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int luaChon = 2;
+
+    switch (luaChon) {
+        case 1:
+            cout << "Xem thong tin" << endl;
+            break;
+        case 2:
+            cout << "Dang ky khoa hoc" << endl;
+            break;
+        default:
+            cout << "Lua chon khong hop le" << endl;
+    }
+
+    return 0;
+}
+```
+
+Hãy nhớ `break` để tránh rơi xuống các `case` bên dưới.
+
+## Cách dùng if else trong C++ cho nhiều điều kiện
+
+```cpp
+int tuoi = 20;
+bool coGiayTo = true;
+
+if (tuoi >= 18 && coGiayTo) {
+    cout << "Du dieu kien" << endl;
+} else {
+    cout << "Chua du dieu kien" << endl;
+}
+```
+
+Khi điều kiện là một khoảng giá trị hoặc logic phức tạp, `if else` thường linh hoạt hơn `switch`.
+
+## Những lỗi thường gặp với if else trong C++
+
+- Dùng `=` thay vì `==` trong điều kiện.
+- Quên `break` trong `switch`.
+- Thiếu dấu `{}` khi khối lệnh có nhiều dòng.
+
+Ví dụ cần tránh:
+
+```cpp
+int diem = 8;
+
+// Sai
+// if (diem = 8) {
+
+if (diem == 8) {
+    cout << "Dung phep so sanh" << endl;
+}
+```
+
+## Bài tập thực hành
+
+Viết chương trình nhập tháng từ 1 đến 12 và in ra quý tương ứng.
+
+Gợi ý:
+
+```cpp
+int thang = 5;
+
+// Dung if else hoac switch de xu ly
+```
+
+## Câu hỏi thường gặp về if else trong C++
+
+### Khi nào nên dùng `switch` thay vì `if else`?
+
+Hãy dùng `switch` khi bạn cần so sánh một biến với nhiều giá trị cụ thể như `1`, `2`, `3`. Nếu điều kiện là khoảng giá trị hoặc dùng toán tử logic, `if else` sẽ phù hợp hơn.
+
+### Có bắt buộc phải dùng dấu `{}` trong C++ không?
+
+Không bắt buộc nếu khối lệnh chỉ có một dòng, nhưng nên dùng để code rõ ràng hơn và tránh lỗi khi thêm dòng mới sau này.
+
+## Tóm tắt
+
+Bạn đã biết cách dùng `if else`, `else if`, và `switch case` trong C++ để điều khiển luồng chương trình. Ở bài tiếp theo, chúng ta sẽ học **vòng lặp trong C++** để lặp lại công việc nhiều lần mà không cần viết lại code.

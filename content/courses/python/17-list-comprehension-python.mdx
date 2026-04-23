@@ -1,0 +1,99 @@
+---
+title: "List comprehension trong Python: viết gọn nhưng dễ hiểu"
+description: "Tìm hiểu list comprehension trong Python, cách tạo danh sách mới ngắn gọn hơn và khi nào nên dùng cho người mới."
+slug: "list-comprehension-python"
+course: "python"
+order: 17
+duration: "18 phút"
+difficulty: "Trung bình"
+keywords: ["list comprehension trong python", "cách dùng list comprehension python", "tạo list mới trong python", "ví dụ list comprehension python", "list comprehension cho người mới"]
+publishedAt: "2024-01-31"
+---
+
+## List comprehension trong Python là gì?
+
+List comprehension trong Python là cách tạo danh sách mới bằng cú pháp ngắn gọn hơn so với viết vòng lặp `for` thông thường. Nó rất hữu ích khi bạn cần biến đổi dữ liệu, lọc dữ liệu, hoặc tạo list nhanh từ một nguồn có sẵn.
+
+Tuy nhiên, mục tiêu không phải là “viết ngắn cho bằng được”, mà là viết gọn nhưng vẫn dễ hiểu.
+
+## Cú pháp cơ bản của list comprehension trong Python
+
+Ví dụ viết bằng `for` thông thường:
+
+```python
+so = [1, 2, 3, 4]
+binh_phuong = []
+
+for item in so:
+    binh_phuong.append(item * item)
+
+print(binh_phuong)
+```
+
+Viết lại bằng list comprehension:
+
+```python
+so = [1, 2, 3, 4]
+binh_phuong = [item * item for item in so]
+
+print(binh_phuong)
+```
+
+## Cách dùng list comprehension để lọc dữ liệu
+
+Bạn có thể thêm điều kiện `if` ngay trong biểu thức.
+
+```python
+so = [1, 2, 3, 4, 5, 6]
+so_chan = [item for item in so if item % 2 == 0]
+
+print(so_chan)
+```
+
+Đây là cách rất hay dùng khi bạn cần lấy ra nhóm dữ liệu thỏa điều kiện nào đó.
+
+## Khi nào nên dùng list comprehension trong Python?
+
+- Khi logic đơn giản và rõ ràng.
+- Khi cần tạo một list mới từ list cũ.
+- Khi muốn code gọn hơn nhưng vẫn dễ đọc.
+
+Nếu biểu thức quá dài hoặc có nhiều tầng điều kiện, hãy quay lại dùng `for` thường để dễ hiểu hơn.
+
+## Những lỗi thường gặp với list comprehension
+
+- Viết quá phức tạp làm code khó đọc.
+- Nhầm thứ tự giữa biểu thức, vòng lặp, và điều kiện.
+- Dùng list comprehension dù chỉ cần một vòng lặp bình thường.
+
+Ví dụ cơ bản đúng thứ tự:
+
+```python
+ket_qua = [x * 2 for x in range(5)]
+```
+
+Thứ tự là: giá trị tạo ra -> vòng lặp -> điều kiện nếu có.
+
+## Bài tập thực hành
+
+Cho list sau:
+
+```python
+so = [2, 5, 8, 11, 14]
+```
+
+Hãy dùng list comprehension để tạo một list mới chỉ chứa các số lớn hơn 7.
+
+## Câu hỏi thường gặp về list comprehension trong Python
+
+### List comprehension có bắt buộc phải dùng không?
+
+Không. Đây là một cách viết tiện lợi, nhưng không bắt buộc. Nếu vòng lặp thường làm code rõ hơn, bạn cứ dùng cách rõ hơn.
+
+### Khi nào không nên dùng list comprehension?
+
+Không nên dùng khi logic xử lý quá dài, có nhiều bước, hoặc cần nhiều nhánh điều kiện. Khi đó, vòng lặp `for` thông thường sẽ dễ đọc hơn.
+
+## Tóm tắt
+
+Bạn đã biết list comprehension trong Python là gì, cách dùng để tạo list mới và lọc dữ liệu gọn hơn. Ở bài tiếp theo, chúng ta sẽ học **lập trình hướng đối tượng cơ bản trong Python** để tổ chức dữ liệu và hành vi tốt hơn.

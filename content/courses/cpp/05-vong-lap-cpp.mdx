@@ -1,0 +1,124 @@
+---
+title: "Vòng lặp trong C++: for, while và do while"
+description: "Tìm hiểu vòng lặp trong C++, cách dùng for, while, do while và break continue qua ví dụ dễ hiểu."
+slug: "vong-lap-cpp"
+course: "cpp"
+order: 5
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["vòng lặp trong c++", "for trong c++", "while trong c++", "do while trong c++", "vòng lặp c++ cho người mới"]
+publishedAt: "2024-01-22"
+---
+
+## Vòng lặp trong C++ là gì?
+
+Vòng lặp trong C++ giúp bạn chạy một đoạn code nhiều lần mà không cần viết lặp tay. Đây là công cụ rất quan trọng khi in danh sách, tính tổng nhiều số, hoặc xử lý mảng.
+
+Ba loại vòng lặp người mới cần nắm là `for`, `while`, và `do while`.
+
+## Cú pháp cơ bản của vòng lặp for trong C++
+
+`for` phù hợp khi bạn biết trước số lần lặp.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    for (int i = 1; i <= 5; i++) {
+        cout << "Lan lap thu " << i << endl;
+    }
+    return 0;
+}
+```
+
+Ba phần trong `for` gồm:
+
+- Giá trị khởi tạo
+- Điều kiện lặp
+- Cập nhật sau mỗi vòng
+
+## Cách dùng while và do while trong C++
+
+`while` phù hợp khi bạn chưa biết trước sẽ lặp bao nhiêu lần.
+
+```cpp
+int dem = 1;
+
+while (dem <= 3) {
+    cout << dem << endl;
+    dem++;
+}
+```
+
+`do while` sẽ chạy ít nhất một lần trước khi kiểm tra điều kiện.
+
+```cpp
+int n = 1;
+
+do {
+    cout << "Gia tri: " << n << endl;
+    n++;
+} while (n <= 2);
+```
+
+## Cách dùng break và continue trong C++
+
+```cpp
+for (int i = 1; i <= 10; i++) {
+    if (i == 5) {
+        continue;
+    }
+    if (i == 8) {
+        break;
+    }
+    cout << i << endl;
+}
+```
+
+- `continue` bỏ qua lần lặp hiện tại.
+- `break` thoát khỏi vòng lặp ngay lập tức.
+
+## Những lỗi thường gặp với vòng lặp trong C++
+
+- Quên tăng hoặc giảm biến đếm nên gây lặp vô hạn.
+- Viết sai điều kiện dừng.
+- Nhầm lẫn giữa `<` và `<=`.
+
+Ví dụ dễ gây lỗi:
+
+```cpp
+int i = 0;
+
+// Neu quen i++ thi vong lap se khong dung
+while (i < 5) {
+    cout << i << endl;
+    i++;
+}
+```
+
+## Bài tập thực hành
+
+Viết chương trình in bảng cửu chương 7 bằng vòng lặp `for`.
+
+Gợi ý:
+
+```cpp
+for (int i = 1; i <= 10; i++) {
+    // viet code o day
+}
+```
+
+## Câu hỏi thường gặp về vòng lặp trong C++
+
+### Khi nào nên dùng `for` thay vì `while`?
+
+Hãy dùng `for` khi bạn biết rõ số lần lặp, ví dụ lặp từ 1 đến 10. Dùng `while` khi việc dừng phụ thuộc vào một điều kiện thay đổi trong lúc chạy.
+
+### `do while` khác gì `while`?
+
+`do while` luôn chạy thân vòng lặp ít nhất một lần. `while` thì kiểm tra điều kiện trước, nên có thể không chạy lần nào.
+
+## Tóm tắt
+
+Bạn đã học cách dùng `for`, `while`, `do while`, cùng với `break` và `continue` trong C++. Ở bài tiếp theo, chúng ta sẽ học **hàm trong C++** để tổ chức code thành từng khối dễ tái sử dụng.

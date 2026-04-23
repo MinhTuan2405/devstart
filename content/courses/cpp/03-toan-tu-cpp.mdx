@@ -1,0 +1,119 @@
+---
+title: "Toán tử trong C++ cho người mới bắt đầu"
+description: "Tìm hiểu toán tử trong C++ gồm toán tử số học, so sánh, logic và các lỗi thường gặp khi mới học."
+slug: "toan-tu-cpp"
+course: "cpp"
+order: 3
+duration: "18 phút"
+difficulty: "Trung bình"
+keywords: ["toán tử trong c++", "toán tử số học trong c++", "toán tử so sánh trong c++", "toán tử logic trong c++", "toán tử c++ cho người mới"]
+publishedAt: "2024-01-20"
+---
+
+## Toán tử trong C++ là gì?
+
+Toán tử trong C++ là các ký hiệu giúp bạn tính toán, so sánh giá trị, hoặc kết hợp nhiều điều kiện với nhau. Đây là phần nền tảng trước khi học `if else`, vòng lặp, và các bài toán xử lý dữ liệu trong C++.
+
+Hiểu đơn giản: biến chứa dữ liệu, còn toán tử là công cụ để thao tác với dữ liệu đó.
+
+## Cú pháp cơ bản của toán tử trong C++
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int a = 10;
+    int b = 3;
+
+    cout << a + b << endl;
+    cout << a - b << endl;
+    cout << a * b << endl;
+    cout << a / b << endl;
+    cout << a % b << endl;
+    return 0;
+}
+```
+
+Trong ví dụ trên:
+
+- `+`, `-`, `*`, `/` là toán tử số học.
+- `%` lấy phần dư của phép chia.
+- Vì `a` và `b` là `int`, nên `a / b` cho kết quả là `3`, không phải `3.333`.
+
+## Cách dùng toán tử so sánh và logic trong C++
+
+Toán tử so sánh như `>`, `<`, `==`, `!=` thường được dùng chung với `if`.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int tuoi = 20;
+    bool coTheSinhVien = true;
+
+    if (tuoi >= 18 && coTheSinhVien) {
+        cout << "Du dieu kien dang ky" << endl;
+    }
+
+    return 0;
+}
+```
+
+Bạn cần nhớ:
+
+- `&&` là `and`.
+- `||` là `or`.
+- `!` là `not`.
+
+## Những lỗi thường gặp với toán tử trong C++
+
+- Dùng `=` thay vì `==` khi so sánh điều kiện.
+- Quên rằng chia hai số nguyên sẽ ra kết quả nguyên.
+- Nhầm ý nghĩa của `i++` và `++i` khi mới bắt đầu.
+
+Ví dụ tránh lỗi chia nguyên:
+
+```cpp
+int a = 10;
+int b = 3;
+
+cout << (double)a / b << endl;
+```
+
+Ép kiểu sang `double` giúp bạn lấy được kết quả thập phân.
+
+## Bài tập thực hành
+
+Viết chương trình khai báo 2 số nguyên và in ra:
+
+- Tổng
+- Hiệu
+- Tích
+- Thương
+- Phần dư
+- Kết quả kiểm tra số thứ nhất có lớn hơn số thứ hai không
+
+Gợi ý:
+
+```cpp
+int a = 15;
+int b = 4;
+
+// Hay tu viet cac dong cout o day
+```
+
+## Câu hỏi thường gặp về toán tử trong C++
+
+### Vì sao `10 / 3` trong C++ lại ra `3`?
+
+Vì cả hai toán hạng đều là `int`, C++ sẽ chia theo kiểu số nguyên. Nếu muốn kết quả có phần thập phân, bạn cần ép một trong hai số sang `double` hoặc `float`.
+
+### Khi nào dùng `&&` và `||`?
+
+Dùng `&&` khi mọi điều kiện đều phải đúng. Dùng `||` khi chỉ cần một điều kiện đúng là đủ.
+
+## Tóm tắt
+
+Bạn đã học các nhóm toán tử quan trọng trong C++ gồm số học, so sánh, và logic. Đây là nền tảng trực tiếp cho bài `if else`. Ở bài tiếp theo, chúng ta sẽ dùng các toán tử này để học **câu lệnh if else và switch trong C++**.

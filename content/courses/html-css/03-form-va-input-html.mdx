@@ -1,0 +1,115 @@
+---
+title: "Form trong HTML: input, label và button"
+description: "Tìm hiểu form trong HTML, cách dùng input, label, textarea và button để tạo biểu mẫu cơ bản cho website."
+slug: "form-va-input-html"
+course: "html-css"
+order: 3
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["form trong html", "thẻ form trong html", "input trong html", "cách tạo form html", "form html cho người mới"]
+publishedAt: "2024-01-22"
+---
+
+## Form trong HTML là gì?
+
+Form trong HTML là khu vực cho phép người dùng nhập dữ liệu, ví dụ tên, email, mật khẩu, hoặc nội dung liên hệ. Nếu bạn từng dùng form đăng ký tài khoản hay form gửi liên hệ, đó chính là ứng dụng thực tế của `form` trong HTML.
+
+Với người mới học web, đây là một trong những nhóm thẻ quan trọng nhất vì gần như website nào cũng có biểu mẫu.
+
+## Cú pháp cơ bản của form trong HTML
+
+```html
+<form>
+  <label for="name">Họ tên</label>
+  <input type="text" id="name" name="name">
+
+  <button type="submit">Gửi</button>
+</form>
+```
+
+Trong đoạn code trên:
+
+- `<form>` là thẻ bao ngoài của biểu mẫu.
+- `<label>` giúp mô tả trường nhập.
+- `<input>` là nơi người dùng điền dữ liệu.
+- `<button>` là nút bấm gửi form.
+
+## Cách dùng input và textarea trong HTML
+
+Bạn có thể thay đổi `type` của `input` để phù hợp với từng loại dữ liệu.
+
+```html
+<form>
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email">
+
+  <label for="message">Tin nhắn</label>
+  <textarea id="message" name="message"></textarea>
+
+  <button type="submit">Gửi liên hệ</button>
+</form>
+```
+
+Một số kiểu `input` phổ biến:
+
+- `text` cho văn bản ngắn
+- `email` cho địa chỉ email
+- `password` cho mật khẩu
+- `number` cho số
+
+## Cách tạo form HTML dễ dùng hơn cho người mới
+
+Luôn gắn `label` với `input` bằng `for` và `id`. Cách này giúp người dùng hiểu ô nhập dùng để làm gì và cũng tốt hơn cho accessibility.
+
+```html
+<label for="phone">Số điện thoại</label>
+<input type="tel" id="phone" name="phone">
+```
+
+Khi click vào chữ của `label`, con trỏ cũng sẽ nhảy đúng vào ô nhập tương ứng.
+
+## Những lỗi thường gặp với form trong HTML
+
+- Quên thêm `name` cho `input`.
+- Dùng `placeholder` thay cho `label`.
+- Chọn sai `type` nên dữ liệu nhập không đúng mục đích.
+
+Ví dụ nên tránh:
+
+```html
+<!-- Khong nen chi dung placeholder -->
+<input type="text" placeholder="Nhập họ tên">
+```
+
+Nên viết rõ ràng hơn bằng `label`.
+
+## Bài tập thực hành
+
+Tạo một form đăng ký đơn giản gồm:
+
+- Họ tên
+- Email
+- Mật khẩu
+- Nút gửi
+
+Gợi ý:
+
+```html
+<form>
+  <!-- them cac truong vao day -->
+</form>
+```
+
+## Câu hỏi thường gặp về form trong HTML
+
+### Vì sao nên dùng `label` trong form HTML?
+
+`label` giúp người dùng hiểu chính xác ô nhập dùng để làm gì. Nó cũng giúp form dễ dùng hơn trên thiết bị hỗ trợ và tăng tính rõ ràng của giao diện.
+
+### `input` và `textarea` khác nhau thế nào?
+
+`input` thường dùng cho dữ liệu ngắn như tên hoặc email. `textarea` dùng khi người dùng cần nhập nội dung dài hơn như mô tả hoặc tin nhắn.
+
+## Tóm tắt
+
+Bạn đã biết cách tạo form trong HTML, dùng `input`, `textarea`, `label`, và `button` để xây dựng biểu mẫu cơ bản. Ở bài tiếp theo, chúng ta sẽ học **semantic HTML** để sắp xếp bố cục trang web rõ ràng và chuẩn hơn.

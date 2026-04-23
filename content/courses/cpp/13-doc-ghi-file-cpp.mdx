@@ -1,0 +1,105 @@
+---
+title: "Đọc ghi file trong C++ với ifstream và ofstream"
+description: "Học cách đọc ghi file trong C++ bằng ifstream, ofstream và xử lý file text cơ bản qua ví dụ dễ hiểu."
+slug: "doc-ghi-file-cpp"
+course: "cpp"
+order: 13
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["đọc ghi file trong c++", "ifstream trong c++", "ofstream trong c++", "mở file trong c++", "file c++ cho người mới"]
+publishedAt: "2024-01-30"
+---
+
+## Đọc ghi file trong C++ là gì?
+
+Đọc ghi file trong C++ là cách chương trình lưu dữ liệu ra file hoặc lấy dữ liệu từ file có sẵn. Khi biết làm việc với file, bạn có thể tạo chương trình lưu danh sách công việc, điểm số, hoặc dữ liệu cấu hình thay vì chỉ nhập tay mỗi lần chạy.
+
+Đây là bước rất quan trọng để chương trình trở nên thực tế hơn.
+
+## Cú pháp cơ bản của ofstream trong C++
+
+Để ghi file, bạn dùng `ofstream`.
+
+```cpp
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+int main() {
+    ofstream file("ketqua.txt");
+    file << "Xin chao C++" << endl;
+    file.close();
+    return 0;
+}
+```
+
+Sau khi chạy, nội dung sẽ được ghi vào file `ketqua.txt`.
+
+## Cách đọc file bằng ifstream trong C++
+
+```cpp
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+int main() {
+    ifstream file("ketqua.txt");
+    string dong;
+
+    while (getline(file, dong)) {
+        cout << dong << endl;
+    }
+
+    file.close();
+    return 0;
+}
+```
+
+`getline()` giúp bạn đọc từng dòng văn bản rất tiện cho file text.
+
+## Khi nào nên dùng file trong C++?
+
+- Khi muốn lưu dữ liệu giữa các lần chạy chương trình
+- Khi cần xử lý danh sách dữ liệu từ file ngoài
+- Khi làm mini project như quản lý sinh viên hoặc ghi log
+
+File text là lựa chọn rất phù hợp cho người mới vì dễ nhìn và dễ kiểm tra.
+
+## Những lỗi thường gặp khi đọc ghi file trong C++
+
+- Quên include thư viện `fstream`
+- Mở sai đường dẫn file
+- Không kiểm tra file có mở thành công hay không
+
+Ví dụ kiểm tra an toàn hơn:
+
+```cpp
+ifstream file("data.txt");
+
+if (!file.is_open()) {
+    cout << "Khong mo duoc file" << endl;
+}
+```
+
+## Bài tập thực hành
+
+Viết chương trình:
+
+- Ghi 3 dòng tên môn học vào file `monhoc.txt`
+- Đọc lại file đó
+- In từng dòng ra màn hình
+
+## Câu hỏi thường gặp về đọc ghi file trong C++
+
+### `ifstream` và `ofstream` khác nhau thế nào?
+
+`ifstream` dùng để đọc file, còn `ofstream` dùng để ghi file. Nếu nhớ được cặp này, bạn đã đi được một nửa chặng đường làm việc với file trong C++.
+
+### Có cần luôn gọi `close()` không?
+
+Nên gọi `close()` khi đã làm xong để code rõ ràng và chắc chắn file được đóng đúng lúc, nhất là với người mới học.
+
+## Tóm tắt
+
+Bạn đã học cách đọc ghi file trong C++ bằng `ifstream`, `ofstream`, và `getline()`. Ở bài tiếp theo, chúng ta sẽ dùng những kiến thức đã học để làm **dự án C++ đầu tiên**.

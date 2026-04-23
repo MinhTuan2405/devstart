@@ -1,0 +1,135 @@
+---
+title: "Display, position và overflow trong CSS"
+description: "Tìm hiểu display, position và overflow trong CSS để hiểu cách phần tử hiển thị, xếp chồng và bị cắt nội dung."
+slug: "display-position-overflow-css"
+course: "html-css"
+order: 8
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["display trong css", "position trong css", "overflow trong css", "display css là gì", "display position overflow css"]
+publishedAt: "2024-01-28"
+---
+
+## Display trong CSS là gì?
+
+`display` trong CSS quyết định phần tử sẽ hiển thị như thế nào trên trang, ví dụ nằm trên một dòng mới, nằm cùng hàng, hay không hiển thị. Khi kết hợp thêm `position` và `overflow`, bạn sẽ hiểu rõ hơn cách phần tử chiếm chỗ, di chuyển và cắt nội dung trong layout.
+
+Đây là nhóm thuộc tính rất quan trọng trước khi đi sâu vào flexbox và responsive.
+
+## Cú pháp cơ bản của display trong CSS
+
+Ba giá trị người mới gặp nhiều nhất là `block`, `inline`, và `inline-block`.
+
+```css
+p {
+  display: block;
+}
+
+span {
+  display: inline;
+}
+
+.card {
+  display: inline-block;
+}
+```
+
+Hiểu nhanh:
+
+- `block`: chiếm cả hàng
+- `inline`: nằm trong dòng chữ
+- `inline-block`: nằm cùng hàng nhưng vẫn chỉnh được width, height
+
+## Cách dùng position trong CSS
+
+`position` giúp bạn kiểm soát vị trí phần tử theo nhiều cách khác nhau.
+
+```css
+.box {
+  position: relative;
+  top: 10px;
+  left: 20px;
+}
+```
+
+Một số giá trị phổ biến:
+
+- `static`: mặc định
+- `relative`: dịch chuyển tương đối so với vị trí ban đầu
+- `absolute`: bám theo phần tử cha gần nhất có `position`
+- `fixed`: bám theo màn hình
+
+Ví dụ với `absolute`:
+
+```css
+.container {
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+```
+
+## Overflow trong CSS dùng để làm gì?
+
+`overflow` kiểm soát điều gì xảy ra khi nội dung vượt ra khỏi kích thước phần tử.
+
+```css
+.box {
+  width: 200px;
+  height: 80px;
+  overflow: hidden;
+}
+```
+
+Một số giá trị hay dùng:
+
+- `visible`: hiển thị tràn ra ngoài
+- `hidden`: ẩn phần bị tràn
+- `scroll`: luôn hiện thanh cuộn
+- `auto`: chỉ hiện thanh cuộn khi cần
+
+## Những lỗi thường gặp với display, position và overflow
+
+- Dùng `absolute` nhưng quên đặt `position: relative` cho phần tử cha.
+- Nhầm `inline` với `inline-block`.
+- Nội dung bị cắt mà không hiểu nguyên nhân do `overflow: hidden`.
+
+Ví dụ rất hay gặp:
+
+```css
+.parent {
+  position: relative;
+}
+
+.child {
+  position: absolute;
+}
+```
+
+Nếu không có `position: relative` ở cha, phần tử con `absolute` có thể nhảy đi chỗ khác ngoài dự đoán.
+
+## Bài tập thực hành
+
+Tạo một khối `.card` có kích thước cố định. Sau đó:
+
+- Đặt một nhãn nhỏ ở góc trên bên phải bằng `position: absolute`
+- Ẩn nội dung bị tràn bằng `overflow: hidden`
+- Thử đổi `display` của một phần tử từ `block` sang `inline-block`
+
+## Câu hỏi thường gặp về display, position và overflow
+
+### `inline-block` khác gì `inline`?
+
+`inline-block` vẫn cho phần tử nằm cùng hàng với phần tử khác, nhưng bạn có thể chỉnh `width`, `height`, `padding`, `margin` dễ hơn. `inline` thì bị giới hạn hơn nhiều.
+
+### Khi nào nên dùng `overflow: hidden`?
+
+Hãy dùng khi bạn muốn cắt phần nội dung vượt ra ngoài khung, ví dụ ảnh trong card, hộp mô tả ngắn, hoặc vùng có bo góc.
+
+## Tóm tắt
+
+Bạn đã biết `display`, `position`, và `overflow` trong CSS dùng để làm gì và cách ảnh hưởng của chúng tới layout. Ở bài tiếp theo, chúng ta sẽ học **flexbox CSS** để sắp xếp phần tử theo hàng và cột nhanh hơn.

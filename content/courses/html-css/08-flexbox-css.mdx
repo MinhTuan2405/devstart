@@ -1,0 +1,114 @@
+---
+title: "Flexbox CSS: căn hàng, căn cột và căn giữa dễ hơn"
+description: "Học flexbox CSS cho người mới, cách dùng display flex, justify-content, align-items và gap để sắp xếp layout nhanh hơn."
+slug: "flexbox-css"
+course: "html-css"
+order: 9
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["flexbox css", "display flex trong css", "cách dùng flexbox css", "justify-content align-items", "flexbox css cho người mới"]
+publishedAt: "2024-01-27"
+---
+
+## Flexbox CSS là gì?
+
+Flexbox CSS là một hệ thống layout giúp bạn sắp xếp phần tử theo hàng hoặc cột rất nhanh. Với flexbox, việc căn giữa nút bấm, chia các cột đều nhau, hay tạo thanh điều hướng sẽ dễ hơn nhiều so với cách cũ.
+
+Đây là công cụ layout mà người mới nên học sớm vì dùng cực kỳ thường xuyên.
+
+## Cú pháp cơ bản của flexbox CSS
+
+Bạn chỉ cần đặt `display: flex` cho phần tử cha.
+
+```html
+<div class="menu">
+  <a href="#">Trang chủ</a>
+  <a href="#">Khóa học</a>
+  <a href="#">Blog</a>
+</div>
+```
+
+```css
+.menu {
+  display: flex;
+  gap: 16px;
+}
+```
+
+Sau đó, các phần tử con sẽ nằm trên cùng một hàng theo mặc định.
+
+## Cách dùng justify-content và align-items
+
+```css
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+```
+
+Hai thuộc tính quan trọng nhất:
+
+- `justify-content`: căn phần tử theo trục ngang
+- `align-items`: căn phần tử theo trục dọc
+
+## Cách đổi hướng layout bằng flex-direction
+
+Bạn có thể chuyển layout từ hàng sang cột rất dễ.
+
+```css
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+```
+
+Điều này rất hữu ích khi làm danh sách thẻ, sidebar, hoặc bố cục mobile đơn giản.
+
+## Những lỗi thường gặp với flexbox CSS
+
+- Đặt `display: flex` cho phần tử con thay vì phần tử cha.
+- Nhầm `justify-content` và `align-items`.
+- Quên thêm `gap` nên các phần tử dính sát nhau.
+
+Ví dụ cần nhớ:
+
+```css
+.container {
+  display: flex;
+}
+```
+
+Phần tử cha mới là nơi kích hoạt flexbox.
+
+## Bài tập thực hành
+
+Tạo một thanh menu ngang gồm 3 liên kết. Sau đó:
+
+- Dùng flexbox để đặt chúng trên cùng một hàng
+- Thêm khoảng cách giữa các liên kết
+- Căn giữa menu theo chiều ngang
+
+Gợi ý:
+
+```css
+.menu {
+  display: flex;
+}
+```
+
+## Câu hỏi thường gặp về flexbox CSS
+
+### Khi nào nên dùng flexbox?
+
+Hãy dùng flexbox khi bạn cần sắp xếp phần tử theo một chiều chính, như hàng ngang hoặc cột dọc. Nó đặc biệt tốt cho menu, nhóm nút, card list, và các khối giao diện nhỏ đến vừa.
+
+### `gap` trong flexbox dùng để làm gì?
+
+`gap` tạo khoảng cách đều giữa các phần tử con mà không cần thêm `margin` cho từng phần tử. Cách này giúp code gọn và dễ kiểm soát hơn.
+
+## Tóm tắt
+
+Bạn đã học cách dùng flexbox CSS với `display: flex`, `justify-content`, `align-items`, `flex-direction`, và `gap`. Đây là nền tảng rất mạnh để xây giao diện hiện đại. Ở bài tiếp theo, chúng ta sẽ học **responsive web và media query** để giao diện hiển thị tốt hơn trên điện thoại và màn hình lớn.

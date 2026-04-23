@@ -1,0 +1,101 @@
+---
+title: "Môi trường ảo Python: venv cho người mới"
+description: "Tìm hiểu môi trường ảo Python, cách tạo venv, kích hoạt và quản lý thư viện riêng cho từng project."
+slug: "moi-truong-ao-python"
+course: "python"
+order: 14
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["môi trường ảo python", "venv python", "cách tạo môi trường ảo python", "kích hoạt venv python", "python virtual environment"]
+publishedAt: "2024-01-28"
+---
+
+## Môi trường ảo Python là gì?
+
+Môi trường ảo Python là một không gian riêng cho từng project, nơi bạn cài thư viện mà không làm ảnh hưởng đến project khác trên máy. Nếu không dùng môi trường ảo, rất dễ xảy ra xung đột phiên bản thư viện khi bạn làm nhiều project cùng lúc.
+
+Với người mới, chỉ cần nhớ: một project nên có một môi trường ảo riêng.
+
+## Cách tạo venv trong Python
+
+Python có sẵn công cụ `venv`.
+
+```bash
+python -m venv venv
+```
+
+Lệnh trên sẽ tạo thư mục `venv` chứa môi trường ảo.
+
+Kích hoạt môi trường ảo:
+
+```bash
+# Windows
+venv\Scripts\activate
+
+# macOS / Linux
+source venv/bin/activate
+```
+
+Sau khi kích hoạt, bạn sẽ thấy tên môi trường xuất hiện trước dòng lệnh.
+
+## Cách cài thư viện trong môi trường ảo Python
+
+Khi venv đã được kích hoạt, mọi lệnh `pip install` sẽ chỉ tác động đến project hiện tại.
+
+```bash
+pip install requests
+pip list
+```
+
+Bạn cũng có thể lưu danh sách thư viện bằng:
+
+```bash
+pip freeze > requirements.txt
+```
+
+Đây là bước rất hay dùng khi chia sẻ project cho người khác.
+
+## Vì sao nên dùng venv cho từng project?
+
+- Tránh xung đột phiên bản thư viện.
+- Dễ tái tạo môi trường trên máy khác.
+- Giữ project sạch và dễ quản lý hơn.
+
+Ví dụ, project A cần `requests` phiên bản này, project B cần phiên bản khác. Nếu không có môi trường ảo, bạn sẽ gặp rắc rối rất nhanh.
+
+## Những lỗi thường gặp với môi trường ảo Python
+
+- Cài thư viện trước khi kích hoạt venv.
+- Quên tạo `requirements.txt`.
+- Commit cả thư mục `venv` lên git.
+
+Thông thường, thư mục `venv` nên được bỏ vào `.gitignore`.
+
+## Bài tập thực hành
+
+Tạo một thư mục project mới, sau đó:
+
+- Tạo môi trường ảo
+- Kích hoạt môi trường ảo
+- Cài thử một thư viện bất kỳ bằng `pip`
+- Lưu lại bằng `requirements.txt`
+
+Gợi ý:
+
+```bash
+python -m venv venv
+```
+
+## Câu hỏi thường gặp về môi trường ảo Python
+
+### Có bắt buộc phải dùng môi trường ảo không?
+
+Không bắt buộc tuyệt đối, nhưng rất nên dùng, đặc biệt khi project có cài thư viện ngoài. Đây là thói quen rất quan trọng nếu bạn muốn làm việc chuyên nghiệp hơn với Python.
+
+### `venv` và `pip` khác nhau thế nào?
+
+`venv` dùng để tạo môi trường riêng. `pip` dùng để cài thư viện vào môi trường đó. Hai công cụ này thường đi cùng nhau trong hầu hết project Python.
+
+## Tóm tắt
+
+Bạn đã hiểu môi trường ảo Python là gì, cách tạo `venv`, kích hoạt, và cài thư viện riêng cho từng project. Ở bài tiếp theo, chúng ta sẽ học **đọc ghi file trong Python** để làm việc với dữ liệu thật thay vì chỉ nhập tay.

@@ -1,0 +1,123 @@
+---
+title: "Class trong C++: bước đầu với OOP"
+description: "Tìm hiểu class trong C++, object, thuộc tính, phương thức và constructor qua ví dụ dễ hiểu cho người mới."
+slug: "class-cpp"
+course: "cpp"
+order: 12
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["class trong c++", "object trong c++", "struct và class trong c++", "constructor c++ cơ bản", "oop c++ cho người mới"]
+publishedAt: "2024-01-29"
+---
+
+## Class trong C++ là gì?
+
+Class trong C++ là cách bạn gom dữ liệu và hành vi liên quan vào cùng một cấu trúc. Với người mới, bạn có thể hiểu class là “bản thiết kế”, còn object là “phiên bản được tạo ra từ bản thiết kế đó”. Đây là bước đầu tiên để học lập trình hướng đối tượng trong C++.
+
+Khi chương trình có nhiều đối tượng giống nhau, class giúp code gọn và rõ hơn.
+
+## Cú pháp cơ bản của class trong C++
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class HocVien {
+public:
+    string ten;
+    int tuoi;
+
+    void gioiThieu() {
+        cout << "Minh la " << ten << ", " << tuoi << " tuoi" << endl;
+    }
+};
+
+int main() {
+    HocVien hv1;
+    hv1.ten = "Lan";
+    hv1.tuoi = 20;
+    hv1.gioiThieu();
+    return 0;
+}
+```
+
+Trong ví dụ trên:
+
+- `ten` và `tuoi` là thuộc tính
+- `gioiThieu()` là phương thức
+- `hv1` là một object
+
+## Cách dùng constructor trong C++
+
+Constructor giúp object có dữ liệu ngay khi được tạo.
+
+```cpp
+class SanPham {
+public:
+    string ten;
+    int gia;
+
+    SanPham(string t, int g) {
+        ten = t;
+        gia = g;
+    }
+};
+
+int main() {
+    SanPham sp1("Ban phim", 500000);
+    cout << sp1.ten << endl;
+    return 0;
+}
+```
+
+Đây là cách rất phổ biến khi làm việc với object thực tế.
+
+## Struct và class trong C++ khác nhau thế nào?
+
+Về mặt cú pháp cơ bản, `struct` và `class` khá giống nhau. Điểm khác phổ biến nhất với người mới là:
+
+- `struct` mặc định `public`
+- `class` mặc định `private`
+
+Trong bài đầu tiên về OOP, bạn chỉ cần nhớ như vậy là đủ.
+
+## Những lỗi thường gặp với class trong C++
+
+- Quên dấu `;` sau khi kết thúc class.
+- Nhầm giữa class và object.
+- Quên khai báo `public:` nên không truy cập được thuộc tính hoặc phương thức.
+
+Ví dụ cần nhớ:
+
+```cpp
+class Test {
+public:
+    int x;
+};
+```
+
+Class trong C++ luôn cần dấu `;` ở cuối.
+
+## Bài tập thực hành
+
+Tạo class `SinhVien` với:
+
+- Thuộc tính `ten`
+- Thuộc tính `diem`
+- Phương thức `hienThi()` để in thông tin sinh viên
+
+Sau đó tạo 2 object khác nhau từ class này.
+
+## Câu hỏi thường gặp về class trong C++
+
+### Khi nào nên dùng class trong C++?
+
+Hãy dùng class khi dữ liệu và hành vi liên quan chặt với nhau, ví dụ học viên, sản phẩm, đơn hàng, hoặc tài khoản người dùng.
+
+### Constructor có bắt buộc không?
+
+Không bắt buộc trong mọi class, nhưng rất hữu ích khi bạn muốn object có giá trị rõ ràng ngay từ lúc tạo ra.
+
+## Tóm tắt
+
+Bạn đã biết class trong C++ là gì, cách tạo object, thêm phương thức và dùng constructor cơ bản. Ở bài tiếp theo, chúng ta sẽ học **đọc ghi file trong C++** để lưu dữ liệu ra ngoài chương trình.

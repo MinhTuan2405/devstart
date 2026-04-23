@@ -1,0 +1,110 @@
+---
+title: "Nhập xuất dữ liệu trong Python với input và print"
+description: "Tìm hiểu cách nhập xuất dữ liệu trong Python bằng input, print, ép kiểu và f-string qua ví dụ đơn giản cho người mới."
+slug: "nhap-xuat-du-lieu-python"
+course: "python"
+order: 12
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["nhập xuất dữ liệu trong python", "input trong python", "print trong python", "f-string python", "nhập dữ liệu python cho người mới"]
+publishedAt: "2024-01-26"
+---
+
+## Nhập xuất dữ liệu trong Python là gì?
+
+Nhập xuất dữ liệu trong Python là cách chương trình nhận thông tin từ người dùng và hiển thị kết quả ra màn hình. Đây là bước rất quan trọng vì từ bài này trở đi, chương trình của bạn không còn “đứng yên” mà có thể tương tác trực tiếp với người dùng.
+
+Hai công cụ cơ bản nhất là `input()` và `print()`.
+
+## Cú pháp cơ bản của input và print trong Python
+
+```python
+ten = input("Nhập tên của bạn: ")
+print("Xin chào", ten)
+```
+
+`input()` luôn trả về dữ liệu dạng chuỗi, kể cả khi người dùng nhập số.
+
+```python
+tuoi = input("Nhập tuổi của bạn: ")
+print(type(tuoi))
+```
+
+Vì vậy, nếu muốn tính toán với số, bạn cần ép kiểu.
+
+## Cách dùng input trong Python với ép kiểu dữ liệu
+
+```python
+so_a = int(input("Nhập số a: "))
+so_b = int(input("Nhập số b: "))
+
+print("Tổng là:", so_a + so_b)
+```
+
+Bạn cũng có thể dùng `float()` nếu dữ liệu là số thực.
+
+```python
+chieu_cao = float(input("Nhập chiều cao: "))
+print(chieu_cao)
+```
+
+## Cách in dữ liệu đẹp hơn bằng f-string
+
+`f-string` giúp câu lệnh in dễ đọc hơn rất nhiều.
+
+```python
+ten = "Minh"
+tuoi = 20
+
+print(f"Bạn tên là {ten} và {tuoi} tuổi")
+```
+
+Với người mới, `f-string` thường là cách dễ dùng nhất khi cần ghép văn bản với biến.
+
+## Những lỗi thường gặp khi nhập xuất dữ liệu trong Python
+
+- Quên ép kiểu nên cộng hai chuỗi thay vì hai số.
+- Nhập chữ nhưng lại ép sang `int`, gây lỗi.
+- Dùng quá nhiều phép ghép chuỗi khiến code khó đọc.
+
+Ví dụ dễ nhầm:
+
+```python
+a = input("Nhập số a: ")
+b = input("Nhập số b: ")
+
+print(a + b)
+```
+
+Nếu nhập `2` và `3`, kết quả sẽ là `23`, không phải `5`.
+
+## Bài tập thực hành
+
+Viết chương trình:
+
+- Nhập họ tên người dùng
+- Nhập tuổi
+- In ra câu giới thiệu bằng f-string
+
+Gợi ý:
+
+```python
+ten = input("Nhập tên: ")
+tuoi = int(input("Nhập tuổi: "))
+
+# In ra câu giới thiệu ở đây
+```
+
+## Câu hỏi thường gặp về nhập xuất dữ liệu trong Python
+
+### Vì sao `input()` trong Python luôn trả về chuỗi?
+
+Vì `input()` được thiết kế để nhận dữ liệu văn bản từ bàn phím. Sau đó, bạn tự quyết định ép kiểu sang `int`, `float`, hoặc giữ nguyên dạng chuỗi tùy mục đích sử dụng.
+
+### Khi nào nên dùng f-string?
+
+Hãy dùng f-string khi bạn cần chèn biến vào trong câu văn theo cách gọn, rõ, và dễ đọc. Đây là cách rất phổ biến trong code Python hiện đại.
+
+## Tóm tắt
+
+Bạn đã biết cách nhập xuất dữ liệu trong Python bằng `input()`, `print()`, ép kiểu, và `f-string`. Ở bài tiếp theo, chúng ta sẽ học **module trong Python** để chia code thành nhiều phần có thể tái sử dụng.

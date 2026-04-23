@@ -1,0 +1,101 @@
+---
+title: "JSON trong Python: đọc và ghi dữ liệu có cấu trúc"
+description: "Học cách làm việc với JSON trong Python bằng json.loads, json.dumps và đọc ghi file JSON qua ví dụ thực tế."
+slug: "json-python"
+course: "python"
+order: 19
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["json trong python", "cách dùng json python", "json.loads python", "json.dumps python", "đọc file json python"]
+publishedAt: "2024-02-02"
+---
+
+## JSON trong Python là gì?
+
+JSON trong Python thường được dùng để trao đổi hoặc lưu dữ liệu có cấu trúc, ví dụ thông tin người dùng, danh sách sản phẩm, hoặc dữ liệu API. Với người mới, bạn có thể hiểu JSON là một định dạng văn bản rất giống dictionary trong Python, nên học khá dễ.
+
+Rất nhiều ứng dụng web, API, và file cấu hình đều dùng JSON.
+
+## Cú pháp cơ bản để xử lý JSON trong Python
+
+Python có module chuẩn `json`.
+
+```python
+import json
+
+du_lieu = '{"ten": "Minh", "tuoi": 20}'
+nguoi_dung = json.loads(du_lieu)
+
+print(nguoi_dung["ten"])
+```
+
+`json.loads()` dùng để chuyển chuỗi JSON thành object Python.
+
+## Cách ghi dữ liệu Python thành JSON
+
+Bạn có thể dùng `json.dumps()` để chuyển dictionary thành chuỗi JSON.
+
+```python
+import json
+
+thong_tin = {
+    "ten": "Lan",
+    "diem": 8.5
+}
+
+json_text = json.dumps(thong_tin, ensure_ascii=False)
+print(json_text)
+```
+
+Nếu muốn hiển thị đẹp hơn, có thể thêm `indent=2`.
+
+## Cách đọc ghi file JSON trong Python
+
+```python
+import json
+
+du_lieu = {"khoa_hoc": "Python", "cap_do": "Co ban"}
+
+with open("data.json", "w", encoding="utf-8") as file:
+    json.dump(du_lieu, file, ensure_ascii=False, indent=2)
+
+with open("data.json", "r", encoding="utf-8") as file:
+    ket_qua = json.load(file)
+    print(ket_qua)
+```
+
+Đây là cách bạn sẽ dùng rất nhiều khi làm việc với file cấu hình hoặc dữ liệu lưu trữ đơn giản.
+
+## Những lỗi thường gặp với JSON trong Python
+
+- Nhầm giữa dictionary Python và chuỗi JSON.
+- Quên import module `json`.
+- Dùng nháy đơn trong JSON thay vì nháy kép.
+
+Ví dụ JSON hợp lệ phải dùng nháy kép:
+
+```python
+du_lieu = '{"ten": "An"}'
+```
+
+## Bài tập thực hành
+
+Tạo một dictionary lưu thông tin một học viên gồm tên, tuổi, và khóa học. Sau đó:
+
+- Ghi dữ liệu ra file `hoc_vien.json`
+- Đọc lại file đó
+- In ra nội dung đọc được
+
+## Câu hỏi thường gặp về JSON trong Python
+
+### `json.loads()` và `json.load()` khác nhau thế nào?
+
+`json.loads()` dùng khi đầu vào là chuỗi JSON. `json.load()` dùng khi bạn đọc JSON trực tiếp từ file.
+
+### Khi nào nên dùng JSON thay vì file text thường?
+
+Hãy dùng JSON khi dữ liệu có cấu trúc rõ ràng, ví dụ key-value hoặc danh sách object. Nó phù hợp hơn nhiều so với file text thuần khi dữ liệu bắt đầu có nhiều trường.
+
+## Tóm tắt
+
+Bạn đã học JSON trong Python, cách chuyển đổi giữa JSON và object Python, cũng như đọc ghi file JSON. Ở bài tiếp theo, chúng ta sẽ dùng các kiến thức đã học để làm **dự án Python đầu tiên**.

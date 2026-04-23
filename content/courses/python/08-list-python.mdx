@@ -1,0 +1,108 @@
+---
+title: "List trong Python: tạo, truy cập và cập nhật"
+description: "Tìm hiểu list trong Python, cách thêm, sửa, xóa phần tử và duyệt danh sách bằng vòng lặp cho người mới bắt đầu."
+slug: "list-python"
+course: "python"
+order: 8
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["list trong python", "cách dùng list trong python", "thêm phần tử vào list python", "duyệt list python", "list python cho người mới"]
+publishedAt: "2024-01-22"
+---
+
+## List trong Python là gì?
+
+List trong Python là kiểu dữ liệu dùng để lưu nhiều giá trị trong cùng một biến. Nếu bạn muốn lưu danh sách môn học, điểm số, hoặc việc cần làm, thì `list` là lựa chọn cơ bản và rất dễ dùng cho người mới.
+
+Khác với biến thường chỉ chứa một giá trị, list giúp bạn gom nhiều phần tử lại để xử lý cùng lúc.
+
+## Cú pháp cơ bản của list trong Python
+
+```python
+mon_hoc = ["Python", "HTML", "C++"]
+
+print(mon_hoc)
+print(mon_hoc[0])
+print(len(mon_hoc))
+```
+
+Trong ví dụ trên:
+
+- List được đặt trong dấu `[]`.
+- Mỗi phần tử cách nhau bằng dấu phẩy.
+- Chỉ số bắt đầu từ `0`.
+
+## Cách thêm và sửa phần tử trong list Python
+
+Bạn có thể dùng `append()` để thêm phần tử vào cuối list.
+
+```python
+cong_viec = ["Học Python", "Làm bài tập"]
+
+cong_viec.append("Đọc tài liệu")
+cong_viec[0] = "Ôn Python cơ bản"
+
+print(cong_viec)
+```
+
+Bạn cũng có thể xóa phần tử bằng `remove()` hoặc `pop()`.
+
+## Cách duyệt list Python bằng vòng lặp
+
+`for` là cách phổ biến nhất để đi qua từng phần tử trong list.
+
+```python
+so = [3, 5, 8, 10]
+
+for item in so:
+    print(item)
+```
+
+Nếu cần cả vị trí lẫn giá trị, bạn có thể dùng `enumerate()` sau này. Với người mới, chỉ cần duyệt từng phần tử trước là đủ.
+
+## Những lỗi thường gặp với list trong Python
+
+- Truy cập vị trí không tồn tại nên bị lỗi `IndexError`.
+- Nhầm giữa `append()` và `extend()`.
+- Quên rằng chỉ số đầu tiên là `0`, không phải `1`.
+
+Ví dụ:
+
+```python
+trai_cay = ["Táo", "Cam"]
+
+# Sai vì list chỉ có 2 phần tử, vị trí hợp lệ là 0 và 1
+# print(trai_cay[2])
+
+print(trai_cay[1])
+```
+
+## Bài tập thực hành
+
+Tạo một list lưu 3 món ăn yêu thích. Sau đó:
+
+- In ra món đầu tiên
+- Thêm một món mới vào cuối list
+- Duyệt toàn bộ list để in từng món
+
+Gợi ý:
+
+```python
+mon_an = ["Phở", "Bún bò", "Cơm tấm"]
+
+# Hãy tiếp tục từ đây
+```
+
+## Câu hỏi thường gặp về list trong Python
+
+### List và tuple trong Python khác nhau thế nào?
+
+List có thể thay đổi được sau khi tạo, còn tuple thì không. Nếu bạn cần thêm, sửa, xóa dữ liệu thường xuyên, list sẽ phù hợp hơn.
+
+### Khi nào nên dùng `append()`?
+
+Hãy dùng `append()` khi bạn chỉ muốn thêm đúng một phần tử vào cuối danh sách. Đây là thao tác rất phổ biến khi nhận dữ liệu mới từ người dùng.
+
+## Tóm tắt
+
+Bạn đã biết cách tạo list trong Python, truy cập phần tử, thêm dữ liệu mới, và duyệt danh sách bằng vòng lặp. Ở bài tiếp theo, chúng ta sẽ học **dictionary trong Python** để lưu dữ liệu theo cặp khóa và giá trị.

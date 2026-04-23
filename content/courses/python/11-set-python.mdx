@@ -1,0 +1,104 @@
+---
+title: "Set trong Python: lưu dữ liệu không trùng lặp"
+description: "Học set trong Python, cách tạo set, thêm xóa phần tử và xử lý dữ liệu không trùng lặp cho người mới bắt đầu."
+slug: "set-python"
+course: "python"
+order: 11
+duration: "16 phút"
+difficulty: "Dễ"
+keywords: ["set trong python", "set python là gì", "cách dùng set trong python", "dữ liệu không trùng lặp python", "set python cho người mới"]
+publishedAt: "2024-01-25"
+---
+
+## Set trong Python là gì?
+
+Set trong Python là kiểu dữ liệu dùng để lưu các phần tử không trùng lặp. Nếu bạn cần loại bỏ giá trị lặp, kiểm tra một phần tử có tồn tại hay không, hoặc làm việc với tập hợp dữ liệu, set là công cụ rất hữu ích.
+
+Hiểu đơn giản: list lưu theo thứ tự, còn set ưu tiên tính duy nhất của dữ liệu.
+
+## Cú pháp cơ bản của set trong Python
+
+Set thường được viết trong dấu `{}`.
+
+```python
+mon_hoc = {"Python", "HTML", "Python", "C++"}
+
+print(mon_hoc)
+```
+
+Kết quả chỉ còn một giá trị `Python` vì set tự loại bỏ phần tử trùng.
+
+Bạn cũng có thể tạo set từ list:
+
+```python
+so = [1, 2, 2, 3, 3, 3]
+tap_so = set(so)
+
+print(tap_so)
+```
+
+## Cách dùng set trong Python để loại bỏ dữ liệu trùng
+
+Đây là ứng dụng phổ biến nhất của set.
+
+```python
+email = ["a@gmail.com", "b@gmail.com", "a@gmail.com"]
+
+email_khong_trung = set(email)
+print(email_khong_trung)
+```
+
+Bạn cũng có thể thêm và xóa phần tử.
+
+```python
+tags = {"python", "web"}
+tags.add("backend")
+tags.remove("web")
+
+print(tags)
+```
+
+## Những lỗi thường gặp với set trong Python
+
+- Mong set giữ nguyên thứ tự phần tử như list.
+- Cố truy cập phần tử bằng chỉ số như `set[0]`.
+- Nhầm `{}` rỗng là set, trong khi Python hiểu đó là dictionary rỗng.
+
+Ví dụ tạo set rỗng đúng cách:
+
+```python
+tap_rong = set()
+print(type(tap_rong))
+```
+
+## Khi nào nên dùng set thay vì list?
+
+- Khi bạn cần dữ liệu không trùng lặp.
+- Khi muốn kiểm tra phần tử có tồn tại nhanh hơn.
+- Khi không quá quan trọng thứ tự phần tử.
+
+Nếu bạn cần giữ thứ tự và cho phép trùng lặp, list vẫn là lựa chọn phù hợp hơn.
+
+## Bài tập thực hành
+
+Cho list sau:
+
+```python
+mon_hoc = ["Python", "HTML", "Python", "CSS", "HTML"]
+```
+
+Hãy chuyển list này thành set để loại bỏ phần tử trùng, sau đó in kết quả ra màn hình.
+
+## Câu hỏi thường gặp về set trong Python
+
+### Set trong Python có truy cập bằng chỉ số được không?
+
+Không. Set không hỗ trợ chỉ số như list hoặc tuple vì nó không lưu dữ liệu theo vị trí cố định.
+
+### Khi nào set hữu ích nhất với người mới?
+
+Set rất hữu ích khi bạn cần loại bỏ dữ liệu bị lặp, ví dụ danh sách email, tag, tên môn học, hoặc mã sản phẩm.
+
+## Tóm tắt
+
+Bạn đã hiểu set trong Python là gì, cách tạo set, loại bỏ dữ liệu trùng lặp, và khi nào nên dùng set thay vì list. Ở bài tiếp theo, chúng ta sẽ học **nhập xuất dữ liệu trong Python** để chương trình có thể tương tác với người dùng.

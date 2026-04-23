@@ -1,0 +1,106 @@
+---
+title: "Reference trong C++: tham chiếu dễ hiểu hơn con trỏ"
+description: "Học reference trong C++, cách tạo tham chiếu, truyền tham chiếu vào hàm và phân biệt reference với pointer."
+slug: "reference-cpp"
+course: "cpp"
+order: 10
+duration: "18 phút"
+difficulty: "Trung bình"
+keywords: ["reference trong c++", "tham chiếu trong c++ là gì", "truyền tham chiếu trong c++", "reference và pointer c++", "reference c++ cho người mới"]
+publishedAt: "2024-01-27"
+---
+
+## Reference trong C++ là gì?
+
+Reference trong C++ là một tên gọi khác cho cùng một vùng dữ liệu đã có sẵn. Bạn có thể xem reference như “bí danh” của biến gốc. So với pointer, reference thường dễ đọc hơn và rất hay dùng khi truyền dữ liệu vào hàm.
+
+Nếu pointer làm việc với địa chỉ, thì reference tập trung vào việc dùng chung cùng một giá trị.
+
+## Cú pháp cơ bản của reference trong C++
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int x = 10;
+    int& y = x;
+
+    cout << x << endl;
+    cout << y << endl;
+    return 0;
+}
+```
+
+Trong ví dụ trên, `y` không phải bản sao của `x`. Nó là một tên khác của chính `x`.
+
+```cpp
+int x = 10;
+int& y = x;
+
+y = 50;
+cout << x << endl;
+```
+
+Khi đổi `y`, giá trị của `x` cũng đổi theo.
+
+## Cách dùng reference trong C++ khi truyền tham số
+
+Reference rất hữu ích khi bạn muốn hàm thay đổi trực tiếp biến gốc.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void tangLenMot(int& so) {
+    so++;
+}
+
+int main() {
+    int x = 7;
+    tangLenMot(x);
+    cout << x << endl;
+    return 0;
+}
+```
+
+Vì tham số là reference, hàm `tangLenMot` tác động trực tiếp lên biến ban đầu.
+
+## Reference và pointer trong C++ khác nhau thế nào?
+
+- Reference dễ đọc hơn trong nhiều trường hợp cơ bản.
+- Pointer có thể trỏ chỗ khác hoặc để `nullptr`, reference thì không.
+- Reference thường hay dùng cho tham số hàm.
+
+Với người mới, reference thường là bước “mềm” hơn trước khi đi sâu hơn vào pointer nâng cao.
+
+## Những lỗi thường gặp với reference trong C++
+
+- Nghĩ rằng reference là bản sao của biến.
+- Khai báo reference mà không gắn ngay với biến.
+- Nhầm `&` trong reference với `&` lấy địa chỉ.
+
+Ví dụ reference phải gắn ngay khi khai báo:
+
+```cpp
+int x = 5;
+int& y = x;
+```
+
+## Bài tập thực hành
+
+Viết hàm `hoanDoi(int& a, int& b)` để đổi chỗ giá trị của hai biến. Sau đó gọi hàm này trong `main()`.
+
+## Câu hỏi thường gặp về reference trong C++
+
+### Reference có thể đổi sang trỏ biến khác không?
+
+Không. Sau khi reference đã gắn với một biến, nó sẽ luôn tham chiếu đến biến đó.
+
+### Khi nào nên dùng reference thay vì pointer?
+
+Hãy dùng reference khi bạn chỉ cần làm việc trực tiếp với biến gốc theo cách gọn hơn, đặc biệt là khi truyền tham số vào hàm.
+
+## Tóm tắt
+
+Bạn đã hiểu reference trong C++, biết cách tạo tham chiếu và dùng nó để thay đổi biến gốc trong hàm. Ở bài tiếp theo, chúng ta sẽ học **vector trong C++** để có cấu trúc dữ liệu linh hoạt hơn mảng thường.

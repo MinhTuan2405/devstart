@@ -1,0 +1,108 @@
+---
+title: "Dự án C++ đầu tiên: chương trình quản lý sinh viên"
+description: "Thực hành dự án C++ đầu tiên bằng chương trình quản lý sinh viên, kết hợp vector, hàm, class và file text."
+slug: "du-an-cpp-dau-tien"
+course: "cpp"
+order: 14
+duration: "25 phút"
+difficulty: "Trung bình"
+keywords: ["dự án c++ đầu tiên", "mini project c++", "ứng dụng console c++", "project c++ đơn giản", "thực hành c++ cuối khóa"]
+publishedAt: "2024-01-31"
+---
+
+## Dự án C++ đầu tiên nên bắt đầu từ đâu?
+
+Dự án C++ đầu tiên nên đủ nhỏ để bạn hoàn thành, nhưng vẫn phải dùng lại nhiều kiến thức đã học. Một chương trình quản lý sinh viên là lựa chọn rất phù hợp vì bạn có thể kết hợp `class`, `vector`, hàm, nhập xuất, và đọc ghi file trong cùng một bài.
+
+Đây là lúc bạn chuyển từ bài tập rời rạc sang một chương trình hoàn chỉnh.
+
+## Ý tưởng mini project C++
+
+Chương trình sẽ có các chức năng cơ bản:
+
+- Thêm sinh viên
+- Hiển thị danh sách sinh viên
+- Lưu dữ liệu ra file
+
+Trước tiên, tạo class `SinhVien`.
+
+```cpp
+class SinhVien {
+public:
+    string ten;
+    float diem;
+};
+```
+
+Sau đó dùng `vector<SinhVien>` để lưu nhiều sinh viên.
+
+## Cấu trúc cơ bản của dự án C++ đầu tiên
+
+Bạn nên tách thành các hàm rõ ràng.
+
+```cpp
+void hienThiMenu() {
+    cout << "1. Them sinh vien" << endl;
+    cout << "2. Xem danh sach" << endl;
+    cout << "3. Thoat" << endl;
+}
+```
+
+Hàm thêm sinh viên có thể viết như sau:
+
+```cpp
+void themSinhVien(vector<SinhVien>& ds) {
+    SinhVien sv;
+    cout << "Nhap ten: ";
+    cin >> sv.ten;
+    cout << "Nhap diem: ";
+    cin >> sv.diem;
+    ds.push_back(sv);
+}
+```
+
+## Cách lưu dữ liệu dự án C++ ra file
+
+```cpp
+void luuFile(const vector<SinhVien>& ds) {
+    ofstream file("sinhvien.txt");
+    for (int i = 0; i < ds.size(); i++) {
+        file << ds[i].ten << " - " << ds[i].diem << endl;
+    }
+    file.close();
+}
+```
+
+Đây là bước làm cho project hữu ích hơn thay vì chỉ chạy xong là mất hết dữ liệu.
+
+## Những lỗi thường gặp khi làm mini project C++
+
+- Viết mọi thứ trong `main()` khiến code rất rối.
+- Không tách hàm cho từng chức năng.
+- Không dùng `vector` nên khó quản lý danh sách.
+- Quên lưu dữ liệu ra file.
+
+Với project đầu tiên, hãy ưu tiên chạy được và dễ hiểu trước. Không cần cố làm quá phức tạp.
+
+## Bài tập thực hành
+
+Hoàn thiện chương trình với các yêu cầu:
+
+- Có menu ít nhất 3 chức năng
+- Dùng `class` để lưu thông tin sinh viên
+- Dùng `vector` để lưu danh sách
+- Có hàm lưu dữ liệu ra file
+
+## Câu hỏi thường gặp về dự án C++ đầu tiên
+
+### Vì sao nên làm project ngay sau khi học cú pháp cơ bản?
+
+Vì project giúp bạn nối các kiến thức rời rạc thành một chương trình thật. Đây là cách tốt nhất để phát hiện mình đã hiểu hay mới chỉ nhớ lý thuyết.
+
+### Dự án đầu tiên có cần giao diện đồ họa không?
+
+Không cần. Ứng dụng console là quá đủ để luyện logic, cấu trúc chương trình, xử lý dữ liệu, và làm việc với file.
+
+## Tóm tắt
+
+Bạn đã hoàn thành ý tưởng cho dự án C++ đầu tiên bằng cách kết hợp class, vector, hàm, và file vào một chương trình quản lý sinh viên. Đây là nền tảng rất tốt để bạn bắt đầu làm các bài toán C++ thực tế hơn sau khóa học.

@@ -1,0 +1,106 @@
+---
+title: "Đọc ghi file trong Python với open và with"
+description: "Học cách đọc ghi file trong Python bằng open, with, read, write và xử lý file text qua ví dụ thực tế."
+slug: "doc-ghi-file-python"
+course: "python"
+order: 15
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["đọc ghi file trong python", "open trong python", "with open python", "ghi file text python", "đọc file python cho người mới"]
+publishedAt: "2024-01-29"
+---
+
+## Đọc ghi file trong Python là gì?
+
+Đọc ghi file trong Python là cách chương trình lưu dữ liệu ra ngoài bộ nhớ tạm và lấy lại khi cần. Nhờ làm việc với file, bạn có thể lưu danh sách công việc, ghi log, đọc dữ liệu cấu hình, hoặc xử lý văn bản từ file thật trên máy.
+
+Đây là bước chuyển quan trọng từ bài tập nhỏ sang ứng dụng thực tế.
+
+## Cú pháp cơ bản của open trong Python
+
+Bạn có thể mở file bằng `open()`.
+
+```python
+file = open("ghi_chu.txt", "r", encoding="utf-8")
+noi_dung = file.read()
+print(noi_dung)
+file.close()
+```
+
+Tuy nhiên, cách an toàn hơn là dùng `with`.
+
+```python
+with open("ghi_chu.txt", "r", encoding="utf-8") as file:
+    noi_dung = file.read()
+    print(noi_dung)
+```
+
+`with` giúp tự đóng file sau khi dùng xong.
+
+## Cách ghi file text trong Python
+
+```python
+with open("ket_qua.txt", "w", encoding="utf-8") as file:
+    file.write("Xin chào Python")
+```
+
+Nếu muốn thêm nội dung vào cuối file thay vì ghi đè, hãy dùng chế độ `a`.
+
+```python
+with open("ket_qua.txt", "a", encoding="utf-8") as file:
+    file.write("\nDong moi")
+```
+
+## Khi nào nên dùng with open trong Python?
+
+`with open` gần như là cách nên dùng mặc định vì:
+
+- An toàn hơn
+- Không quên đóng file
+- Code gọn hơn
+
+Bạn sẽ gặp cách này thường xuyên trong project thật.
+
+## Những lỗi thường gặp khi đọc file trong Python
+
+- Mở file không đúng đường dẫn.
+- Quên `encoding="utf-8"` khi làm việc với tiếng Việt.
+- Dùng chế độ `w` rồi vô tình ghi đè toàn bộ nội dung cũ.
+
+Ví dụ nên cẩn thận:
+
+```python
+with open("du_lieu.txt", "w", encoding="utf-8") as file:
+    file.write("Noi dung moi")
+```
+
+Lệnh trên sẽ xóa nội dung cũ và ghi lại từ đầu.
+
+## Bài tập thực hành
+
+Tạo file `todo.txt`, sau đó viết chương trình:
+
+- Ghi 3 công việc vào file
+- Đọc lại nội dung từ file
+- In kết quả ra màn hình
+
+Gợi ý:
+
+```python
+with open("todo.txt", "w", encoding="utf-8") as file:
+    file.write("Hoc Python\nLam bai tap\nDoc tai lieu")
+```
+
+## Câu hỏi thường gặp về đọc ghi file trong Python
+
+### `r`, `w`, `a` trong Python khác nhau thế nào?
+
+`r` dùng để đọc file, `w` dùng để ghi mới và có thể ghi đè nội dung cũ, còn `a` dùng để thêm nội dung vào cuối file.
+
+### Vì sao nên dùng `with open` thay vì `open` thường?
+
+Vì `with open` giúp Python tự đóng file sau khi xong việc. Cách này an toàn hơn và tránh lỗi quên đóng file trong các chương trình dài.
+
+## Tóm tắt
+
+Bạn đã biết cách đọc ghi file trong Python bằng `open()`, `with open()`, `read()`, và `write()`. Ở bài tiếp theo, chúng ta sẽ học **try except trong Python** để xử lý lỗi khi nhập sai dữ liệu hoặc mở file không tồn tại.

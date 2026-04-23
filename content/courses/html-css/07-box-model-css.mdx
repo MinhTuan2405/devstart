@@ -1,0 +1,111 @@
+---
+title: "Box model CSS: margin, border, padding, content"
+description: "Tìm hiểu box model CSS và cách dùng margin, padding, border để kiểm soát khoảng cách và kích thước phần tử."
+slug: "box-model-css"
+course: "html-css"
+order: 7
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["box model css", "margin padding border css", "box model là gì", "margin và padding khác nhau", "box model css cho người mới"]
+publishedAt: "2024-01-26"
+---
+
+## Box model CSS là gì?
+
+Box model CSS là cách trình duyệt hiểu kích thước và khoảng cách của mỗi phần tử trên trang web. Mỗi phần tử HTML được xem như một cái hộp gồm nội dung, khoảng đệm, đường viền, và khoảng cách bên ngoài.
+
+Nếu bạn từng thắc mắc vì sao một phần tử bị lệch hoặc to hơn mong đợi, nguyên nhân rất thường nằm ở box model.
+
+## Cấu trúc cơ bản của box model CSS
+
+Box model gồm 4 phần:
+
+- `content`: nội dung bên trong
+- `padding`: khoảng cách từ nội dung tới viền
+- `border`: đường viền
+- `margin`: khoảng cách với phần tử bên ngoài
+
+```css
+.card {
+  width: 300px;
+  padding: 20px;
+  border: 1px solid #cbd5e1;
+  margin: 24px;
+}
+```
+
+## Cách dùng margin và padding trong CSS
+
+```html
+<div class="card">Noi dung the</div>
+```
+
+```css
+.card {
+  background-color: #f8fafc;
+  padding: 16px;
+  margin-top: 20px;
+}
+```
+
+Bạn có thể hiểu nhanh như sau:
+
+- `padding` làm nội dung “thoáng” hơn bên trong hộp
+- `margin` tạo khoảng cách giữa hộp này với hộp khác
+
+## Vì sao box model làm phần tử to hơn mong đợi?
+
+Nếu bạn đặt `width: 300px` rồi thêm `padding` và `border`, kích thước hiển thị thực tế có thể lớn hơn `300px`.
+
+```css
+.box {
+  width: 300px;
+  padding: 20px;
+  border: 2px solid black;
+}
+```
+
+Để dễ kiểm soát hơn, bạn sẽ thường thấy thêm:
+
+```css
+* {
+  box-sizing: border-box;
+}
+```
+
+## Những lỗi thường gặp với box model CSS
+
+- Nhầm giữa `margin` và `padding`.
+- Đặt `width` rồi quên rằng `padding` làm hộp to hơn.
+- Chỉ chỉnh một cạnh nhưng lại mong toàn bộ hộp thay đổi đều.
+
+## Bài tập thực hành
+
+Tạo một `div` có class `card`. Sau đó:
+
+- Đặt `width: 320px`
+- Thêm `padding: 20px`
+- Thêm `border`
+- Thêm `margin-top: 24px`
+
+Gợi ý:
+
+```css
+.card {
+  width: 320px;
+}
+```
+
+## Câu hỏi thường gặp về box model CSS
+
+### `margin` và `padding` khác nhau thế nào?
+
+`padding` là khoảng cách bên trong phần tử, giữa nội dung và viền. `margin` là khoảng cách bên ngoài, giữa phần tử này với phần tử khác.
+
+### `box-sizing: border-box` dùng để làm gì?
+
+Nó giúp trình duyệt tính luôn `padding` và `border` vào bên trong kích thước đã khai báo. Nhờ vậy, việc kiểm soát chiều rộng và chiều cao sẽ dễ hơn nhiều.
+
+## Tóm tắt
+
+Bạn đã hiểu box model CSS gồm content, padding, border, và margin. Đây là nền tảng để làm layout không bị lệch khó hiểu. Ở bài tiếp theo, chúng ta sẽ học **display, position và overflow** để hiểu sâu hơn cách phần tử hiển thị và nằm trên trang.

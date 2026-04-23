@@ -1,0 +1,129 @@
+---
+title: "CSS selector, màu sắc và chữ cho người mới"
+description: "Học cách chọn phần tử bằng CSS selector, đổi màu, chỉnh cỡ chữ và áp dụng style cơ bản vào trang HTML."
+slug: "css-selector-va-mau-sac"
+course: "html-css"
+order: 6
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["css selector", "selector trong css là gì", "class và id trong css", "đổi màu chữ bằng css", "css selector cho người mới"]
+publishedAt: "2024-01-25"
+---
+
+## CSS selector là gì?
+
+CSS selector là cách bạn chọn phần tử HTML để áp dụng style. Nếu không hiểu selector, bạn sẽ không biết CSS đang nhắm vào phần nào của trang.
+
+Người mới thường bắt đầu với 3 kiểu selector: theo tên thẻ, theo class, và theo id.
+
+## Cú pháp cơ bản của CSS selector
+
+```css
+h1 {
+  color: blue;
+}
+
+.title {
+  font-size: 28px;
+}
+
+#hero {
+  background-color: #eff6ff;
+}
+```
+
+Trong đó:
+
+- `h1` chọn tất cả thẻ `h1`
+- `.title` chọn phần tử có class `title`
+- `#hero` chọn phần tử có id `hero`
+
+## Cách dùng class và id trong CSS
+
+```html
+<h1 class="title">Học HTML/CSS</h1>
+<section id="hero">
+  <p>Trang đầu tiên của tôi</p>
+</section>
+```
+
+```css
+.title {
+  color: #1d4ed8;
+}
+
+#hero {
+  background-color: #dbeafe;
+}
+```
+
+`class` thường dùng cho nhiều phần tử giống nhau. `id` thường dùng cho một phần tử duy nhất trên trang.
+
+## Cách đổi màu và chỉnh chữ bằng CSS
+
+```css
+body {
+  color: #334155;
+  font-family: Arial, sans-serif;
+}
+
+p {
+  font-size: 18px;
+  line-height: 1.6;
+}
+```
+
+Những thuộc tính bạn sẽ dùng nhiều:
+
+- `color`: màu chữ
+- `background-color`: màu nền
+- `font-size`: cỡ chữ
+- `font-family`: font chữ
+
+## Những lỗi thường gặp với CSS selector
+
+- Quên thêm dấu `.` cho class hoặc `#` cho id.
+- Viết sai tên class giữa HTML và CSS.
+- Dùng id lặp lại ở nhiều nơi trên cùng một trang.
+
+Ví dụ cần thống nhất:
+
+```html
+<p class="intro">Xin chào</p>
+```
+
+```css
+.intro {
+  color: green;
+}
+```
+
+## Bài tập thực hành
+
+Tạo một tiêu đề `h1`, một đoạn `p`, và một `div` có class `card`. Sau đó:
+
+- Đổi màu tiêu đề
+- Tăng cỡ chữ đoạn văn
+- Thêm màu nền cho `.card`
+
+Gợi ý:
+
+```css
+.card {
+  background-color: #f8fafc;
+}
+```
+
+## Câu hỏi thường gặp về CSS selector
+
+### Nên dùng `class` hay `id` khi mới học?
+
+Hãy ưu tiên `class` vì nó linh hoạt và dùng lại được cho nhiều phần tử. `id` phù hợp hơn khi bạn cần đánh dấu một phần tử duy nhất.
+
+### Có thể đổi màu chữ và màu nền cùng lúc không?
+
+Có. Bạn chỉ cần khai báo cả `color` và `background-color` trong cùng một selector.
+
+## Tóm tắt
+
+Bạn đã biết CSS selector là gì, cách dùng `class` và `id`, cùng các thuộc tính cơ bản để đổi màu và định dạng chữ. Ở bài tiếp theo, chúng ta sẽ học **box model CSS** để hiểu cách phần tử chiếm không gian trên trang.

@@ -1,0 +1,128 @@
+---
+title: "Dự án HTML CSS đầu tiên: tạo landing page đơn giản"
+description: "Thực hành dự án HTML CSS đầu tiên bằng cách tạo landing page đơn giản, responsive và có bố cục rõ ràng cho người mới."
+slug: "landing-page-html-css"
+course: "html-css"
+order: 11
+duration: "25 phút"
+difficulty: "Dễ"
+keywords: ["landing page html css", "tạo landing page bằng html css", "dự án html css đầu tiên", "project html css cho người mới", "mini project html css"]
+publishedAt: "2024-01-30"
+---
+
+## Dự án HTML CSS đầu tiên nên làm gì?
+
+Dự án HTML CSS đầu tiên nên đủ nhỏ để bạn hoàn thành trong một buổi, nhưng cũng đủ thực tế để luyện bố cục, màu sắc, khoảng cách, và responsive. Một landing page đơn giản là lựa chọn rất phù hợp vì bạn có thể gom gần như toàn bộ kiến thức cơ bản vào cùng một trang.
+
+Mục tiêu của bài này là làm ra một trang hoàn chỉnh, không phải một giao diện quá phức tạp.
+
+## Cấu trúc cơ bản của landing page HTML CSS
+
+Bạn có thể chia landing page thành các phần sau:
+
+- Header
+- Hero section
+- Phần lợi ích
+- Nút kêu gọi hành động
+- Footer
+
+Ví dụ HTML cơ bản:
+
+```html
+<header>
+  <h1>DevStart</h1>
+</header>
+
+<main>
+  <section class="hero">
+    <h2>Hoc lap trinh de hieu hon</h2>
+    <p>Noi dung gioi thieu ngan gon.</p>
+    <a href="#" class="btn">Bat dau ngay</a>
+  </section>
+</main>
+
+<footer>Ban quyen 2024</footer>
+```
+
+## Cách tạo layout landing page bằng CSS
+
+Bạn có thể bắt đầu với một số style cơ bản như sau:
+
+```css
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  color: #0f172a;
+}
+
+.hero {
+  padding: 64px 20px;
+  text-align: center;
+  background: #eff6ff;
+}
+
+.btn {
+  display: inline-block;
+  padding: 12px 20px;
+  background: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+}
+```
+
+Đây là đủ để tạo một trang đầu tiên gọn gàng, có điểm nhấn, và dễ đọc.
+
+## Cách làm landing page HTML CSS responsive
+
+Bạn có thể dùng flexbox và media query để chuyển từ 1 cột sang nhiều cột ở màn hình lớn.
+
+```css
+.benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .benefits {
+    flex-direction: row;
+  }
+}
+```
+
+Với project đầu tiên, chỉ cần responsive rõ ràng ở các phần chính là đã rất tốt.
+
+## Những lỗi thường gặp khi làm landing page HTML CSS
+
+- Thêm quá nhiều section làm trang rối.
+- Dùng quá nhiều màu và font khác nhau.
+- Quên khoảng trắng nên nội dung bị bí.
+- Không test trên mobile.
+
+Hãy ưu tiên trang ngắn, rõ, dễ nhìn trước. Đẹp vừa đủ và đọc tốt quan trọng hơn hiệu ứng phức tạp.
+
+## Bài tập thực hành
+
+Tạo một landing page gồm:
+
+- Header có logo đơn giản
+- Hero section có tiêu đề, mô tả, nút CTA
+- 3 ô lợi ích
+- Footer ngắn gọn
+
+Sau đó thêm media query để phần lợi ích xếp 1 cột trên mobile và 3 cột trên desktop.
+
+## Câu hỏi thường gặp về dự án HTML CSS đầu tiên
+
+### Vì sao nên làm landing page trước khi học framework?
+
+Vì landing page giúp bạn luyện nền tảng HTML, CSS, layout, spacing, và responsive mà không phụ thuộc vào thư viện ngoài. Khi nền tảng chắc, học framework sẽ dễ hơn nhiều.
+
+### Landing page đầu tiên có cần animation không?
+
+Không cần. Với người mới, một layout sạch, dễ đọc, và responsive đã là kết quả rất tốt. Animation chỉ nên thêm sau khi cấu trúc và khoảng cách đã ổn.
+
+## Tóm tắt
+
+Bạn đã có định hướng rõ ràng để làm landing page HTML CSS đầu tiên bằng cách kết hợp semantic HTML, CSS cơ bản, flexbox, và responsive. Đây là cột mốc rất tốt để bạn bắt đầu tự làm các trang web nhỏ hoàn chỉnh.

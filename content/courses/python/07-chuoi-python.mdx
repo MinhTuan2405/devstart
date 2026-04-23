@@ -1,0 +1,121 @@
+---
+title: "Chuỗi trong Python: nối, cắt và xử lý văn bản"
+description: "Học cách làm việc với chuỗi trong Python, từ nối chuỗi, cắt chuỗi đến các phương thức xử lý văn bản cơ bản."
+slug: "chuoi-python"
+course: "python"
+order: 7
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["chuỗi trong python", "string trong python là gì", "nối chuỗi trong python", "cắt chuỗi trong python", "phương thức string python"]
+publishedAt: "2024-01-21"
+---
+
+## Chuỗi trong Python là gì?
+
+Chuỗi trong Python là kiểu dữ liệu dùng để lưu văn bản, ví dụ tên người dùng, email, tin nhắn, hoặc nội dung nhập từ bàn phím. Hầu hết chương trình thực tế đều phải xử lý chuỗi, nên đây là kỹ năng rất quan trọng với người mới.
+
+Chuỗi thường được đặt trong dấu nháy đơn `' '` hoặc nháy kép `" "`.
+
+## Cú pháp cơ bản của chuỗi trong Python
+
+```python
+ten = "DevStart"
+loi_chao = 'Xin chào'
+
+print(ten)
+print(loi_chao)
+print(len(ten))
+```
+
+Bạn cũng có thể truy cập từng ký tự bằng chỉ số:
+
+```python
+text = "Python"
+
+print(text[0])   # P
+print(text[1:4]) # yth
+```
+
+`text[0]` lấy ký tự đầu tiên, còn `text[1:4]` cắt một đoạn chuỗi.
+
+## Cách dùng nối chuỗi trong Python
+
+Có 2 cách phổ biến để nối chuỗi:
+
+```python
+ho = "Nguyen"
+ten = "An"
+
+print(ho + " " + ten)
+print(f"Xin chào {ho} {ten}")
+```
+
+Với người mới, `f-string` thường dễ đọc hơn vì bạn không phải ghép nhiều dấu `+` liên tục.
+
+## Cách xử lý văn bản bằng phương thức string Python
+
+Chuỗi trong Python có nhiều phương thức tiện lợi:
+
+```python
+email = "  Hello@DevStart.vn  "
+
+print(email.lower())
+print(email.strip())
+print(email.replace("DevStart", "Python"))
+```
+
+Bạn sẽ hay dùng:
+
+- `.lower()` để chuyển sang chữ thường.
+- `.strip()` để bỏ khoảng trắng ở đầu và cuối.
+- `.replace()` để thay thế nội dung.
+
+## Những lỗi thường gặp với chuỗi trong Python
+
+- Cộng chuỗi với số mà chưa ép kiểu.
+- Truy cập vị trí không tồn tại nên bị `IndexError`.
+- Quên xử lý khoảng trắng khi nhận dữ liệu nhập vào.
+
+Ví dụ dễ nhầm:
+
+```python
+tuoi = 20
+
+# Sai
+# print("Tuổi của bạn là: " + tuoi)
+
+# Đúng
+print("Tuổi của bạn là: " + str(tuoi))
+```
+
+## Bài tập thực hành
+
+Cho biến `ho_ten = "  nguyen van a  "`.
+
+Hãy viết code để:
+
+- Bỏ khoảng trắng thừa
+- Chuyển thành chữ thường
+- In ra độ dài chuỗi sau khi đã làm sạch
+
+Gợi ý:
+
+```python
+ho_ten = "  nguyen van a  "
+
+# Hãy xử lý chuỗi ở đây
+```
+
+## Câu hỏi thường gặp về chuỗi trong Python
+
+### `len()` trong Python dùng để làm gì?
+
+`len()` trả về độ dài của chuỗi, nghĩa là số ký tự đang có trong chuỗi đó. Hàm này rất hữu ích khi kiểm tra độ dài mật khẩu, tên người dùng, hoặc văn bản nhập vào.
+
+### Khi nào nên dùng f-string?
+
+Hãy dùng f-string khi bạn muốn chèn biến vào trong câu chữ một cách gọn gàng và dễ đọc. Đây là cách rất phổ biến trong Python hiện đại.
+
+## Tóm tắt
+
+Bạn đã học cách tạo chuỗi, nối chuỗi, cắt chuỗi, và dùng một số phương thức string Python để xử lý văn bản. Ở bài tiếp theo, chúng ta sẽ học **list trong Python** để lưu nhiều giá trị trong cùng một biến.

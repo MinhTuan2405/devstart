@@ -1,0 +1,127 @@
+---
+title: "CSS là gì? Cách gắn CSS vào HTML"
+description: "Tìm hiểu CSS là gì, CSS dùng để làm gì và 3 cách gắn CSS vào HTML: inline, internal và external."
+slug: "gioi-thieu-css"
+course: "html-css"
+order: 5
+duration: "16 phút"
+difficulty: "Dễ"
+keywords: ["css là gì", "cách chèn css vào html", "inline css", "internal css", "external css"]
+publishedAt: "2024-01-24"
+---
+
+## CSS là gì?
+
+CSS là ngôn ngữ dùng để tạo kiểu cho trang web, ví dụ đổi màu chữ, chỉnh kích thước, căn lề, hoặc sắp xếp bố cục. Nếu HTML tạo ra cấu trúc, thì CSS giúp cấu trúc đó nhìn đẹp hơn và dễ dùng hơn.
+
+Nói ngắn gọn: HTML là bộ khung, CSS là phần trang trí.
+
+## Cú pháp cơ bản của CSS
+
+Một rule CSS thường có 2 phần: selector và thuộc tính.
+
+```css
+h1 {
+  color: blue;
+  font-size: 32px;
+}
+```
+
+Trong đó:
+
+- `h1` là selector, nghĩa là chọn thẻ `h1`
+- `color` và `font-size` là thuộc tính
+
+## Cách gắn CSS vào HTML
+
+Có 3 cách phổ biến để chèn CSS vào HTML.
+
+### Inline CSS
+
+```html
+<h1 style="color: blue;">Xin chào</h1>
+```
+
+### Internal CSS
+
+```html
+<head>
+  <style>
+    h1 {
+      color: blue;
+    }
+  </style>
+</head>
+```
+
+### External CSS
+
+```html
+<head>
+  <link rel="stylesheet" href="style.css">
+</head>
+```
+
+Với project thật, bạn nên ưu tiên external CSS vì dễ quản lý hơn.
+
+## Vì sao nên dùng external CSS?
+
+External CSS giúp:
+
+- Tách riêng nội dung và giao diện
+- Dễ sửa nhiều trang cùng lúc
+- Giữ file HTML gọn hơn
+
+Ví dụ file `style.css`:
+
+```css
+body {
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  color: #2563eb;
+}
+```
+
+## Những lỗi thường gặp khi mới học CSS
+
+- Quên liên kết file CSS bằng thẻ `link`.
+- Sai đường dẫn tới file `style.css`.
+- Thiếu dấu `;` sau thuộc tính.
+
+Ví dụ nên kiểm tra kỹ:
+
+```html
+<link rel="stylesheet" href="style.css">
+```
+
+Nếu `href` sai, CSS sẽ không được áp dụng.
+
+## Bài tập thực hành
+
+Tạo file `index.html` và `style.css`. Sau đó:
+
+- Liên kết `style.css` vào HTML
+- Đổi màu tiêu đề `h1`
+- Đổi font cho toàn bộ trang
+
+Gợi ý:
+
+```html
+<link rel="stylesheet" href="style.css">
+```
+
+## Câu hỏi thường gặp về CSS
+
+### Nên học HTML xong rồi mới học CSS đúng không?
+
+Đúng. Bạn nên nắm cấu trúc HTML cơ bản trước, vì CSS luôn áp dụng lên các phần tử HTML đã có.
+
+### Khi nào nên dùng inline CSS?
+
+Inline CSS chỉ nên dùng cho ví dụ rất ngắn hoặc thử nhanh. Với code thật, external CSS sẽ dễ bảo trì hơn nhiều.
+
+## Tóm tắt
+
+Bạn đã hiểu CSS là gì và biết 3 cách gắn CSS vào HTML. Quan trọng nhất là nên quen với external CSS để tách giao diện ra khỏi nội dung. Ở bài tiếp theo, chúng ta sẽ học **CSS selector, màu sắc và chữ** để bắt đầu tạo kiểu cho từng phần tử.

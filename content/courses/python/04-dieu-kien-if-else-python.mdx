@@ -1,0 +1,118 @@
+---
+title: "Câu lệnh if else trong Python cho người mới"
+description: "Học cách dùng if else trong Python, kết hợp elif và điều kiện logic để xử lý nhiều tình huống khác nhau."
+slug: "dieu-kien-if-else-python"
+course: "python"
+order: 4
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["câu lệnh if else trong python", "if else python là gì", "cách dùng if else trong python", "elif trong python", "if else python cho người mới"]
+publishedAt: "2024-01-18"
+---
+
+## Câu lệnh if else trong Python là gì?
+
+Câu lệnh `if else` trong Python giúp chương trình đưa ra quyết định dựa trên điều kiện đúng hay sai. Đây là một trong những phần quan trọng nhất cho người mới, vì gần như mọi chương trình thực tế đều cần kiểm tra điều kiện trước khi làm gì tiếp theo.
+
+Ví dụ rất quen thuộc: nếu điểm lớn hơn hoặc bằng 5 thì đậu, ngược lại thì rớt.
+
+## Cú pháp cơ bản của câu lệnh if else trong Python
+
+```python
+diem = 7
+
+if diem >= 5:
+    print("Bạn đã đậu")
+else:
+    print("Bạn cần ôn thêm")
+```
+
+Bạn cần nhớ 3 điểm:
+
+- Điều kiện đứng sau `if` phải trả về `True` hoặc `False`.
+- Sau `if` và `else` luôn có dấu `:`.
+- Khối lệnh bên trong phải được thụt đầu dòng đúng.
+
+## Cách dùng elif trong Python
+
+Khi có nhiều trường hợp khác nhau, bạn dùng `elif` để tránh viết nhiều `if` rời rạc.
+
+```python
+diem = 8.5
+
+if diem >= 9:
+    print("Xuất sắc")
+elif diem >= 7:
+    print("Khá")
+elif diem >= 5:
+    print("Trung bình")
+else:
+    print("Cần cố gắng thêm")
+```
+
+`elif` rất phù hợp khi bạn cần phân loại mức điểm, độ tuổi, hạng thành viên, hoặc trạng thái đơn hàng.
+
+## Cách dùng if else trong Python với nhiều điều kiện
+
+Bạn có thể kết hợp `if else` với toán tử logic để kiểm tra nhiều điều kiện cùng lúc.
+
+```python
+tuoi = 20
+co_cccd = True
+
+if tuoi >= 18 and co_cccd:
+    print("Bạn có thể đăng ký")
+else:
+    print("Bạn chưa đủ điều kiện")
+```
+
+Nếu bài toán lớn hơn, bạn nên đặt tên biến rõ nghĩa để điều kiện dễ đọc hơn.
+
+## Những lỗi thường gặp với câu lệnh if else trong Python
+
+- Quên dấu `:` ở cuối dòng `if`, `elif`, hoặc `else`.
+- Thụt đầu dòng sai nên Python báo lỗi.
+- Dùng `=` thay vì `==` khi muốn so sánh.
+
+Ví dụ đúng và sai:
+
+```python
+tuoi = 18
+
+# Sai
+# if tuoi = 18
+
+# Đúng
+if tuoi == 18:
+    print("Bạn vừa tròn 18 tuổi")
+```
+
+## Bài tập thực hành
+
+Viết chương trình kiểm tra một số là:
+
+- Số dương
+- Số âm
+- Hoặc bằng 0
+
+Gợi ý:
+
+```python
+so = -5
+
+# Hãy dùng if, elif, else để xử lý
+```
+
+## Câu hỏi thường gặp về câu lệnh if else trong Python
+
+### Có thể dùng `if` mà không cần `else` không?
+
+Có. Nếu bạn chỉ muốn xử lý khi điều kiện đúng và không cần làm gì khi điều kiện sai, chỉ cần dùng `if` là đủ.
+
+### Khi nào nên dùng `elif` thay vì viết nhiều `if`?
+
+Hãy dùng `elif` khi các điều kiện loại trừ lẫn nhau, nghĩa là chỉ một nhánh được chạy. Cách này giúp code ngắn hơn và dễ đọc hơn.
+
+## Tóm tắt
+
+Bạn đã biết cách dùng `if else` trong Python để đưa ra quyết định, dùng `elif` cho nhiều trường hợp, và kết hợp điều kiện với toán tử logic. Ở bài tiếp theo, chúng ta sẽ học **vòng lặp for và while** để lặp lại công việc thay vì viết code nhiều lần.

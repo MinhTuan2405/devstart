@@ -1,0 +1,121 @@
+---
+title: "Dự án Python đầu tiên: ứng dụng quản lý việc cần làm"
+description: "Thực hành dự án Python đầu tiên bằng cách xây ứng dụng quản lý việc cần làm, kết hợp list, hàm, file và xử lý lỗi."
+slug: "du-an-python-dau-tien"
+course: "python"
+order: 20
+duration: "25 phút"
+difficulty: "Trung bình"
+keywords: ["dự án python đầu tiên", "mini project python", "ứng dụng python đơn giản", "project python cho người mới", "thực hành python cuối khóa"]
+publishedAt: "2024-02-03"
+---
+
+## Dự án Python đầu tiên nên làm gì?
+
+Dự án Python đầu tiên nên đủ đơn giản để bạn hoàn thành, nhưng cũng đủ thực tế để dùng lại nhiều kiến thức đã học. Một ứng dụng quản lý việc cần làm là lựa chọn rất phù hợp vì nó dùng được list, hàm, input, file, và xử lý lỗi trong cùng một bài.
+
+Mục tiêu của bài này không phải viết project “xịn”, mà là ghép các mảnh kiến thức lại thành một chương trình hoàn chỉnh.
+
+## Ý tưởng dự án Python đầu tiên
+
+Chúng ta sẽ làm ứng dụng console quản lý việc cần làm với các chức năng:
+
+- Thêm công việc
+- Xem danh sách công việc
+- Lưu ra file
+- Đọc lại từ file khi cần
+
+Bạn có thể bắt đầu bằng một list đơn giản.
+
+```python
+cong_viec = []
+```
+
+## Cấu trúc cơ bản của mini project Python
+
+Trước tiên, tạo các hàm riêng cho từng việc.
+
+```python
+def hien_thi_menu():
+    print("1. Them cong viec")
+    print("2. Xem cong viec")
+    print("3. Thoat")
+
+def them_cong_viec(ds):
+    ten = input("Nhap cong viec moi: ")
+    ds.append(ten)
+```
+
+Sau đó, viết vòng lặp menu chính:
+
+```python
+cong_viec = []
+
+while True:
+    hien_thi_menu()
+    lua_chon = input("Chon chuc nang: ")
+
+    if lua_chon == "1":
+        them_cong_viec(cong_viec)
+    elif lua_chon == "2":
+        print(cong_viec)
+    elif lua_chon == "3":
+        break
+    else:
+        print("Lua chon khong hop le")
+```
+
+## Cách lưu dự án Python đầu tiên ra file
+
+Để project hữu ích hơn, bạn có thể ghi danh sách công việc ra file text.
+
+```python
+def luu_cong_viec(ds):
+    with open("todo.txt", "w", encoding="utf-8") as file:
+        for item in ds:
+            file.write(item + "\n")
+```
+
+Bạn cũng có thể viết hàm đọc lại dữ liệu từ file lúc khởi động chương trình.
+
+## Những lỗi thường gặp khi làm mini project Python
+
+- Viết mọi thứ trong một khối code dài mà không tách hàm.
+- Không kiểm tra đầu vào từ người dùng.
+- Quên lưu dữ liệu nên khi chạy lại chương trình mọi thứ bị mất.
+
+Hãy ưu tiên code rõ ràng và chạy được trước. Đừng cố thêm quá nhiều tính năng ngay từ đầu.
+
+## Bài tập thực hành
+
+Hoàn thiện project với các yêu cầu:
+
+- Có menu ít nhất 3 chức năng
+- Dùng ít nhất 2 hàm riêng
+- Lưu công việc ra file
+- Bắt lỗi nếu người dùng nhập lựa chọn không hợp lệ
+
+Gợi ý:
+
+```python
+def hien_thi_cong_viec(ds):
+    if not ds:
+        print("Chua co cong viec nao")
+    else:
+        for item in ds:
+            print("-", item)
+```
+
+## Câu hỏi thường gặp về dự án Python đầu tiên
+
+### Vì sao nên làm mini project sớm?
+
+Vì mini project giúp bạn ghép kiến thức rời rạc thành một sản phẩm chạy được. Đây là cách học rất hiệu quả để hiểu mình còn hổng ở đâu và cần luyện thêm phần nào.
+
+### Dự án Python đầu tiên có cần giao diện đẹp không?
+
+Không cần. Với người mới, ứng dụng console là quá đủ để luyện logic, chia hàm, xử lý input, và làm việc với file.
+
+## Tóm tắt
+
+Bạn đã hoàn thành dự án Python đầu tiên bằng cách kết hợp list, hàm, input, file, và xử lý lỗi vào một chương trình quản lý việc cần làm. Đây là cột mốc rất tốt để bạn bắt đầu tự xây các project nhỏ tiếp theo bằng Python.

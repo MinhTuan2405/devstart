@@ -1,0 +1,110 @@
+---
+title: "Pointer trong C++: hiểu con trỏ từ đầu"
+description: "Tìm hiểu pointer trong C++, địa chỉ biến, toán tử * và & qua ví dụ dễ hiểu dành cho người mới bắt đầu."
+slug: "pointer-cpp"
+course: "cpp"
+order: 9
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["pointer trong c++", "con trỏ trong c++ là gì", "toán tử * và & trong c++", "địa chỉ biến trong c++", "pointer c++ cho người mới"]
+publishedAt: "2024-01-26"
+---
+
+## Pointer trong C++ là gì?
+
+Pointer trong C++ là biến dùng để lưu địa chỉ bộ nhớ của biến khác. Nghe có vẻ khó lúc đầu, nhưng nếu hiểu pointer là “biến trỏ tới nơi đang chứa dữ liệu”, bạn sẽ thấy nó hợp lý hơn nhiều. Đây là phần quan trọng để học tiếp reference, mảng động, và nhiều khái niệm nâng cao khác.
+
+Với người mới, mục tiêu đầu tiên là hiểu địa chỉ và cách trỏ tới dữ liệu.
+
+## Cú pháp cơ bản của pointer trong C++
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int x = 10;
+    int* p = &x;
+
+    cout << x << endl;
+    cout << &x << endl;
+    cout << p << endl;
+    return 0;
+}
+```
+
+Trong ví dụ trên:
+
+- `&x` là địa chỉ của biến `x`
+- `int* p` nghĩa là `p` là con trỏ tới kiểu `int`
+- `p` đang lưu địa chỉ của `x`
+
+## Cách dùng toán tử * và & trong C++
+
+Toán tử `&` lấy địa chỉ, còn `*` lấy giá trị tại địa chỉ đó.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int x = 25;
+    int* p = &x;
+
+    cout << *p << endl;
+
+    *p = 50;
+    cout << x << endl;
+    return 0;
+}
+```
+
+Khi bạn thay đổi `*p`, giá trị thật của `x` cũng thay đổi vì `p` đang trỏ trực tiếp vào `x`.
+
+## Khi nào pointer trong C++ hữu ích?
+
+- Khi cần làm việc trực tiếp với địa chỉ bộ nhớ
+- Khi truyền dữ liệu vào hàm để thay đổi biến gốc
+- Khi làm việc với mảng, cấp phát động, hoặc cấu trúc dữ liệu nâng cao
+
+Ở giai đoạn này, bạn chưa cần đi quá sâu. Chỉ cần hiểu pointer là cầu nối giữa biến và địa chỉ của nó.
+
+## Những lỗi thường gặp với pointer trong C++
+
+- Dùng con trỏ chưa gán địa chỉ hợp lệ.
+- Nhầm giữa `p` và `*p`.
+- Trỏ sai kiểu dữ liệu.
+
+Ví dụ cần tránh:
+
+```cpp
+int* p;
+
+// Sai vi p chua tro den dia chi hop le
+// cout << *p << endl;
+```
+
+Hãy luôn đảm bảo pointer đã được gán đúng trước khi dereference.
+
+## Bài tập thực hành
+
+Tạo một biến `so = 100`, sau đó tạo pointer trỏ tới biến này. Hãy:
+
+- In giá trị của `so`
+- In địa chỉ của `so`
+- In giá trị thông qua pointer
+- Dùng pointer để đổi giá trị của `so` thành `200`
+
+## Câu hỏi thường gặp về pointer trong C++
+
+### `p` và `*p` khác nhau thế nào?
+
+`p` là địa chỉ mà con trỏ đang lưu. `*p` là giá trị nằm tại địa chỉ đó. Đây là khác biệt quan trọng nhất khi mới học pointer.
+
+### Vì sao pointer bị xem là khó?
+
+Vì pointer liên quan trực tiếp đến bộ nhớ và địa chỉ, trong khi người mới thường quen nghĩ ở mức biến và giá trị. Khi bạn tách rõ “địa chỉ” và “giá trị”, pointer sẽ dễ hiểu hơn rất nhiều.
+
+## Tóm tắt
+
+Bạn đã hiểu pointer trong C++ là gì, cách dùng `&` và `*`, và cách con trỏ tương tác trực tiếp với biến gốc. Ở bài tiếp theo, chúng ta sẽ học **reference trong C++** để thấy một cách khác gắn với dữ liệu mà cú pháp dễ đọc hơn.
