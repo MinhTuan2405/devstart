@@ -29,8 +29,8 @@ export default function BlogPage() {
 
   return (
     <>
-      <div className="border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white px-4 py-12">
-        <div className="mx-auto max-w-6xl">
+      <div className="border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white px-4 py-12 sm:px-6 xl:px-8">
+        <div className="site-frame">
           <span className="mb-3 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-700">
             Blog
           </span>
@@ -43,7 +43,7 @@ export default function BlogPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="site-container py-10">
         <BlogFilter />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

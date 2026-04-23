@@ -10,9 +10,14 @@ export interface Heading {
  */
 function toHeadingId(text: string): string {
   return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
     .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
 }
 
 /**
@@ -21,20 +26,29 @@ function toHeadingId(text: string): string {
  */
 export function extractHeadings(content: string): Heading[] {
   const headings: Heading[] = []
-  const lines = content.split('\n')
+  const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const lines = normalizedContent.split('\n')
+  let inCodeFence = false
 
   for (const line of lines) {
+    if (/^\s*```/.test(line)) {
+      inCodeFence = !inCodeFence
+      continue
+    }
+
+    if (inCodeFence) continue
+
     // Bỏ qua heading bên trong code block
     if (line.startsWith('    ') || line.startsWith('\t')) continue
 
-    const h3Match = line.match(/^### (.+)$/)
+    const h3Match = line.match(/^\s*###\s+(.+)$/)
     if (h3Match) {
       const text = h3Match[1].trim()
       headings.push({ id: toHeadingId(text), text, level: 3 })
       continue
     }
 
-    const h2Match = line.match(/^## (.+)$/)
+    const h2Match = line.match(/^\s*##\s+(.+)$/)
     if (h2Match) {
       const text = h2Match[1].trim()
       headings.push({ id: toHeadingId(text), text, level: 2 })

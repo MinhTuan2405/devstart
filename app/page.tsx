@@ -143,7 +143,7 @@ export default function HomePage() {
       </section>
 
       {/* Courses Section */}
-      <section className="relative mx-auto max-w-6xl px-4 py-20">
+      <section className="relative site-container py-20">
         <div className="mb-12 text-center">
           <span className="mb-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-700">
             Khóa học
@@ -168,9 +168,9 @@ export default function HomePage() {
 
       {/* Blog Section */}
       {recentPosts.length > 0 && (
-        <section className="relative bg-slate-50/80 px-4 py-20">
+        <section className="relative bg-slate-50/80 px-4 py-20 sm:px-6 xl:px-8">
           <div className="pattern-dots pointer-events-none absolute inset-0 opacity-30" />
-          <div className="relative mx-auto max-w-6xl">
+          <div className="relative site-frame">
             <div className="mb-12 text-center">
               <span className="mb-3 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-700">
                 Blog
@@ -197,7 +197,7 @@ export default function HomePage() {
       )}
 
       {/* Why Us Section */}
-      <section className="mx-auto max-w-6xl px-4 py-20">
+      <section className="site-container py-20">
         <div className="mb-12 text-center">
           <span className="mb-3 inline-block rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-purple-700">
             Lợi ích

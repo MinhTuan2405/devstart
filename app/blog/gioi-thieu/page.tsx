@@ -27,7 +27,7 @@ export default function GioiThieuPage() {
   const posts = getBlogPostsByCategory('gioi-thieu')
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
+    <div className="site-container py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">Giới thiệu công nghệ</h1>
         <p className="mt-2 text-slate-500">Khám phá các công nghệ và công cụ mới nhất.</p>

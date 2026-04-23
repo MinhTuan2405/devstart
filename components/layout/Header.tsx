@@ -11,13 +11,14 @@ export default function Header() {
   const navLinks = [
     { href: '/', label: 'Trang chủ' },
     { href: '/khoa-hoc', label: 'Khóa học' },
+    { href: '/interview', label: 'Interview' },
     { href: '/blog', label: 'Blog' },
     { href: '/gioi-thieu', label: 'Giới thiệu' },
   ]
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <div className="site-container flex items-center justify-between py-3">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
             D

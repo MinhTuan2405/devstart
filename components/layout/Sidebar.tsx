@@ -14,14 +14,14 @@ export default function Sidebar({ lessons, courseName, courseSlug }: SidebarProp
   const pathname = usePathname()
 
   return (
-    <aside className="sticky top-20 hidden h-fit w-72 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
+    <aside className="sticky top-24 hidden h-fit w-80 shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
       <div className="border-b border-slate-100 bg-gradient-to-r from-blue-50 to-white px-5 py-4">
         <h3 className="text-sm font-bold text-slate-900">
           📚 {courseName}
         </h3>
         <p className="mt-0.5 text-xs text-slate-500">{lessons.length} bài học</p>
       </div>
-      <nav className="max-h-[60vh] overflow-y-auto p-2">
+      <nav className="max-h-[calc(100vh-8rem)] overflow-y-auto p-2">
         {lessons.map((lesson, index) => {
           const href = `/khoa-hoc/${courseSlug}/${lesson.slug}`
           const isActive = pathname === href

@@ -43,8 +43,8 @@ export default function HtmlCssCoursePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="hero-gradient px-4 py-12">
-        <div className="mx-auto max-w-6xl">
+      <div className="hero-gradient px-4 py-12 sm:px-6 xl:px-8">
+        <div className="site-frame">
           <nav className="mb-8 text-sm text-slate-600">
             <Link href="/" className="hover:text-blue-600">
               Trang chủ
@@ -82,7 +82,7 @@ export default function HtmlCssCoursePage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-12">
+      <div className="site-container py-12">
         <div className="space-y-3">
           {course?.lessons.map((lesson, index) => (
             <LessonCard key={lesson.slug} lesson={lesson} courseSlug="html-css" index={index} />

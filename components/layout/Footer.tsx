@@ -3,7 +3,7 @@ import Link from 'next/link'
 export default function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-slate-900 text-slate-400">
-      <div className="mx-auto max-w-6xl px-4 py-12">
+      <div className="site-container py-12">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2">
@@ -71,6 +71,11 @@ export default function Footer() {
               <li>
                 <Link href="/blog" className="text-sm transition-colors hover:text-white">
                   Tất cả bài viết
+                </Link>
+              </li>
+              <li>
+                <Link href="/interview" className="text-sm transition-colors hover:text-white">
+                  Interview
                 </Link>
               </li>
             </ul>

@@ -27,7 +27,7 @@ export default function HuongDanPage() {
   const posts = getBlogPostsByCategory('huong-dan')
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
+    <div className="site-container py-12">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">Hướng dẫn</h1>
         <p className="mt-2 text-slate-500">Các bài hướng dẫn lập trình chi tiết.</p>
