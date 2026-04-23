@@ -92,8 +92,8 @@ export default function HtmlCssLessonPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white px-4 py-8">
-        <div className="mx-auto max-w-6xl">
+      <div className="border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white px-4 py-8 sm:px-6 xl:px-8">
+        <div className="site-frame">
           <nav className="text-sm text-slate-500">
             <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
             <span className="mx-2">/</span>
@@ -116,13 +116,11 @@ export default function HtmlCssLessonPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="flex gap-10">
+      <div className="site-container py-10">
+        <div className="flex gap-8 xl:gap-10 2xl:gap-12">
           <Sidebar lessons={allLessons} courseName="HTML/CSS" courseSlug="html-css" />
 
           <article className="min-w-0 flex-1">
-            <TableOfContents headings={headings} variant="inline" />
-
             <div
               className="prose prose-slate max-w-none prose-headings:font-bold prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-a:text-blue-600 prose-pre:bg-[#1E293B] prose-pre:rounded-xl prose-pre:border prose-pre:border-slate-700"
               dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(lesson.content) }}
@@ -141,6 +139,8 @@ export default function HtmlCssLessonPage({ params }: PageProps) {
               </div>
             )}
           </article>
+
+          <TableOfContents headings={headings} variant="sidebar" />
         </div>
       </div>
     </>

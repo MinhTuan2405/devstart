@@ -32,7 +32,7 @@ export default function CoursesPage() {
 
   return (
     <section className="py-16">
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="site-container">
         <div className="mb-10">
           <span className="mb-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-700">
             Khóa học

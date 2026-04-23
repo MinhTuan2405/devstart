@@ -109,7 +109,7 @@ export default function BlogPostPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <div className="mx-auto max-w-6xl px-4 py-12">
+      <div className="site-container py-12">
         <nav className="mb-6 text-sm text-slate-500">
           <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
           <span className="mx-2">/</span>
@@ -118,7 +118,7 @@ export default function BlogPostPage({ params }: PageProps) {
           <span className="text-slate-900">{post.frontmatter.title}</span>
         </nav>
 
-        <div className="flex gap-12">
+        <div className="flex gap-8 xl:gap-10 2xl:gap-12">
           <div className="min-w-0 flex-1">
             <article>
               <header className="mb-8">

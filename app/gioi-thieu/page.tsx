@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
+    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 xl:px-8">
       <h1 className="mb-6 text-3xl font-bold text-slate-900">Giới thiệu về DevStart</h1>
 
       <div className="prose prose-slate max-w-none">
