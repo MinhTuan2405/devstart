@@ -1,0 +1,180 @@
+---
+title: "K-means trong Machine Learning là gì?"
+description: "Giải thích K-means là gì, cách hoạt động, ưu nhược điểm, ví dụ Python và khi nào nên dùng K-means cho người mới."
+slug: "k-means-la-gi"
+course: "machine-learning"
+order: 19
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["K-means trong machine learning la gi", "k-means la gi", "thuat toan k-means la gi", "k-means clustering la gi", "k-means trong hoc may", "cach hoat dong cua k-means", "huong dan k-means cho nguoi moi", "vi du ve k-means", "uu nhuoc diem cua k-means", "ung dung cua k-means trong machine learning"]
+publishedAt: "2026-04-23"
+---
+
+## K-means trong machine learning là gì?
+
+K-means là một thuật toán clustering dùng để chia dữ liệu thành `K` cụm khác nhau dựa trên khoảng cách giữa các điểm dữ liệu và tâm cụm. Nói đơn giản, mô hình cố gắng gom những điểm gần nhau thành cùng một nhóm và điều chỉnh tâm cụm sao cho các nhóm đó hợp lý hơn.
+
+Với người mới, cách hiểu ngắn gọn về `K-means trong machine learning la gi` là: thuật toán tự chia dữ liệu thành nhiều nhóm bằng cách lặp đi lặp lại việc gán điểm vào cụm gần nhất.
+
+## K-means là gì?
+
+`K-means la gi`? Đây là thuật toán phân cụm phổ biến nhất trong nhập môn machine learning. Từ `K` là số cụm bạn muốn chia, còn `means` liên quan tới việc tính trung bình để xác định tâm cụm.
+
+Ví dụ:
+
+- Nếu `K = 2`, dữ liệu sẽ được chia thành 2 cụm.
+- Nếu `K = 3`, dữ liệu sẽ được chia thành 3 cụm.
+
+## Thuật toán K-means là gì và hoạt động ra sao?
+
+`Thuật toán k-means la gi` và `cach hoat dong cua k-means` có thể tóm gọn trong 4 bước:
+
+- Chọn số cụm `K`.
+- Chọn tâm cụm ban đầu.
+- Gán mỗi điểm vào cụm có tâm gần nhất.
+- Cập nhật lại tâm cụm bằng trung bình của các điểm trong cụm.
+
+Sau đó thuật toán lặp lại cho đến khi cụm không thay đổi nhiều nữa.
+
+Ví dụ trực giác bằng code đơn giản:
+
+```python
+X = [[1, 2], [2, 2], [2, 3], [8, 8], [9, 8], [8, 9]]
+K = 2
+
+print(X)
+print(K)
+```
+
+Đoạn code này chưa chạy K-means thật, nhưng nó giúp bạn hình dung dữ liệu đầu vào và số cụm mong muốn.
+
+## Ví dụ về K-means bằng Python
+
+Ví dụ phân cụm dữ liệu bằng `scikit-learn`:
+
+```python
+from sklearn.cluster import KMeans
+
+X = [[1, 2], [2, 2], [2, 3], [8, 8], [9, 8], [8, 9]]
+
+model = KMeans(n_clusters=2, random_state=42, n_init=10)
+model.fit(X)
+
+print(model.labels_)
+print(model.cluster_centers_)
+```
+
+Trong ví dụ này:
+
+- `n_clusters=2` nghĩa là chia thành 2 cụm.
+- `labels_` cho biết mỗi điểm thuộc cụm nào.
+- `cluster_centers_` là tọa độ tâm cụm sau khi thuật toán hội tụ.
+
+Đây là `vi du ve k-means` rất phù hợp cho người mới vì dễ liên hệ với trực giác chia nhóm điểm dữ liệu trên mặt phẳng.
+
+## K-means clustering là gì trong thực tế?
+
+`K-means clustering la gi` trong ngữ cảnh thực tế có thể thấy qua các ví dụ như:
+
+- Phân khúc khách hàng theo hành vi mua sắm.
+- Gom nhóm người dùng theo mức độ hoạt động.
+- Gom nhóm bài viết hoặc sản phẩm theo đặc trưng tương tự.
+- Hỗ trợ nén ảnh ở mức đơn giản.
+
+Đây là lý do `ung dung cua k-means trong machine learning` khá rộng, đặc biệt trong phân tích dữ liệu không nhãn.
+
+## Chọn số cụm K như thế nào?
+
+Đây là câu hỏi quan trọng nhất khi dùng K-means. Nếu chọn `K` quá nhỏ, các nhóm khác nhau có thể bị trộn lẫn. Nếu chọn `K` quá lớn, dữ liệu có thể bị chia vụn quá mức.
+
+Với người mới, bạn có thể:
+
+- Dùng hiểu biết về bài toán.
+- Quan sát dữ liệu nếu có thể vẽ.
+- Thử vài giá trị `K` rồi so sánh.
+
+Ví dụ thử nhiều giá trị:
+
+```python
+from sklearn.cluster import KMeans
+
+for k in [2, 3, 4]:
+    model = KMeans(n_clusters=k, random_state=42, n_init=10)
+    model.fit([[1, 2], [2, 2], [2, 3], [8, 8], [9, 8], [8, 9]])
+    print(k, model.labels_)
+```
+
+## Ưu điểm của K-means
+
+- Dễ hiểu, dễ triển khai.
+- Chạy khá nhanh.
+- Phù hợp cho bài toán clustering cơ bản.
+- Là điểm bắt đầu tốt nhất cho người mới học phân cụm.
+
+Đây là lý do `huong dan k-means cho nguoi moi` thường luôn xuất hiện trong mọi khóa học nhập môn unsupervised learning.
+
+## Nhược điểm của K-means
+
+`uu nhuoc diem cua k-means` cần nhìn cả điểm yếu:
+
+- Phải chọn trước số cụm `K`.
+- Nhạy với vị trí tâm cụm ban đầu.
+- Nhạy với outlier.
+- Hoạt động kém nếu cụm có hình dạng quá phức tạp.
+
+Ngoài ra, vì dựa trên khoảng cách, K-means thường cần chuẩn hóa dữ liệu nếu các feature có thang đo quá khác nhau.
+
+## Những lỗi thường gặp khi mới học K-means
+
+- Chọn `K` hoàn toàn theo cảm tính.
+- Không chuẩn hóa dữ liệu khi cần.
+- Nghĩ rằng cụm mô hình tạo ra chắc chắn có ý nghĩa nghiệp vụ.
+- Dùng K-means cho dữ liệu có cấu trúc cụm không phù hợp.
+
+Nếu tránh các lỗi này, bạn sẽ dùng K-means thực tế hơn rất nhiều.
+
+## Bài tập thực hành
+
+Hãy lấy một dataset nhỏ 2 chiều và thử:
+
+- Chạy K-means với `K = 2`.
+- Chạy lại với `K = 3`.
+- So sánh nhãn cụm nhận được.
+
+Bạn có thể bắt đầu với đoạn code sau:
+
+```python
+from sklearn.cluster import KMeans
+
+X = [[1, 1], [2, 1], [2, 2], [8, 8], [9, 8], [8, 9]]
+
+model = KMeans(n_clusters=2, random_state=42, n_init=10)
+model.fit(X)
+
+print(model.labels_)
+print(model.cluster_centers_)
+```
+
+Gợi ý: hãy tự hỏi nếu đổi `n_clusters` thì ý nghĩa của các cụm có thay đổi không.
+
+## Câu hỏi thường gặp về K-means
+
+### K-means là gì?
+
+K-means là thuật toán clustering dùng để chia dữ liệu thành `K` cụm dựa trên khoảng cách đến tâm cụm. Đây là thuật toán phân cụm phổ biến nhất cho người mới bắt đầu.
+
+### K-means clustering là gì?
+
+Đó là cách dùng K-means để gom các điểm dữ liệu tương tự nhau vào cùng một nhóm. Nó là một dạng học không giám sát rất phổ biến.
+
+### Cách hoạt động của K-means là gì?
+
+Thuật toán lặp lại hai bước chính: gán điểm vào cụm gần nhất và cập nhật lại tâm cụm. Quá trình này tiếp tục cho đến khi cụm ổn định hơn.
+
+### Ưu nhược điểm của K-means là gì?
+
+K-means dễ hiểu và nhanh, nhưng phải chọn trước số cụm và khá nhạy với outlier hoặc thang đo dữ liệu. Vì vậy nó mạnh trong nhiều bài toán, nhưng không phải lúc nào cũng phù hợp.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu K-means là gì, cách thuật toán hoạt động và vì sao nó là điểm bắt đầu rất tốt cho clustering. Sau khi nắm K-means, bạn đã có đủ nền tảng để thực hành một mini project hoàn chỉnh. Ở bài tiếp theo, chúng ta sẽ làm **dự án machine learning đầu tiên với scikit-learn** để ghép toàn bộ kiến thức đã học vào một quy trình thực tế.

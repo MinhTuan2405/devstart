@@ -33,6 +33,7 @@ export interface Lesson {
   frontmatter: LessonFrontmatter
   content: string
   slug: string
+  modifiedAt: string
 }
 
 export interface BlogPost {
@@ -40,6 +41,7 @@ export interface BlogPost {
   content: string
   slug: string
   readingTime: string
+  modifiedAt: string
 }
 
 function getMDXFiles(dir: string): string[] {
@@ -54,12 +56,14 @@ export function getLessonsByCourseName(courseName: string): Lesson[] {
   const lessons = files.map((filename) => {
     const filePath = path.join(dir, filename)
     const fileContent = fs.readFileSync(filePath, 'utf-8')
+    const fileStats = fs.statSync(filePath)
     const { data, content } = matter(fileContent)
 
     return {
       frontmatter: data as LessonFrontmatter,
       content,
       slug: data.slug || filename.replace('.mdx', ''),
+      modifiedAt: fileStats.mtime.toISOString(),
     }
   })
 
@@ -72,7 +76,7 @@ export function getLessonBySlug(courseName: string, slug: string): Lesson | null
 }
 
 export function getAllLessons(): Lesson[] {
-  const courseNames = ['python', 'cpp', 'html-css']
+  const courseNames = ['python', 'cpp', 'html-css', 'machine-learning']
   return courseNames.flatMap((name) => getLessonsByCourseName(name))
 }
 
@@ -83,6 +87,7 @@ export function getAllBlogPosts(): BlogPost[] {
   const posts = files.map((filename) => {
     const filePath = path.join(dir, filename)
     const fileContent = fs.readFileSync(filePath, 'utf-8')
+    const fileStats = fs.statSync(filePath)
     const { data, content } = matter(fileContent)
     const rt = readingTime(content)
 
@@ -91,6 +96,7 @@ export function getAllBlogPosts(): BlogPost[] {
       content,
       slug: data.slug || filename.replace('.mdx', ''),
       readingTime: data.readingTime || `${Math.ceil(rt.minutes)} phút`,
+      modifiedAt: fileStats.mtime.toISOString(),
     }
   })
 
@@ -134,5 +140,11 @@ export const courseInfo: Record<string, { name: string; description: string; ico
     description: 'Nền tảng để xây dựng giao diện website, bước đầu tiên vào web.',
     icon: '🌐',
     slug: 'html-css',
+  },
+  'machine-learning': {
+    name: 'Machine Learning',
+    description: 'Làm quen học máy, dữ liệu và cách xây dựng mô hình dự đoán từ cơ bản.',
+    icon: '🤖',
+    slug: 'machine-learning',
   },
 }

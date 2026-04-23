@@ -1,0 +1,223 @@
+---
+title: "Feature, Label, Dataset là gì trong Machine Learning?"
+description: "Giải thích feature, label, dataset là gì trong machine learning, cách phân biệt chúng và cách đọc dữ liệu ML cho người mới bắt đầu."
+slug: "feature-label-dataset-la-gi"
+course: "machine-learning"
+order: 4
+duration: "16 phút"
+difficulty: "Dễ"
+keywords: ["feature label dataset là gì", "dữ liệu trong machine learning là gì", "dataset trong machine learning là gì", "feature là gì trong machine learning", "label là gì trong machine learning", "phân biệt feature và label", "mối quan hệ giữa dataset feature label", "dữ liệu huấn luyện trong machine learning", "ví dụ feature label dataset", "cách đọc dữ liệu machine learning cho người mới", "supervised learning cần feature và label như thế nào"]
+publishedAt: "2026-04-23"
+---
+
+## Feature, label, dataset là gì?
+
+Feature, label, dataset là ba khái niệm nền tảng trong dữ liệu machine learning. `Dataset` là toàn bộ tập dữ liệu, `feature` là các thông tin đầu vào dùng để dự đoán, còn `label` là kết quả đúng mà mô hình cần học để dự đoán ra sau này.
+
+Nếu bạn chưa hiểu ba khái niệm này, việc học machine learning rất dễ bị rối. Nhưng khi hiểu rồi, bạn sẽ đọc dataset và code huấn luyện mô hình rõ ràng hơn rất nhiều.
+
+## Dataset trong machine learning là gì?
+
+Dataset là tập dữ liệu mà bạn dùng trong một bài toán machine learning. Nó thường được lưu dưới dạng bảng, trong đó:
+
+- Mỗi dòng là một mẫu dữ liệu.
+- Mỗi cột là một thuộc tính hoặc kết quả.
+
+Ví dụ dataset dự đoán giá nhà có thể gồm các cột như:
+
+- `dien_tich`
+- `so_phong_ngu`
+- `vi_tri`
+- `gia_nha`
+
+Trong đó, toàn bộ bảng này chính là `dataset`.
+
+Ví dụ tạo dataset rất đơn giản bằng Python:
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "dien_tich": [30, 45, 60],
+    "so_phong_ngu": [1, 2, 3],
+    "gia_nha": [1.2, 1.8, 2.7]
+})
+
+print(data)
+```
+
+Khi đọc dữ liệu machine learning cho người mới, bạn nên tập nhìn dataset như một bảng thông tin: mỗi hàng là một trường hợp thực tế, mỗi cột là một phần thông tin mô tả trường hợp đó.
+
+## Feature là gì trong machine learning?
+
+Feature là các đặc trưng đầu vào giúp mô hình đưa ra dự đoán. Nói đơn giản, feature là những gì mô hình được phép nhìn thấy trước khi trả lời.
+
+Trong ví dụ giá nhà:
+
+- `dien_tich` là một feature.
+- `so_phong_ngu` là một feature.
+- `vi_tri` cũng có thể là feature.
+
+Nếu mục tiêu là dự đoán giá nhà, thì các thông tin trên giúp mô hình học được mối quan hệ giữa thuộc tính của căn nhà và giá thật.
+
+## Label là gì trong machine learning?
+
+Label là kết quả đúng mà mô hình cần học để dự đoán. Trong supervised learning, label giống như đáp án mẫu.
+
+Ví dụ:
+
+- Nếu dự đoán giá nhà, `gia_nha` là label.
+- Nếu phân loại email spam, `spam` hoặc `khong_spam` là label.
+- Nếu dự đoán học sinh đậu hay rớt, `dau` hoặc `rot` là label.
+
+Vì vậy, khi ai đó hỏi `label là gì trong machine learning`, bạn có thể trả lời ngắn gọn: **label là kết quả đúng mà mô hình học để đoán cho dữ liệu mới**.
+
+## Phân biệt feature và label
+
+Đây là phần rất nhiều người mới hay nhầm.
+
+- Feature là đầu vào.
+- Label là đầu ra đúng.
+
+Hay nói cách khác:
+
+- Feature trả lời câu hỏi: "mô hình được nhìn thấy thông tin gì?"
+- Label trả lời câu hỏi: "mô hình cần học để dự đoán điều gì?"
+
+Ví dụ với bài toán điểm thi:
+
+- Feature: `so_gio_hoc`, `so_buoi_nghi`, `diem_giua_ky`
+- Label: `diem_cuoi_ky`
+
+Nếu bạn đảo lộn hai phần này, mô hình sẽ học sai hoặc không chạy đúng.
+
+## Mối quan hệ giữa dataset, feature và label
+
+Ba khái niệm này đi cùng nhau trong hầu hết dự án machine learning:
+
+- Dataset là chiếc hộp lớn chứa toàn bộ dữ liệu.
+- Feature là các cột đầu vào lấy ra từ dataset.
+- Label là cột kết quả đúng lấy ra từ dataset.
+
+Ví dụ tách `X` và `y` trong Python:
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "so_gio_hoc": [1, 2, 3, 4],
+    "so_buoi_nghi": [4, 3, 2, 1],
+    "diem_cuoi_ky": [5, 6, 7, 8]
+})
+
+X = data[["so_gio_hoc", "so_buoi_nghi"]]
+y = data["diem_cuoi_ky"]
+
+print(X)
+print(y)
+```
+
+Ở đây:
+
+- `data` là dataset.
+- `X` là tập feature.
+- `y` là label.
+
+Đây là pattern bạn sẽ gặp lặp đi lặp lại trong tài liệu machine learning và trong hầu hết project thực tế.
+
+## Ví dụ feature, label, dataset trong bài toán thực tế
+
+### Dự đoán giá nhà
+
+- Dataset: bảng thông tin các căn nhà đã bán.
+- Feature: diện tích, số phòng, vị trí.
+- Label: giá nhà.
+
+### Phân loại email spam
+
+- Dataset: tập email đã được gán nhãn.
+- Feature: số link, số từ khóa khuyến mãi, độ dài email.
+- Label: spam hoặc không spam.
+
+### Dự đoán học sinh đậu hay rớt
+
+- Dataset: dữ liệu học tập của học sinh.
+- Feature: số giờ học, số buổi nghỉ, điểm giữa kỳ.
+- Label: đậu hoặc rớt.
+
+Nhìn vào ví dụ feature label dataset như vậy sẽ giúp bạn hiểu dữ liệu huấn luyện trong machine learning thực chất chỉ là tập hợp nhiều cặp đầu vào và đáp án đúng.
+
+## Supervised learning cần feature và label như thế nào?
+
+Trong supervised learning, bạn cần có cả feature và label. Nếu không có label, mô hình không biết đáp án đúng để học.
+
+Ví dụ huấn luyện mô hình từ feature và label:
+
+```python
+from sklearn.tree import DecisionTreeClassifier
+
+X = [[1, 4], [2, 3], [4, 1], [5, 0]]
+y = [0, 0, 1, 1]  # 0 = rot, 1 = dau
+
+model = DecisionTreeClassifier(random_state=42)
+model.fit(X, y)
+
+print(model.predict([[3, 2]]))
+```
+
+Nếu bạn chỉ có `X` mà không có `y`, mô hình supervised learning sẽ không biết học theo đáp án nào.
+
+## Những lỗi thường gặp khi đọc dữ liệu machine learning
+
+- Nghĩ rằng mọi cột trong dataset đều phải là feature. Thực tế có cột là label, có cột có thể phải bỏ đi.
+- Nhầm label với một feature bình thường.
+- Chưa hiểu mỗi dòng là một mẫu dữ liệu riêng.
+- Dùng thông tin của tương lai làm feature, khiến mô hình học sai cách.
+
+Chỉ cần tránh bốn lỗi này, bạn đã đi nhanh hơn rất nhiều so với nhiều người mới bắt đầu.
+
+## Bài tập thực hành
+
+Hãy tự tạo một dataset nhỏ về điểm thi hoặc giá nhà với ít nhất 4 dòng dữ liệu. Sau đó xác định rõ:
+
+- Dataset là phần nào?
+- Những cột nào là feature?
+- Cột nào là label?
+
+Bạn có thể bắt đầu với đoạn code mẫu sau:
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "so_gio_hoc": [2, 3, 5, 6],
+    "so_buoi_nghi": [3, 2, 1, 0],
+    "diem_cuoi_ky": [5, 6, 8, 9]
+})
+
+print(data)
+```
+
+Gợi ý: hãy thử tự tách `X` và `y` từ dataset trên.
+
+## Câu hỏi thường gặp về feature, label và dataset
+
+### Dataset trong machine learning là gì?
+
+Dataset là toàn bộ tập dữ liệu dùng cho bài toán machine learning. Nó thường là một bảng gồm nhiều dòng dữ liệu và nhiều cột thông tin.
+
+### Feature là gì trong machine learning?
+
+Feature là các biến đầu vào giúp mô hình đưa ra dự đoán. Bạn có thể hiểu feature là những tín hiệu mà mô hình được nhìn thấy.
+
+### Label là gì trong machine learning?
+
+Label là đáp án đúng mà mô hình cần học trong supervised learning. Đây là giá trị mục tiêu mà bạn muốn mô hình dự đoán ra sau này.
+
+### Phân biệt feature và label thế nào cho dễ nhớ?
+
+Feature là câu hỏi đầu vào, còn label là câu trả lời đúng. Chỉ cần nhớ đầu vào và đầu ra là bạn sẽ phân biệt được nhanh.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu `dataset`, `feature` và `label` là gì, cách phân biệt chúng và cách tách dữ liệu đầu vào, đầu ra trong machine learning. Đây là nền tảng cực kỳ quan trọng trước khi học chia dữ liệu train/test hoặc tiền xử lý dữ liệu. Ở bài tiếp theo, chúng ta sẽ tiếp tục với **cách chia dữ liệu thành train, validation và test** để đánh giá mô hình đúng cách.

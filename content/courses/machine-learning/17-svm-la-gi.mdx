@@ -1,0 +1,197 @@
+---
+title: "SVM là gì trong Machine Learning?"
+description: "Giải thích SVM là gì trong machine learning, cách hoạt động của support vector machine, ví dụ Python và khi nào nên dùng SVM cho người mới."
+slug: "svm-la-gi"
+course: "machine-learning"
+order: 17
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["svm là gì trong machine learning", "svm là gì", "support vector machine là gì", "thuật toán svm trong machine learning", "cách hoạt động của svm", "svm dùng để làm gì", "svm phân loại như thế nào", "ví dụ svm trong machine learning", "svm cho người mới bắt đầu", "ưu nhược điểm của svm", "khi nào nên dùng svm"]
+publishedAt: "2026-04-23"
+---
+
+## SVM là gì trong machine learning?
+
+SVM là một thuật toán machine learning dùng chủ yếu cho bài toán phân loại, đôi khi cũng dùng cho regression. `SVM` là viết tắt của `Support Vector Machine`. Nói đơn giản, mô hình này cố gắng tìm ra một ranh giới tốt nhất để tách các lớp dữ liệu ra xa nhau nhất có thể.
+
+Với người mới, cách hiểu dễ nhất về `svm là gì trong machine learning` là: đây là mô hình tìm một đường hoặc mặt phẳng phân chia dữ liệu sao cho khoảng cách tới hai lớp là lớn nhất.
+
+## Support Vector Machine là gì?
+
+`Support vector machine là gì` chỉ là tên đầy đủ của SVM. Từ `support vectors` nói đến những điểm dữ liệu quan trọng nhất nằm gần ranh giới phân chia. Chính các điểm này ảnh hưởng mạnh đến vị trí của đường biên mà mô hình chọn.
+
+Bạn có thể hình dung như sau:
+
+- Nếu hai nhóm dữ liệu đứng tách xa nhau, SVM sẽ chọn một đường ở giữa.
+- Đường này không chỉ tách hai nhóm, mà còn cố gắng giữ khoảng cách tốt nhất tới các điểm gần biên.
+
+## Cách hoạt động của SVM
+
+`Cách hoạt động của SVM` có thể tóm lại bằng ba ý:
+
+- Tìm ranh giới phân chia giữa các lớp.
+- Tối đa hóa khoảng cách giữa ranh giới đó và các điểm gần nhất của mỗi lớp.
+- Dùng ranh giới đã học để phân loại điểm mới.
+
+Ví dụ trực giác đơn giản bằng code logic:
+
+```python
+def phan_loai(x):
+    if x > 5:
+        return 1
+    return 0
+
+print(phan_loai(7))
+```
+
+Đây chưa phải SVM thật, nhưng nó giúp bạn hình dung ý tưởng phân loại bằng một ranh giới. SVM khác ở chỗ nó học ranh giới đó từ dữ liệu theo cách tối ưu hơn.
+
+## SVM phân loại như thế nào?
+
+`SVM phân loại như thế nào`? Khi có dữ liệu đã gán nhãn, mô hình sẽ cố tìm một đường biên sao cho:
+
+- Các điểm lớp 0 nằm về một phía.
+- Các điểm lớp 1 nằm về phía còn lại.
+- Khoảng cách giữa biên và các điểm gần nhất là lớn nhất.
+
+Đó là lý do SVM thường hoạt động tốt trên một số bài toán phân loại với ranh giới rõ ràng.
+
+## Ví dụ SVM trong machine learning bằng Python
+
+Ví dụ phân loại đơn giản bằng `SVC` trong `scikit-learn`:
+
+```python
+from sklearn.svm import SVC
+
+X = [[1, 2], [2, 3], [3, 3], [6, 7], [7, 8], [8, 8]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = SVC(kernel="linear")
+model.fit(X, y)
+
+print(model.predict([[4, 4]]))
+```
+
+Trong ví dụ này:
+
+- `X` là feature đầu vào.
+- `y` là nhãn lớp.
+- `kernel="linear"` nghĩa là dùng ranh giới tuyến tính.
+
+Đây là `ví dụ svm trong machine learning` rất phù hợp cho người mới vì dễ liên hệ với ý tưởng tìm đường phân chia giữa hai nhóm.
+
+## SVM dùng để làm gì?
+
+`SVM dùng để làm gì`? Mô hình này thường dùng cho:
+
+- Phân loại email spam.
+- Phân loại ảnh hoặc chữ viết tay ở mức cơ bản.
+- Phân tích văn bản.
+- Một số bài toán dữ liệu có số chiều vừa phải.
+
+SVM thường nổi bật khi dữ liệu không quá lớn nhưng cần một ranh giới phân loại tốt.
+
+## Kernel trong SVM là gì?
+
+Một khái niệm hay gặp là `kernel`. Với người mới, chỉ cần hiểu như sau:
+
+- `Linear kernel`: phù hợp khi dữ liệu có thể tách gần như bằng đường thẳng.
+- `RBF kernel`: phù hợp khi ranh giới phức tạp hơn.
+
+Ví dụ thử hai kernel:
+
+```python
+from sklearn.svm import SVC
+
+model_linear = SVC(kernel="linear")
+model_rbf = SVC(kernel="rbf")
+
+print(model_linear)
+print(model_rbf)
+```
+
+Bạn chưa cần học sâu công thức kernel ở giai đoạn đầu. Điều quan trọng là biết SVM có thể xử lý cả ranh giới không tuyến tính thông qua kernel phù hợp.
+
+## Khi nào nên dùng SVM?
+
+`Khi nào nên dùng SVM`?
+
+Bạn nên cân nhắc SVM khi:
+
+- Bài toán là classification.
+- Dữ liệu không quá lớn.
+- Cần một mô hình phân loại khá mạnh.
+- Muốn thử một baseline khác ngoài logistic regression hoặc decision tree.
+
+SVM không phải lúc nào cũng là lựa chọn tốt nhất, nhưng nó là một công cụ rất đáng biết.
+
+## Ưu điểm của SVM
+
+- Mạnh trên nhiều bài toán phân loại.
+- Hoạt động tốt khi dữ liệu có ranh giới rõ.
+- Có thể xử lý ranh giới phi tuyến nhờ kernel.
+- Thường cho kết quả tốt với dữ liệu vừa và nhỏ.
+
+Đây là lý do `svm cho người mới bắt đầu` thường được học sau các mô hình phân loại cơ bản hơn.
+
+## Nhược điểm của SVM
+
+`Ưu nhược điểm của svm` cần nhìn cả điểm yếu:
+
+- Khó giải thích hơn decision tree hoặc logistic regression.
+- Chậm hơn khi dữ liệu quá lớn.
+- Cần chọn kernel và tham số cẩn thận.
+- Nhạy với thang đo feature, nên thường cần chuẩn hóa dữ liệu.
+
+## Những lỗi thường gặp khi mới học SVM
+
+- Quên chuẩn hóa dữ liệu đầu vào.
+- Chọn kernel theo cảm tính mà không kiểm tra validation.
+- Nghĩ rằng SVM luôn mạnh hơn mọi mô hình khác.
+- Quá tập trung vào công thức mà quên trực giác về ranh giới phân chia.
+
+Nếu tránh các lỗi này, bạn sẽ học SVM nhẹ nhàng hơn nhiều.
+
+## Bài tập thực hành
+
+Hãy tự tạo một dataset nhỏ với 2 feature và 2 lớp. Sau đó:
+
+- Train một mô hình SVM tuyến tính.
+- Thử đổi sang `rbf` kernel.
+- So sánh trực giác về cách mô hình có thể phân chia dữ liệu.
+
+Bạn có thể bắt đầu với đoạn code sau:
+
+```python
+from sklearn.svm import SVC
+
+X = [[1, 1], [2, 2], [2, 1], [7, 7], [8, 8], [8, 7]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = SVC(kernel="linear")
+model.fit(X, y)
+
+print(model.predict([[3, 2]]))
+```
+
+## Câu hỏi thường gặp về SVM
+
+### SVM là gì?
+
+SVM là thuật toán machine learning dùng chủ yếu cho classification bằng cách tìm ranh giới phân chia tốt giữa các lớp dữ liệu. Đây là một mô hình mạnh và khá nổi tiếng trong nhập môn ML.
+
+### Support vector machine là gì?
+
+Support vector machine là tên đầy đủ của SVM. Nó nhấn mạnh vai trò của những điểm dữ liệu nằm gần ranh giới phân loại, gọi là support vectors.
+
+### SVM phân loại như thế nào?
+
+Mô hình tìm một ranh giới sao cho các lớp được tách ra tốt nhất và khoảng cách tới các điểm gần biên là lớn nhất. Sau đó mô hình dùng ranh giới đó để phân loại mẫu mới.
+
+### Khi nào nên dùng SVM?
+
+Bạn nên thử SVM khi bài toán là classification, dữ liệu không quá lớn và cần một mô hình khá mạnh. Đây là một lựa chọn tốt để so sánh với logistic regression hoặc decision tree.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu SVM là gì trong machine learning, cách support vector machine hoạt động và khi nào nên dùng mô hình này. Đây là một mô hình phân loại quan trọng giúp bạn mở rộng góc nhìn vượt ra ngoài các mô hình cây hay xác suất. Ở bài tiếp theo, chúng ta sẽ chuyển sang **clustering** để làm quen với học không giám sát.

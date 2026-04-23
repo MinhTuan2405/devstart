@@ -1,0 +1,178 @@
+---
+title: "Random Forest là gì trong Machine Learning?"
+description: "Giải thích random forest là gì, cách hoạt động, ưu nhược điểm, ví dụ Python và sự khác nhau giữa random forest với decision tree."
+slug: "random-forest-la-gi"
+course: "machine-learning"
+order: 15
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["random forest là gì", "thuật toán random forest là gì", "random forest trong machine learning", "random forest hoạt động như thế nào", "ưu nhược điểm của random forest", "khi nào nên dùng random forest", "ví dụ random forest", "random forest cho người mới", "cách hoạt động của random forest", "so sánh random forest và decision tree"]
+publishedAt: "2026-04-23"
+---
+
+## Random forest là gì?
+
+Random forest là một mô hình machine learning kết hợp nhiều decision tree để đưa ra dự đoán tốt hơn và ổn định hơn. Thay vì chỉ dựa vào một cây quyết định duy nhất, random forest tạo ra cả một `rừng cây` rồi tổng hợp kết quả từ nhiều cây đó.
+
+Với người mới, `random forest là gì` có thể hiểu ngắn gọn là: nhiều decision tree cùng bỏ phiếu để giảm sai lệch của từng cây riêng lẻ.
+
+## Thuật toán random forest là gì?
+
+`Thuật toán random forest là gì`? Đây là một mô hình thuộc nhóm ensemble learning, tức là kết hợp nhiều mô hình nhỏ để tạo thành mô hình mạnh hơn.
+
+Ý tưởng chính là:
+
+- Tạo nhiều decision tree.
+- Mỗi cây học trên một phần dữ liệu hoặc một cách chọn feature khác nhau.
+- Cuối cùng lấy đa số phiếu hoặc trung bình kết quả của các cây.
+
+## Random forest hoạt động như thế nào?
+
+`Random forest hoạt động như thế nào` có thể tóm gọn như sau:
+
+- Lấy nhiều mẫu dữ liệu con từ tập train.
+- Train nhiều decision tree khác nhau.
+- Mỗi cây chỉ nhìn một phần feature tại mỗi lần chia.
+- Tổng hợp dự đoán của toàn bộ cây.
+
+Ví dụ mô phỏng ý tưởng bỏ phiếu:
+
+```python
+du_doan_cac_cay = [1, 1, 0, 1, 0]
+
+ket_qua_cuoi = max(set(du_doan_cac_cay), key=du_doan_cac_cay.count)
+print(ket_qua_cuoi)
+```
+
+Đây chưa phải random forest hoàn chỉnh, nhưng nó giúp bạn hình dung ý tưởng cốt lõi: không tin tuyệt đối vào một cây, mà lấy ý kiến từ nhiều cây.
+
+## Ví dụ random forest bằng Python
+
+Ví dụ phân loại đậu hay rớt bằng `RandomForestClassifier`:
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+
+X = [[1, 4], [2, 3], [3, 2], [6, 1], [7, 1], [8, 0]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X, y)
+
+print(model.predict([[5, 1]]))
+```
+
+Trong ví dụ này:
+
+- `n_estimators=100` nghĩa là dùng 100 cây.
+- Mỗi cây tự học theo cách hơi khác nhau.
+- Kết quả cuối cùng là sự tổng hợp từ nhiều cây.
+
+Đây là `ví dụ random forest` rất điển hình cho người mới.
+
+## Cách hoạt động của random forest so với decision tree
+
+`So sánh random forest và decision tree` theo cách ngắn gọn:
+
+- Decision tree: một cây duy nhất.
+- Random forest: nhiều cây kết hợp.
+
+Vì decision tree đơn lẻ dễ bị overfitting, random forest thường ổn định hơn nhờ trung bình hóa hoặc bỏ phiếu từ nhiều cây.
+
+Đó là điểm mạnh rất lớn của random forest.
+
+## Khi nào nên dùng random forest?
+
+`Khi nào nên dùng random forest`?
+
+Bạn nên nghĩ tới mô hình này khi:
+
+- Muốn một baseline mạnh hơn decision tree.
+- Dữ liệu dạng bảng.
+- Muốn mô hình khá mạnh mà chưa cần đi sang các kỹ thuật quá phức tạp.
+- Chấp nhận mô hình khó giải thích hơn một decision tree đơn lẻ.
+
+Trong nhiều bài toán tabular data, random forest là một lựa chọn rất thực dụng.
+
+## Ưu điểm của random forest
+
+- Thường chính xác và ổn định hơn decision tree đơn lẻ.
+- Giảm nguy cơ overfitting so với một cây riêng.
+- Dùng tốt cho nhiều bài toán classification và regression.
+- Không yêu cầu chuẩn hóa dữ liệu quá nghiêm ngặt.
+
+Đây là lý do `random forest cho người mới` thường được giới thiệu như một bước nâng cấp tự nhiên sau decision tree.
+
+## Nhược điểm của random forest
+
+`Ưu nhược điểm của random forest` cũng cần nhìn mặt hạn chế:
+
+- Khó giải thích hơn decision tree đơn lẻ.
+- Nặng hơn về tính toán và bộ nhớ.
+- Không phải lúc nào cũng là lựa chọn tốt nhất nếu cần mô hình cực kỳ dễ diễn giải.
+
+Vì có nhiều cây, random forest thường giống một `hộp xám` hơn là một sơ đồ rõ ràng như decision tree.
+
+## Ví dụ random forest trong machine learning thực tế
+
+- Dự đoán khách hàng có rời dịch vụ không.
+- Phân loại giao dịch gian lận hay hợp lệ.
+- Dự đoán giá nhà.
+- Chấm điểm lead hoặc phân loại khách hàng.
+
+Những bài toán này thường có nhiều feature và quan hệ giữa chúng không quá đơn giản, nên random forest thường hoạt động khá tốt.
+
+## Những lỗi thường gặp khi mới học random forest
+
+- Nghĩ rằng nhiều cây thì chắc chắn luôn tốt hơn mọi mô hình khác.
+- Không so sánh với decision tree hoặc baseline đơn giản hơn.
+- Bỏ qua thời gian huấn luyện và tài nguyên tính toán.
+- Chỉ nhìn accuracy mà quên các metric khác.
+
+Random forest mạnh, nhưng vẫn cần được đánh giá cẩn thận như mọi mô hình khác.
+
+## Bài tập thực hành
+
+Hãy lấy một dataset nhỏ và thử:
+
+- Train decision tree.
+- Train random forest.
+- So sánh trực giác về độ ổn định của hai mô hình.
+
+Bạn có thể bắt đầu với đoạn code sau:
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+
+X = [[2, 5], [3, 4], [4, 3], [7, 2], [8, 1], [9, 1]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+model.fit(X, y)
+
+print(model.predict([[6, 2]]))
+```
+
+Gợi ý: hãy tự hỏi vì sao mô hình nhiều cây thường ổn định hơn một cây đơn lẻ.
+
+## Câu hỏi thường gặp về random forest
+
+### Random forest là gì?
+
+Random forest là mô hình machine learning kết hợp nhiều decision tree để đưa ra dự đoán tốt hơn và ổn định hơn. Đây là một mô hình rất phổ biến cho dữ liệu dạng bảng.
+
+### Thuật toán random forest là gì?
+
+Đó là thuật toán ensemble tạo nhiều cây quyết định rồi tổng hợp kết quả của chúng. Ý tưởng chính là giảm điểm yếu của từng cây đơn lẻ.
+
+### Random forest hoạt động như thế nào?
+
+Mỗi cây học từ một phần dữ liệu và một phần feature, sau đó cả rừng cùng bỏ phiếu hoặc lấy trung bình để ra kết quả cuối cùng. Điều này giúp mô hình bớt nhạy với nhiễu hơn.
+
+### So sánh random forest và decision tree thế nào?
+
+Decision tree dễ hiểu hơn nhưng dễ overfit hơn. Random forest thường mạnh và ổn định hơn, nhưng khó giải thích hơn vì nó gồm nhiều cây cùng lúc.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu random forest là gì, cách hoạt động của nó và vì sao mô hình này thường ổn định hơn decision tree đơn lẻ. Đây là một bước rất tốt để làm quen với ensemble learning cơ bản. Ở bài tiếp theo, chúng ta sẽ học **naive bayes** để thấy một hướng tiếp cận hoàn toàn khác dựa trên xác suất.

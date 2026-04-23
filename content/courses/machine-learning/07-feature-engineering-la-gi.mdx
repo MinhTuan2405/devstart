@@ -1,0 +1,191 @@
+---
+title: "Feature Engineering là gì trong Machine Learning?"
+description: "Giải thích feature engineering là gì trong machine learning, vì sao quan trọng, ví dụ tạo feature mới và phân biệt feature selection với feature engineering."
+slug: "feature-engineering-la-gi"
+course: "machine-learning"
+order: 7
+duration: "17 phút"
+difficulty: "Dễ"
+keywords: ["feature engineering la gi trong machine learning", "feature engineering là gì", "feature engineering trong machine learning", "kỹ thuật đặc trưng là gì", "vai trò của feature engineering trong machine learning", "các bước feature engineering", "ví dụ feature engineering", "feature engineering cho người mới", "cách tạo feature trong machine learning", "feature selection và feature engineering khác gì"]
+publishedAt: "2026-04-23"
+---
+
+## Feature engineering là gì trong machine learning?
+
+Feature engineering là quá trình tạo mới, biến đổi hoặc cải thiện các feature để mô hình machine learning học tốt hơn. Nói đơn giản, thay vì chỉ đưa dữ liệu thô vào mô hình, bạn chủ động thiết kế những đặc trưng có ích hơn cho bài toán.
+
+Đây là một kỹ năng cực kỳ quan trọng. Trong nhiều bài toán thực tế, cải thiện feature còn hiệu quả hơn cả việc đổi sang một mô hình phức tạp hơn.
+
+## Vì sao feature engineering quan trọng?
+
+Mô hình chỉ học được từ những gì bạn đưa vào. Nếu feature quá nghèo nàn hoặc không thể hiện đúng bản chất vấn đề, mô hình khó cho kết quả tốt.
+
+`Vai trò của feature engineering trong machine learning` nằm ở chỗ nó giúp mô hình nhìn dữ liệu theo cách có ý nghĩa hơn. Ví dụ:
+
+- Từ cột ngày tháng, bạn tạo ra `thu`, `thang`, `cuoi_tuan`.
+- Từ giá và diện tích, bạn tạo thêm `gia_moi_m2`.
+- Từ nội dung email, bạn tạo thêm `so_link`, `so_tu_khoa_khuyen_mai`.
+
+Những feature mới này thường mang nhiều tín hiệu hữu ích hơn dữ liệu thô ban đầu.
+
+## Feature engineering khác tiền xử lý dữ liệu thế nào?
+
+Nhiều người mới hay nhầm hai khái niệm này.
+
+- Tiền xử lý dữ liệu tập trung vào làm sạch, chuẩn hóa và đưa dữ liệu về dạng mô hình có thể dùng.
+- Feature engineering tập trung vào tạo ra hoặc cải thiện đặc trưng để mô hình học tốt hơn.
+
+Hai phần này liên quan chặt chẽ nhưng không giống nhau. Bạn thường tiền xử lý dữ liệu trước, rồi mới suy nghĩ sâu hơn về feature engineering.
+
+## Ví dụ feature engineering đơn giản
+
+Giả sử bạn có dữ liệu bán hàng với cột `ngay_dat_hang`. Nếu để nguyên ngày tháng dưới dạng chuỗi, mô hình khó học được nhiều điều. Nhưng nếu tách ra thành các đặc trưng có ý nghĩa, kết quả có thể tốt hơn.
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "ngay_dat_hang": ["2026-04-21", "2026-04-22", "2026-04-26"]
+})
+
+data["ngay_dat_hang"] = pd.to_datetime(data["ngay_dat_hang"])
+data["thu"] = data["ngay_dat_hang"].dt.dayofweek
+data["thang"] = data["ngay_dat_hang"].dt.month
+data["cuoi_tuan"] = (data["thu"] >= 5).astype(int)
+
+print(data)
+```
+
+Ở đây, bạn đã biến một cột ngày tháng thành nhiều feature hữu ích hơn cho bài toán dự đoán hành vi mua hàng.
+
+## Cách tạo feature trong machine learning
+
+`Cách tạo feature trong machine learning` thường rơi vào một số nhóm phổ biến:
+
+- Tách thông tin từ ngày tháng, thời gian.
+- Tạo tỉ lệ, tổng, hiệu, trung bình từ các cột số.
+- Gom nhóm giá trị hiếm hoặc tương tự nhau.
+- Chuyển văn bản thành đặc trưng số.
+- Biến đổi log hoặc chuẩn hóa để giảm lệch phân phối.
+
+Ví dụ tạo feature mới từ dữ liệu nhà đất:
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "dien_tich": [40, 60, 80],
+    "gia_nha": [2.0, 3.6, 5.6],
+    "so_phong": [1, 2, 3]
+})
+
+data["gia_moi_m2"] = data["gia_nha"] / data["dien_tich"]
+data["dien_tich_moi_phong"] = data["dien_tich"] / data["so_phong"]
+
+print(data)
+```
+
+Hai feature mới này có thể phản ánh chất lượng bất động sản tốt hơn so với chỉ nhìn từng cột riêng lẻ.
+
+## Các bước feature engineering cho người mới
+
+Một quy trình đơn giản có thể là:
+
+- Hiểu rõ bài toán và kết quả cần dự đoán.
+- Xem từng cột dữ liệu có ý nghĩa gì.
+- Tự hỏi liệu có thể tạo ra feature nào giàu thông tin hơn không.
+- Thử mô hình trước và sau khi thêm feature mới.
+- Giữ lại những feature thực sự giúp cải thiện kết quả.
+
+Đây là `các bước feature engineering` đủ thực tế để người mới bắt đầu luyện tập.
+
+## Ví dụ feature engineering trong thực tế
+
+### Bài toán dự đoán giá nhà
+
+- Từ `dien_tich` và `gia_nha`, tạo `gia_moi_m2`.
+- Từ `nam_xay`, tạo `tuoi_ngoi_nha`.
+- Từ `dia_chi`, tạo `khoang_cach_den_trung_tam`.
+
+### Bài toán thương mại điện tử
+
+- Từ lịch sử đơn hàng, tạo `tong_so_don_30_ngay`.
+- Từ thời điểm mua, tạo `mua_buoi_toi` hoặc `mua_cuoi_tuan`.
+- Từ giá trị giỏ hàng, tạo `gia_tri_trung_binh_moi_san_pham`.
+
+### Bài toán email spam
+
+- Số link trong email.
+- Số lần xuất hiện từ khóa như `khuyen mai`, `mien phi`.
+- Tỉ lệ chữ in hoa.
+
+Nhìn vào `ví dụ feature engineering` như vậy sẽ giúp bạn thấy đây không phải lý thuyết xa vời, mà là cách dùng hiểu biết về dữ liệu để hỗ trợ mô hình.
+
+## Feature selection và feature engineering khác gì?
+
+Đây là cặp khái niệm rất dễ nhầm.
+
+- Feature engineering là tạo mới hoặc biến đổi feature.
+- Feature selection là chọn ra những feature tốt nhất từ tập hiện có.
+
+Ví dụ:
+
+- Nếu bạn tạo `gia_moi_m2` từ `gia_nha` và `dien_tich`, đó là feature engineering.
+- Nếu bạn quyết định chỉ giữ lại `dien_tich`, `so_phong`, `gia_moi_m2` và bỏ các cột kém hữu ích khác, đó là feature selection.
+
+## Những lỗi thường gặp khi làm feature engineering
+
+- Tạo quá nhiều feature nhưng không kiểm tra có thật sự hữu ích không.
+- Tạo feature từ thông tin của tương lai, gây rò rỉ dữ liệu.
+- Không hiểu ý nghĩa nghiệp vụ của cột dữ liệu.
+- Thêm feature chỉ vì nghe có vẻ hay, không dựa trên bài toán cụ thể.
+
+Feature engineering tốt không phải là tạo thật nhiều feature, mà là tạo đúng feature.
+
+## Bài tập thực hành
+
+Hãy chọn một dataset đơn giản như điểm thi, bán hàng hoặc giá nhà. Sau đó thử:
+
+- Tạo ít nhất 2 feature mới.
+- Giải thích vì sao mỗi feature có thể hữu ích.
+- So sánh trực giác trước và sau khi thêm feature mới.
+
+Bạn có thể bắt đầu với đoạn code sau:
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "so_gio_hoc": [2, 4, 6, 8],
+    "so_buoi_nghi": [4, 3, 1, 0]
+})
+
+data["hieu_qua_hoc"] = data["so_gio_hoc"] / (data["so_buoi_nghi"] + 1)
+data["cham_chi"] = (data["so_buoi_nghi"] <= 1).astype(int)
+
+print(data)
+```
+
+Gợi ý: hãy tự hỏi hai feature mới này có thể giúp dự đoán điểm cuối kỳ tốt hơn như thế nào.
+
+## Câu hỏi thường gặp về feature engineering
+
+### Feature engineering là gì?
+
+Feature engineering là quá trình tạo mới hoặc biến đổi đặc trưng đầu vào để mô hình machine learning học tốt hơn. Đây là bước rất quan trọng trong nhiều dự án thực tế.
+
+### Kỹ thuật đặc trưng là gì?
+
+Kỹ thuật đặc trưng là cách gọi tiếng Việt của feature engineering. Nó nhấn mạnh việc thiết kế đặc trưng phù hợp cho bài toán.
+
+### Feature engineering cho người mới nên bắt đầu từ đâu?
+
+Bạn nên bắt đầu bằng những biến đổi đơn giản và dễ hiểu, như tách ngày tháng, tạo tỉ lệ, tổng hoặc cờ nhị phân. Đừng cố làm quá phức tạp ngay từ đầu.
+
+### Feature selection và feature engineering khác gì?
+
+Feature engineering là tạo hoặc biến đổi feature, còn feature selection là chọn ra feature tốt nhất từ những gì đang có. Hai bước này thường bổ trợ cho nhau.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu feature engineering là gì trong machine learning, vì sao nó quan trọng và cách tạo feature mới từ dữ liệu thô. Khi biết cách cải thiện feature, bạn sẽ giúp mô hình học đúng tín hiệu quan trọng hơn. Ở bài tiếp theo, chúng ta sẽ học **overfitting và underfitting trong machine learning** để hiểu vì sao có mô hình học quá ít hoặc quá nhiều.

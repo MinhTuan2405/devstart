@@ -1,0 +1,184 @@
+---
+title: "Decision Tree là gì trong Machine Learning?"
+description: "Giải thích decision tree là gì, cách cây quyết định hoạt động, ví dụ Python và ưu nhược điểm của decision tree cho người mới."
+slug: "decision-tree-la-gi"
+course: "machine-learning"
+order: 14
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["decision tree la gi", "decision tree là gì", "cây quyết định là gì", "decision tree trong machine learning", "decision tree hoạt động như thế nào", "cách dùng decision tree", "ví dụ decision tree", "ưu nhược điểm của decision tree", "decision tree cho người mới", "thuật toán decision tree là gì"]
+publishedAt: "2026-04-23"
+---
+
+## Decision tree là gì?
+
+Decision tree là một mô hình machine learning ra quyết định bằng cách chia dữ liệu thành nhiều nhánh dựa trên các câu hỏi dạng đúng hoặc sai. Tên tiếng Việt của nó là `cây quyết định`. Nói đơn giản, mô hình này giống như một sơ đồ hỏi đáp: mỗi nút hỏi một câu, mỗi nhánh là một lựa chọn, và lá cuối cùng là kết quả dự đoán.
+
+Với người mới, `decision tree là gì` là một trong những mô hình dễ hình dung nhất vì cách hoạt động của nó khá gần với suy nghĩ tự nhiên của con người.
+
+## Cây quyết định là gì?
+
+`Cây quyết định là gì`? Hãy tưởng tượng bạn muốn quyết định có nên mang ô hay không:
+
+- Trời có mưa không?
+- Nếu có, xác suất mưa lớn không?
+- Nếu mưa lớn, hãy mang ô.
+
+Decision tree trong machine learning cũng hoạt động theo kiểu đó, chỉ khác là thay vì con người tự viết quy tắc, mô hình sẽ học cách tách dữ liệu để dự đoán tốt hơn.
+
+## Decision tree hoạt động như thế nào?
+
+`Decision tree hoạt động như thế nào` có thể hiểu qua 3 ý chính:
+
+- Chọn một feature để chia dữ liệu.
+- Tạo các nhánh theo giá trị hoặc ngưỡng của feature đó.
+- Lặp lại việc chia cho đến khi các nhóm đủ rõ để dự đoán.
+
+Ví dụ đơn giản về logic dạng cây:
+
+```python
+def du_doan(thoi_tiet, do_am):
+    if thoi_tiet == "mua":
+        return "mang_o"
+    if do_am > 80:
+        return "xem_xet_mang_o"
+    return "khong_can"
+
+print(du_doan("nang", 60))
+```
+
+Đây chưa phải decision tree được học từ dữ liệu, nhưng nó giúp bạn hình dung rõ cấu trúc cây: có nút, nhánh và kết quả cuối cùng.
+
+## Ví dụ decision tree bằng Python
+
+Ví dụ phân loại đậu hay rớt dựa trên số giờ học và số buổi nghỉ:
+
+```python
+from sklearn.tree import DecisionTreeClassifier
+
+X = [[1, 4], [2, 3], [3, 2], [6, 1], [7, 1], [8, 0]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = DecisionTreeClassifier(max_depth=3, random_state=42)
+model.fit(X, y)
+
+print(model.predict([[5, 1]]))
+```
+
+Trong ví dụ này, mô hình học cách chia dữ liệu theo các điều kiện để cuối cùng dự đoán nhãn 0 hoặc 1.
+
+Đây là `ví dụ decision tree` khá trực quan vì bạn có thể tưởng tượng cây đang hỏi những câu như:
+
+- Số giờ học có lớn hơn một ngưỡng nào đó không?
+- Số buổi nghỉ có quá nhiều không?
+
+## Decision tree trong machine learning dùng để làm gì?
+
+`Decision tree trong machine learning` có thể dùng cho cả classification và regression.
+
+Ví dụ ứng dụng:
+
+- Phân loại email spam.
+- Dự đoán khách hàng có rời dịch vụ hay không.
+- Dự đoán giá nhà.
+- Hỗ trợ ra quyết định trong hệ thống kinh doanh.
+
+Điểm mạnh của decision tree là dễ giải thích. Bạn có thể lần theo các nhánh để hiểu vì sao mô hình đưa ra kết quả đó.
+
+## Cách dùng decision tree cho người mới
+
+`Cách dùng decision tree` ở mức cơ bản khá đơn giản:
+
+- Chuẩn bị dữ liệu feature và label.
+- Tạo mô hình decision tree.
+- Train bằng `fit()`.
+- Dự đoán bằng `predict()`.
+- Kiểm tra mô hình có bị overfitting không.
+
+Ví dụ xem độ sâu tối đa của cây:
+
+```python
+from sklearn.tree import DecisionTreeClassifier
+
+model_nong = DecisionTreeClassifier(max_depth=2, random_state=42)
+model_sau = DecisionTreeClassifier(max_depth=10, random_state=42)
+
+print(model_nong)
+print(model_sau)
+```
+
+Tham số như `max_depth` rất quan trọng vì cây quá sâu có thể học quá sát dữ liệu train.
+
+## Ưu điểm của decision tree
+
+- Dễ hiểu, dễ giải thích.
+- Không cần chuẩn hóa dữ liệu nghiêm ngặt như KNN.
+- Hỗ trợ cả classification lẫn regression.
+- Có thể xử lý feature số và feature dạng nhóm.
+
+Đây là lý do `decision tree cho người mới` rất đáng học sau các mô hình cơ bản đầu tiên.
+
+## Nhược điểm của decision tree
+
+`Ưu nhược điểm của decision tree` cần nhìn cả hạn chế:
+
+- Dễ bị overfitting nếu cây quá sâu.
+- Có thể không ổn định khi dữ liệu thay đổi nhỏ.
+- Một cây đơn lẻ đôi khi không mạnh bằng các mô hình ensemble như random forest.
+
+Đây cũng chính là lý do random forest ra đời để cải thiện một số điểm yếu của decision tree.
+
+## Những lỗi thường gặp khi mới học decision tree
+
+- Nghĩ rằng cây càng sâu thì càng tốt.
+- Không kiểm tra overfitting.
+- Chỉ nhìn train score.
+- Bỏ qua ý nghĩa của từng feature khi mô hình chia nhánh.
+
+Nếu tránh những lỗi này, bạn sẽ dùng decision tree tốt hơn nhiều.
+
+## Bài tập thực hành
+
+Hãy tạo một dataset nhỏ với 2 feature và 2 lớp. Sau đó:
+
+- Train một decision tree.
+- Thử `max_depth=2` và `max_depth=5`.
+- So sánh dự đoán hoặc trực giác về độ phức tạp của cây.
+
+Bạn có thể bắt đầu với đoạn code sau:
+
+```python
+from sklearn.tree import DecisionTreeClassifier
+
+X = [[2, 5], [3, 4], [4, 3], [7, 2], [8, 1], [9, 1]]
+y = [0, 0, 0, 1, 1, 1]
+
+model = DecisionTreeClassifier(max_depth=3, random_state=42)
+model.fit(X, y)
+
+print(model.predict([[6, 2]]))
+```
+
+Gợi ý: hãy tự hỏi cây đang có thể dùng feature nào để tách dữ liệu trước tiên.
+
+## Câu hỏi thường gặp về decision tree
+
+### Decision tree là gì?
+
+Decision tree là mô hình machine learning ra quyết định bằng cách chia dữ liệu thành các nhánh dựa trên những câu hỏi dạng điều kiện. Đây là mô hình rất trực quan cho người mới.
+
+### Cây quyết định là gì?
+
+Cây quyết định là tên tiếng Việt của decision tree. Nó hoạt động giống một sơ đồ phân nhánh để đi từ dữ liệu đầu vào đến dự đoán cuối cùng.
+
+### Decision tree hoạt động như thế nào?
+
+Mô hình chọn feature để chia dữ liệu thành các nhóm nhỏ hơn, rồi tiếp tục chia cho đến khi đủ rõ để dự đoán. Kết quả cuối cùng nằm ở các nút lá của cây.
+
+### Ưu nhược điểm của decision tree là gì?
+
+Decision tree dễ hiểu và dễ giải thích, nhưng cũng dễ bị overfitting nếu cây quá sâu. Đây là mô hình tốt để học, nhưng cần kiểm soát độ phức tạp.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu decision tree là gì, cách cây quyết định hoạt động và vì sao nó vừa dễ hiểu vừa có nguy cơ overfitting. Đây là nền tảng rất tốt trước khi học các mô hình ensemble. Ở bài tiếp theo, chúng ta sẽ học **random forest** để thấy cách nhiều cây quyết định kết hợp với nhau cho kết quả ổn định hơn.

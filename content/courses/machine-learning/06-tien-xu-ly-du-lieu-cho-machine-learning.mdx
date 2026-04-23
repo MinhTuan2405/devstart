@@ -1,0 +1,217 @@
+---
+title: "Tiền xử lý dữ liệu cho Machine Learning cho người mới"
+description: "Tìm hiểu tiền xử lý dữ liệu cho machine learning gồm làm sạch dữ liệu, xử lý thiếu, mã hóa categorical, chuẩn hóa và feature scaling."
+slug: "tien-xu-ly-du-lieu-cho-machine-learning"
+course: "machine-learning"
+order: 6
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["tiền xử lý dữ liệu cho machine learning", "tiền xử lý dữ liệu là gì", "các bước tiền xử lý dữ liệu", "làm sạch dữ liệu cho machine learning", "chuẩn hóa dữ liệu trong machine learning", "mã hóa dữ liệu categorical", "xử lý dữ liệu thiếu", "phát hiện và xử lý ngoại lệ", "chia dữ liệu train test", "feature scaling là gì", "hướng dẫn tiền xử lý dữ liệu cho người mới"]
+publishedAt: "2026-04-23"
+---
+
+## Tiền xử lý dữ liệu cho machine learning là gì?
+
+Tiền xử lý dữ liệu cho machine learning là bước chuẩn bị dữ liệu trước khi huấn luyện mô hình, bao gồm làm sạch dữ liệu, xử lý giá trị thiếu, mã hóa dữ liệu dạng chữ, chuẩn hóa dữ liệu và loại bỏ những vấn đề có thể làm mô hình học sai. Nói ngắn gọn, đây là bước biến dữ liệu thô thành dữ liệu sẵn sàng cho machine learning.
+
+Rất nhiều người mới tập trung quá nhiều vào mô hình mà quên rằng dữ liệu đầu vào thường quyết định phần lớn chất lượng kết quả. Dữ liệu bẩn thì mô hình tốt đến mấy cũng khó cứu được.
+
+## Vì sao cần tiền xử lý dữ liệu?
+
+Trong thực tế, dữ liệu hiếm khi đẹp sẵn. Bạn thường gặp những vấn đề như:
+
+- Thiếu giá trị ở một số cột.
+- Dữ liệu chữ nhưng mô hình lại cần số.
+- Đơn vị đo quá khác nhau giữa các cột.
+- Có ngoại lệ quá lớn làm lệch mô hình.
+- Dữ liệu trùng lặp hoặc sai định dạng.
+
+Đây là lý do `tiền xử lý dữ liệu là gì` không chỉ là một khái niệm lý thuyết, mà là bước bắt buộc trong hầu hết dự án ML thật.
+
+## Các bước tiền xử lý dữ liệu thường gặp
+
+Một quy trình tiền xử lý dữ liệu cho người mới thường gồm các bước sau:
+
+- Kiểm tra dữ liệu và kiểu dữ liệu từng cột.
+- Xử lý dữ liệu thiếu.
+- Làm sạch dữ liệu lỗi hoặc trùng lặp.
+- Mã hóa dữ liệu categorical.
+- Chuẩn hóa dữ liệu hoặc feature scaling.
+- Phát hiện và xử lý ngoại lệ khi cần.
+
+Không phải bài toán nào cũng cần tất cả các bước, nhưng đây là khung rất tốt để bắt đầu.
+
+## Xử lý dữ liệu thiếu
+
+`Xử lý dữ liệu thiếu` là một trong những việc phổ biến nhất. Nếu một số dòng thiếu giá trị ở cột quan trọng, bạn có thể:
+
+- Xóa dòng đó nếu số lượng ít.
+- Điền giá trị trung bình, trung vị hoặc giá trị thường gặp.
+- Điền theo logic nghiệp vụ nếu có hiểu biết về dữ liệu.
+
+Ví dụ đơn giản với `pandas`:
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "tuoi": [20, 21, None, 23],
+    "diem": [8.0, 7.5, 9.0, None]
+})
+
+data["tuoi"] = data["tuoi"].fillna(data["tuoi"].mean())
+data["diem"] = data["diem"].fillna(data["diem"].mean())
+
+print(data)
+```
+
+Người mới thường có xu hướng xóa mọi dòng thiếu dữ liệu. Cách đó đôi khi ổn, nhưng nếu dữ liệu ít thì bạn có thể mất quá nhiều thông tin.
+
+## Mã hóa dữ liệu categorical
+
+Nhiều mô hình machine learning chỉ làm việc trực tiếp với số, trong khi dữ liệu thực tế lại có cột dạng chữ như `thanh_pho`, `gioi_tinh`, `loai_san_pham`. Khi đó bạn cần `mã hóa dữ liệu categorical`.
+
+Ví dụ dùng one-hot encoding:
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "mau_sac": ["do", "xanh", "do", "vang"],
+    "gia": [10, 12, 11, 9]
+})
+
+data_encoded = pd.get_dummies(data, columns=["mau_sac"])
+print(data_encoded)
+```
+
+Sau bước này, cột chữ sẽ được biến thành các cột số như `mau_sac_do`, `mau_sac_xanh`, `mau_sac_vang`.
+
+## Chuẩn hóa dữ liệu và feature scaling
+
+`Feature scaling là gì`? Đây là bước đưa các feature về cùng thang đo hoặc thang đo gần nhau hơn. Ví dụ, một cột có giá trị từ 1 đến 10, trong khi cột khác từ 1 đến 100000. Nếu để nguyên, một số mô hình sẽ bị ảnh hưởng mạnh bởi chênh lệch này.
+
+Ví dụ chuẩn hóa dữ liệu bằng `StandardScaler`:
+
+```python
+from sklearn.preprocessing import StandardScaler
+
+X_train = [[150, 5000000], [160, 6000000], [170, 7000000]]
+X_test = [[165, 6500000]]
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+print(X_train_scaled)
+print(X_test_scaled)
+```
+
+Điểm rất quan trọng: bạn `fit` scaler trên train set, rồi chỉ `transform` validation/test set. Nếu chuẩn hóa trước khi chia dữ liệu, bạn sẽ vô tình làm rò rỉ thông tin.
+
+## Làm sạch dữ liệu cho machine learning
+
+`Làm sạch dữ liệu cho machine learning` không chỉ là xóa giá trị thiếu. Nó còn bao gồm:
+
+- Xóa dòng trùng lặp.
+- Sửa sai chính tả hoặc định dạng không nhất quán.
+- Chuyển kiểu dữ liệu đúng, ví dụ từ chuỗi sang số hoặc ngày tháng.
+- Kiểm tra cột có giá trị bất thường rõ ràng.
+
+Ví dụ:
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "so_luong": [1, 2, 2, 1000],
+    "ten": ["An", "Binh", "Binh", "Chi"]
+})
+
+data = data.drop_duplicates()
+print(data)
+```
+
+Đoạn code này chưa xử lý hết mọi vấn đề, nhưng cho thấy việc làm sạch dữ liệu thường bắt đầu bằng những bước rất cơ bản như kiểm tra trùng lặp và giá trị bất thường.
+
+## Phát hiện và xử lý ngoại lệ
+
+`Phát hiện và xử lý ngoại lệ` nghĩa là tìm những giá trị quá khác biệt so với phần lớn dữ liệu, ví dụ một mức lương bằng 0 hoặc một tuổi bằng 300. Không phải ngoại lệ nào cũng sai, nhưng nhiều ngoại lệ có thể làm mô hình học lệch.
+
+Với người mới, bạn chưa cần dùng kỹ thuật quá phức tạp. Chỉ cần:
+
+- In thống kê mô tả.
+- Vẽ biểu đồ nếu có thể.
+- Kiểm tra những giá trị quá vô lý theo ngữ cảnh.
+
+## Thứ tự đúng khi tiền xử lý dữ liệu
+
+Một flow cơ bản thường là:
+
+- Chia train, validation, test.
+- Fit các bước xử lý trên train set.
+- Áp dụng lại cùng cách xử lý cho validation/test.
+
+Đây là điểm mà nhiều người mới sai. Họ xử lý toàn bộ dữ liệu trước, rồi mới chia train test. Cách đó dễ gây `data leakage`, làm kết quả đánh giá đẹp giả tạo.
+
+## Những lỗi thường gặp khi tiền xử lý dữ liệu cho machine learning
+
+- Chuẩn hóa toàn bộ dữ liệu trước khi chia train/test.
+- Dùng dữ liệu chữ nhưng quên mã hóa categorical.
+- Xóa quá nhiều dòng dữ liệu chỉ vì có giá trị thiếu.
+- Không kiểm tra ngoại lệ trước khi train mô hình.
+- Thấy dữ liệu có số là nghĩ không cần preprocessing nữa.
+
+Nếu tránh được các lỗi này, bạn đã đi rất đúng hướng.
+
+## Bài tập thực hành
+
+Hãy tự tạo một dataset nhỏ có:
+
+- Một cột số bị thiếu giá trị.
+- Một cột chữ.
+- Một cột có thang đo rất lớn.
+
+Sau đó thử làm 3 việc:
+
+- Điền giá trị thiếu.
+- Mã hóa cột chữ.
+- Chuẩn hóa các cột số.
+
+Bạn có thể bắt đầu bằng đoạn code sau:
+
+```python
+import pandas as pd
+
+data = pd.DataFrame({
+    "tuoi": [20, None, 25, 22],
+    "thanh_pho": ["Ha Noi", "Da Nang", "Ha Noi", "Hue"],
+    "thu_nhap": [5000000, 12000000, 7000000, 9000000]
+})
+
+print(data)
+```
+
+Gợi ý: sau khi xử lý xong, hãy tự giải thích vì sao dữ liệu mới phù hợp hơn cho machine learning.
+
+## Câu hỏi thường gặp về tiền xử lý dữ liệu
+
+### Tiền xử lý dữ liệu là gì?
+
+Tiền xử lý dữ liệu là bước chuẩn bị dữ liệu trước khi huấn luyện mô hình machine learning. Nó giúp dữ liệu sạch hơn, dễ dùng hơn và giảm nguy cơ mô hình học sai.
+
+### Các bước tiền xử lý dữ liệu gồm những gì?
+
+Thường gồm kiểm tra dữ liệu, xử lý thiếu, làm sạch lỗi, mã hóa categorical, chuẩn hóa dữ liệu và xử lý ngoại lệ. Tùy bài toán mà bạn có thể dùng đủ hoặc chỉ dùng một phần.
+
+### Chuẩn hóa dữ liệu trong machine learning có luôn cần không?
+
+Không phải luôn luôn, nhưng nhiều mô hình như KNN, SVM, logistic regression hoặc neural network thường hưởng lợi rõ rệt từ feature scaling. Với một số mô hình cây quyết định, mức độ cần thiết thấp hơn.
+
+### Hướng dẫn tiền xử lý dữ liệu cho người mới nên bắt đầu từ đâu?
+
+Bạn nên bắt đầu bằng ba việc dễ nhất: kiểm tra giá trị thiếu, kiểm tra cột chữ và kiểm tra sự chênh lệch thang đo giữa các feature. Chỉ cần làm tốt ba việc này là bạn đã tiến bộ rất nhanh.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu tiền xử lý dữ liệu cho machine learning là gì, vì sao cần làm sạch dữ liệu, cách xử lý thiếu, mã hóa categorical và chuẩn hóa dữ liệu. Đây là nền tảng trước khi cải thiện chất lượng đặc trưng đầu vào. Ở bài tiếp theo, chúng ta sẽ học **feature engineering trong machine learning** để tạo ra những feature hữu ích hơn cho mô hình.

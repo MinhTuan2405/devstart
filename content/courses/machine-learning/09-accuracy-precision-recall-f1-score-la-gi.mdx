@@ -1,0 +1,244 @@
+---
+title: "Accuracy, Precision, Recall, F1 Score là gì?"
+description: "Giải thích accuracy, precision, recall, F1 score là gì, khác nhau thế nào, khi nào nên dùng và cách đọc confusion matrix cho người mới."
+slug: "accuracy-precision-recall-f1-score-la-gi"
+course: "machine-learning"
+order: 9
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["accuracy precision recall f1 score là gì", "accuracy precision recall f1 score khác nhau như thế nào", "precision và recall là gì", "f1 score là gì", "accuracy là gì trong machine learning", "khi nào dùng precision recall f1 score", "cách tính precision recall f1 score", "ví dụ precision recall f1 score", "precision recall f1 score cho người mới", "so sánh accuracy precision recall", "confusion matrix là gì"]
+publishedAt: "2026-04-23"
+---
+
+## Accuracy, precision, recall, F1 score là gì?
+
+Accuracy, precision, recall và F1 score là các chỉ số dùng để đánh giá mô hình phân loại trong machine learning. `Accuracy` đo tỉ lệ dự đoán đúng tổng thể, `precision` đo mức độ đúng của những dự đoán dương tính, `recall` đo khả năng tìm ra đúng các trường hợp dương tính thật, còn `F1 score` là cách cân bằng giữa precision và recall.
+
+Với người mới, bốn chỉ số này thường gây nhầm vì nghe khá giống nhau. Nhưng nếu hiểu đúng, bạn sẽ biết khi nào accuracy là đủ và khi nào phải nhìn thêm precision, recall hoặc F1 score.
+
+## Confusion matrix là gì?
+
+Muốn hiểu `accuracy precision recall f1 score`, trước tiên bạn nên nắm `confusion matrix là gì`. Đây là bảng so sánh giữa nhãn thật và nhãn dự đoán của mô hình.
+
+Trong bài toán nhị phân, confusion matrix có 4 thành phần:
+
+- True Positive (TP): dự đoán dương tính và thực tế cũng dương tính.
+- True Negative (TN): dự đoán âm tính và thực tế cũng âm tính.
+- False Positive (FP): dự đoán dương tính nhưng thực tế âm tính.
+- False Negative (FN): dự đoán âm tính nhưng thực tế dương tính.
+
+Ví dụ biểu diễn confusion matrix bằng Python:
+
+```python
+tp = 40
+tn = 50
+fp = 5
+fn = 5
+
+print({"TP": tp, "TN": tn, "FP": fp, "FN": fn})
+```
+
+Khi đã có TP, TN, FP, FN, bạn có thể tính ra accuracy, precision, recall và F1 score.
+
+## Accuracy là gì trong machine learning?
+
+`Accuracy là gì trong machine learning`? Đây là tỉ lệ dự đoán đúng trên toàn bộ số mẫu.
+
+Công thức:
+
+- Accuracy = (TP + TN) / (TP + TN + FP + FN)
+
+Ví dụ:
+
+```python
+tp = 40
+tn = 50
+fp = 5
+fn = 5
+
+accuracy = (tp + tn) / (tp + tn + fp + fn)
+print(accuracy)
+```
+
+Accuracy rất dễ hiểu, nhưng có một nhược điểm lớn: nếu dữ liệu bị lệch lớp, accuracy có thể cao một cách gây hiểu lầm.
+
+Ví dụ, nếu 95% email là không spam, một mô hình luôn đoán "không spam" cũng đã có accuracy 95%, dù thực ra nó không hề phát hiện được email spam nào.
+
+## Precision và recall là gì?
+
+`Precision và recall là gì` là cặp câu hỏi cực kỳ quan trọng trong classification.
+
+- Precision trả lời: trong những mẫu mà mô hình nói là dương tính, có bao nhiêu mẫu thật sự dương tính?
+- Recall trả lời: trong tất cả các mẫu dương tính thật sự, mô hình tìm ra được bao nhiêu mẫu?
+
+Công thức:
+
+- Precision = TP / (TP + FP)
+- Recall = TP / (TP + FN)
+
+Ví dụ tính precision và recall:
+
+```python
+tp = 40
+fp = 5
+fn = 5
+
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+
+print("precision:", precision)
+print("recall:", recall)
+```
+
+Nếu bài toán là phát hiện spam:
+
+- Precision cao nghĩa là khi mô hình nói "spam", nó thường đúng.
+- Recall cao nghĩa là mô hình bỏ sót ít email spam.
+
+## F1 score là gì?
+
+`F1 score là gì`? Đây là chỉ số kết hợp precision và recall thành một con số duy nhất. F1 score đặc biệt hữu ích khi bạn muốn cân bằng giữa việc tránh báo động sai và tránh bỏ sót.
+
+Công thức:
+
+- F1 = 2 x Precision x Recall / (Precision + Recall)
+
+Ví dụ:
+
+```python
+precision = 0.89
+recall = 0.80
+
+f1 = 2 * precision * recall / (precision + recall)
+print(f1)
+```
+
+Nếu precision rất cao nhưng recall thấp, hoặc ngược lại, F1 score sẽ không quá cao. Vì vậy F1 thường được dùng khi bạn không muốn mô hình chỉ giỏi một mặt.
+
+## Accuracy, precision, recall, F1 score khác nhau như thế nào?
+
+Nếu bạn hỏi `accuracy precision recall f1 score khác nhau như thế nào`, có thể nhớ ngắn gọn như sau:
+
+- Accuracy: nhìn tổng thể đúng bao nhiêu phần trăm.
+- Precision: dự đoán dương tính có đáng tin không.
+- Recall: có bỏ sót dương tính thật không.
+- F1 score: cân bằng giữa precision và recall.
+
+Đây là cách `so sánh accuracy precision recall` rất hữu ích cho người mới.
+
+## Khi nào dùng precision, recall, F1 score?
+
+`Khi nào dùng precision recall f1 score` phụ thuộc vào bài toán.
+
+Bạn nên ưu tiên precision khi:
+
+- Báo động sai gây hậu quả lớn.
+- Ví dụ: gắn nhầm email quan trọng thành spam.
+
+Bạn nên ưu tiên recall khi:
+
+- Bỏ sót trường hợp dương tính nguy hiểm hơn báo nhầm.
+- Ví dụ: bỏ sót bệnh nhân có bệnh hoặc bỏ sót giao dịch gian lận.
+
+Bạn nên ưu tiên F1 score khi:
+
+- Muốn cân bằng giữa precision và recall.
+- Dữ liệu bị lệch lớp và accuracy không còn đủ đáng tin.
+
+## Ví dụ precision, recall, F1 score trong thực tế
+
+### Phát hiện email spam
+
+- Precision cao: ít email bình thường bị gắn nhầm là spam.
+- Recall cao: ít email spam bị bỏ sót.
+
+### Chẩn đoán bệnh
+
+- Recall thường rất quan trọng vì bỏ sót bệnh nhân có bệnh là rủi ro lớn.
+
+### Phát hiện gian lận
+
+- Cần cân bằng precision và recall để vừa phát hiện được gian lận, vừa không chặn nhầm quá nhiều giao dịch hợp lệ.
+
+Nhìn vào `ví dụ precision recall f1 score` như vậy sẽ giúp bạn hiểu chỉ số nào phù hợp với từng tình huống.
+
+## Cách tính accuracy, precision, recall, F1 score bằng sklearn
+
+Bạn không cần tự tính tay mọi lúc. Trong Python, có thể dùng `sklearn`:
+
+```python
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+y_true = [1, 0, 1, 1, 0, 1]
+y_pred = [1, 0, 1, 0, 0, 1]
+
+print("accuracy:", accuracy_score(y_true, y_pred))
+print("precision:", precision_score(y_true, y_pred))
+print("recall:", recall_score(y_true, y_pred))
+print("f1:", f1_score(y_true, y_pred))
+```
+
+Đây là cách rất tiện để kiểm tra mô hình classification trong các bài thực hành đầu tiên.
+
+## Những lỗi thường gặp khi đọc các chỉ số này
+
+- Chỉ nhìn accuracy rồi kết luận mô hình tốt.
+- Không để ý dữ liệu có bị lệch lớp hay không.
+- Nhầm precision cao với recall cao.
+- Dùng F1 score nhưng không hiểu bài toán thực sự ưu tiên tránh báo nhầm hay tránh bỏ sót.
+
+Chỉ cần tránh những lỗi này, bạn sẽ đọc kết quả mô hình chính xác hơn rất nhiều.
+
+## Bài tập thực hành
+
+Hãy giả sử một mô hình phát hiện spam có các giá trị sau:
+
+- TP = 30
+- TN = 50
+- FP = 10
+- FN = 10
+
+Hãy tự tính:
+
+- Accuracy
+- Precision
+- Recall
+- F1 score
+
+Bạn có thể dùng đoạn code sau để kiểm tra kết quả:
+
+```python
+tp = 30
+tn = 50
+fp = 10
+fn = 10
+
+accuracy = (tp + tn) / (tp + tn + fp + fn)
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+f1 = 2 * precision * recall / (precision + recall)
+
+print(accuracy, precision, recall, f1)
+```
+
+## Câu hỏi thường gặp về accuracy, precision, recall và F1 score
+
+### Accuracy là gì trong machine learning?
+
+Accuracy là tỉ lệ dự đoán đúng trên toàn bộ dữ liệu. Đây là chỉ số dễ hiểu nhất, nhưng có thể gây hiểu lầm nếu dữ liệu bị lệch lớp.
+
+### Precision và recall là gì?
+
+Precision đo độ chính xác của các dự đoán dương tính, còn recall đo khả năng tìm ra đủ các mẫu dương tính thật. Hai chỉ số này rất quan trọng trong bài toán classification.
+
+### F1 score là gì?
+
+F1 score là chỉ số cân bằng giữa precision và recall. Nó hữu ích khi bạn không muốn mô hình chỉ mạnh một phía mà bỏ quên phía còn lại.
+
+### Khi nào dùng precision recall F1 score thay vì accuracy?
+
+Khi dữ liệu bị lệch lớp hoặc khi báo nhầm và bỏ sót có chi phí khác nhau, bạn nên nhìn thêm precision, recall hoặc F1 score thay vì chỉ nhìn accuracy.
+
+## Tóm tắt
+
+Trong bài này, bạn đã hiểu accuracy, precision, recall, F1 score là gì, cách chúng khác nhau và khi nào nên dùng từng chỉ số. Đây là nền tảng quan trọng để đọc kết quả mô hình phân loại một cách đúng đắn. Ở bài tiếp theo, chúng ta sẽ bắt đầu với **linear regression** để làm quen với một mô hình machine learning cơ bản và dễ hiểu.
