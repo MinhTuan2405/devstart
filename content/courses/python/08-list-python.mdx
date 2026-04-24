@@ -1,0 +1,195 @@
+---
+title: "List trong Python: tạo, truy cập và cập nhật"
+description: "Tìm hiểu list trong Python, cách thêm, sửa, xóa phần tử và duyệt danh sách bằng vòng lặp cho người mới bắt đầu."
+slug: "list-python"
+course: "python"
+order: 8
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["list trong python", "cách dùng list trong python", "thêm phần tử vào list python", "duyệt list python", "list python cho người mới"]
+publishedAt: "2024-01-22"
+---
+
+## List trong Python là gì?
+
+List trong Python là kiểu dữ liệu dùng để lưu nhiều giá trị trong cùng một biến theo dạng có thứ tự. Khi học `list trong python`, bạn đang học cách quản lý danh sách dữ liệu như tên môn học, điểm số, việc cần làm hoặc sản phẩm trong giỏ hàng.
+
+Khác với biến thường chỉ giữ một giá trị, list giúp bạn gom nhiều phần tử lại và xử lý chúng bằng chỉ số, vòng lặp hoặc các phương thức có sẵn. Đây là một trong những cấu trúc dữ liệu quan trọng nhất với người mới vì nó xuất hiện trong rất nhiều bài toán thực tế.
+
+## Cách tạo list trong Python
+
+List được viết trong dấu `[]`, các phần tử ngăn cách nhau bằng dấu phẩy.
+
+```python
+mon_hoc = ["Python", "HTML", "C++"]
+
+print(mon_hoc)
+print(mon_hoc[0])
+print(len(mon_hoc))
+```
+
+Trong ví dụ trên:
+
+- List có ba phần tử
+- Chỉ số bắt đầu từ `0`
+- `len(mon_hoc)` cho biết độ dài danh sách
+
+List có thể chứa nhiều kiểu dữ liệu khác nhau, dù với người mới bạn nên dùng dữ liệu cùng loại để dễ hiểu hơn.
+
+```python
+du_lieu = ["Lan", 20, True]
+print(du_lieu)
+```
+
+Trong thực tế, bạn nên giữ list nhất quán về kiểu dữ liệu nếu có thể. Ví dụ danh sách điểm nên chứa số, danh sách môn học nên chứa chuỗi. Điều này giúp code dễ đọc và ít lỗi hơn.
+
+## Truy cập phần tử trong list Python
+
+Bạn có thể truy cập từng phần tử bằng chỉ số.
+
+```python
+trai_cay = ["Tao", "Cam", "Chuoi"]
+
+print(trai_cay[0])
+print(trai_cay[1])
+print(trai_cay[-1])
+```
+
+`-1` là phần tử cuối cùng trong list. Đây là cú pháp rất tiện khi bạn không muốn tự tính vị trí cuối.
+
+Bạn cũng có thể cắt một phần list giống như chuỗi:
+
+```python
+so = [1, 2, 3, 4, 5]
+print(so[1:4])
+```
+
+Khi cắt list, Python cũng lấy từ vị trí bắt đầu đến trước vị trí kết thúc. Quy tắc này giống hệt với chuỗi, nên nếu bạn đã quen slicing ở phần chuỗi thì sẽ thấy phần này dễ hơn nhiều.
+
+## Thêm, sửa và xóa phần tử trong list Python
+
+List là cấu trúc dữ liệu có thể thay đổi, nên bạn có thể thêm, sửa hoặc xóa phần tử sau khi tạo.
+
+```python
+cong_viec = ["Hoc Python", "Lam bai tap"]
+
+cong_viec.append("Doc tai lieu")
+cong_viec[0] = "On Python co ban"
+
+print(cong_viec)
+```
+
+Một số thao tác phổ biến:
+
+- `append()` thêm một phần tử vào cuối list
+- `insert()` chèn phần tử vào vị trí chỉ định
+- `remove()` xóa theo giá trị
+- `pop()` xóa theo vị trí và trả về phần tử bị xóa
+
+Ví dụ:
+
+```python
+so = [10, 20, 30, 40]
+
+so.remove(20)
+gia_tri = so.pop()
+
+print(so)
+print(gia_tri)
+```
+
+Điểm quan trọng ở đây là list có thể thay đổi sau khi tạo. Đây là khác biệt lớn giữa list và tuple, và cũng là lý do list rất phù hợp cho dữ liệu hay được cập nhật.
+
+## Duyệt list trong Python bằng vòng lặp
+
+`for` là cách phổ biến nhất để duyệt từng phần tử trong list.
+
+```python
+so = [3, 5, 8, 10]
+
+for item in so:
+    print(item)
+```
+
+Nếu cần cả vị trí và giá trị, bạn có thể dùng `enumerate()`.
+
+```python
+mon_hoc = ["Python", "HTML", "CSS"]
+
+for index, mon in enumerate(mon_hoc):
+    print(index, mon)
+```
+
+Với người mới, chỉ cần hiểu rằng `enumerate()` giúp bạn lấy cả chỉ số lẫn phần tử trong cùng một vòng lặp. Điều này rất tiện khi muốn in danh sách có đánh số hoặc cần cập nhật phần tử theo vị trí.
+
+## Khi nào nên dùng list trong Python?
+
+List phù hợp khi:
+
+- Bạn cần lưu nhiều giá trị trong một biến
+- Dữ liệu có thứ tự
+- Có thể có phần tử trùng lặp
+- Cần thêm, sửa, xóa thường xuyên
+
+Ví dụ, danh sách học viên đăng ký khóa học là một trường hợp rất phù hợp để dùng list. Danh sách việc cần làm, danh sách điểm, danh sách sản phẩm trong giỏ hàng cũng vậy.
+
+## Những lỗi thường gặp với list trong Python
+
+- Truy cập vị trí không tồn tại
+- Quên rằng chỉ số bắt đầu từ `0`
+- Nhầm `append()` với `extend()`
+- Xóa phần tử không có trong list
+
+Ví dụ dễ nhầm:
+
+```python
+trai_cay = ["Tao", "Cam"]
+
+# Sai vi list chi co vi tri 0 va 1
+# print(trai_cay[2])
+
+print(trai_cay[1])
+```
+
+Một lỗi khác là nghĩ `append([1, 2])` sẽ thêm từng phần tử riêng lẻ. Thực tế nó thêm cả list con vào cuối. Nếu muốn nối từng phần tử, bạn sẽ học thêm về `extend()` sau. Người mới cũng hay quên rằng `remove()` xóa theo giá trị, còn `pop()` thường gắn với vị trí.
+
+## Bài tập thực hành
+
+Tạo một list lưu ba món ăn yêu thích. Sau đó:
+
+- In ra món đầu tiên
+- Thêm một món mới vào cuối list
+- Sửa tên món thứ hai
+- Duyệt toàn bộ list để in từng món
+
+Gợi ý:
+
+```python
+mon_an = ["Pho", "Bun bo", "Com tam"]
+
+mon_an.append("Hu tieu")
+```
+
+Sau khi làm xong, hãy thử xóa một món khỏi danh sách và in lại kết quả. Nếu muốn luyện thêm, hãy viết chương trình tính tổng các số trong một list số nguyên.
+
+## Câu hỏi thường gặp về list trong Python
+
+### List và tuple trong Python khác nhau thế nào?
+
+List có thể thay đổi được sau khi tạo. Tuple thì không. Nếu bạn cần thêm, sửa, xóa dữ liệu thường xuyên, list phù hợp hơn.
+
+### Khi nào nên dùng `append()`?
+
+Hãy dùng `append()` khi bạn muốn thêm đúng một phần tử vào cuối danh sách. Đây là thao tác rất phổ biến khi nhận dữ liệu mới.
+
+### Chỉ số của list trong Python bắt đầu từ đâu?
+
+Chỉ số bắt đầu từ `0`, không phải `1`. Vì vậy phần tử đầu tiên luôn ở vị trí `0`.
+
+### Có thể lưu nhiều kiểu dữ liệu trong một list không?
+
+Có. Python cho phép điều đó. Tuy nhiên với người mới, bạn nên ưu tiên list chứa dữ liệu cùng loại để code dễ hiểu và dễ xử lý hơn.
+
+## Tóm tắt
+
+Bạn đã biết cách tạo list trong Python, truy cập phần tử, thêm sửa xóa dữ liệu và duyệt danh sách bằng vòng lặp. List là một cấu trúc dữ liệu cực kỳ quan trọng và sẽ xuất hiện rất nhiều trong các bài tập thực tế. Ở bài tiếp theo, chúng ta sẽ học **dictionary trong Python** để lưu dữ liệu theo cặp khóa và giá trị.

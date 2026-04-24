@@ -1,0 +1,198 @@
+---
+title: "Module trong Python: import và tái sử dụng code"
+description: "Học module trong Python, cách dùng import, from import và chia code thành nhiều file dễ quản lý hơn."
+slug: "module-python"
+course: "python"
+order: 13
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["module trong python", "import trong python", "from import python", "cách tạo module python", "module python cho người mới"]
+publishedAt: "2024-01-27"
+---
+
+## Module trong Python là gì?
+
+Module trong Python là một file `.py` chứa biến, hàm hoặc class mà bạn có thể import vào file khác để dùng lại. Nhờ đó, code không bị dồn hết vào một nơi, dễ đọc hơn, dễ sửa hơn và dễ tái sử dụng hơn khi dự án lớn dần.
+
+Khi mới học, bạn thường viết mọi thứ trong một file. Cách đó ổn với bài ngắn, nhưng sẽ nhanh chóng rối khi chương trình có nhiều chức năng. Module giúp bạn chia project thành từng phần rõ ràng, ví dụ một file chuyên tính toán, một file chuyên xử lý dữ liệu hoặc một file chuyên chạy chương trình chính.
+
+## Cú pháp cơ bản của import trong Python
+
+Python có sẵn nhiều module tiêu chuẩn như `math`.
+
+```python
+import math
+
+print(math.sqrt(25))
+print(math.pi)
+```
+
+Ở đây:
+
+- `import math` nghĩa là nạp toàn bộ module `math`
+- khi dùng hàm hoặc biến bên trong, bạn gọi qua tên module như `math.sqrt()` hoặc `math.pi`
+
+Bạn cũng có thể import riêng một phần cụ thể:
+
+```python
+from math import sqrt
+
+print(sqrt(49))
+```
+
+Khi viết như vậy, bạn gọi trực tiếp `sqrt()` mà không cần thêm `math.` phía trước. Cách này ngắn hơn, nhưng nếu lạm dụng quá nhiều `from ... import ...`, code có thể khó theo dõi nguồn gốc của hàm.
+
+## Module python là gì trong thực tế?
+
+Hãy tưởng tượng bạn đang viết một chương trình quản lý học viên. Nếu mọi hàm đều nằm trong `main.py`, file đó sẽ rất dài. Thay vào đó, bạn có thể tách như sau:
+
+- `hoc_vien.py` chứa hàm hoặc class liên quan đến học viên
+- `diem_so.py` chứa logic tính điểm
+- `main.py` là nơi gọi và phối hợp các phần lại
+
+Đây chính là lợi ích lớn nhất của module trong Python: chia nhỏ vấn đề để chương trình gọn hơn.
+
+## Cách tạo module Python của riêng bạn
+
+Giả sử bạn có file `tinh_toan.py` như sau:
+
+```python
+def tinh_tong(a, b):
+    return a + b
+```
+
+Sau đó, ở file khác bạn có thể import lại:
+
+```python
+import tinh_toan
+
+print(tinh_toan.tinh_tong(3, 4))
+```
+
+Đây là cách rất tốt để tách logic theo từng nhóm chức năng. Python xem file `tinh_toan.py` là một module vì nó chứa code có thể import được.
+
+Bạn cũng có thể import riêng hàm cần dùng:
+
+```python
+from tinh_toan import tinh_tong
+
+print(tinh_tong(10, 5))
+```
+
+Nếu file module có nhiều hàm liên quan, bạn nên giữ nguyên dạng `import tinh_toan` để nhìn code rõ hơn, đặc biệt với người mới.
+
+## Cách dùng module trong Python với thư viện chuẩn
+
+Ngoài module tự tạo, Python còn có thư viện chuẩn rất hữu ích. Ví dụ với `random`:
+
+```python
+import random
+
+so_ngau_nhien = random.randint(1, 10)
+print(so_ngau_nhien)
+```
+
+Hoặc với `math`:
+
+```python
+import math
+
+ban_kinh = 5
+dien_tich = math.pi * ban_kinh ** 2
+print(dien_tich)
+```
+
+Nhờ module, bạn không cần tự viết lại mọi thứ từ đầu. Đây là lý do việc học `import trong Python` rất quan trọng từ sớm.
+
+## Khi nào nên dùng module trong Python?
+
+- Khi code bắt đầu dài và khó theo dõi.
+- Khi có nhiều hàm liên quan đến cùng một chủ đề.
+- Khi bạn muốn tái sử dụng code ở nhiều file khác nhau.
+- Khi làm việc nhóm và mỗi người phụ trách một phần riêng.
+
+Ví dụ, bạn có thể tạo module riêng cho:
+
+- xử lý toán học
+- kiểm tra dữ liệu
+- làm việc với file
+- hiển thị menu
+- xử lý dữ liệu JSON
+
+Một nguyên tắc đơn giản là nếu bạn thấy một nhóm hàm có cùng mục đích, rất có thể chúng nên nằm trong cùng một module.
+
+## Cách đặt tên module để dễ hiểu
+
+Tên module nên ngắn, rõ nghĩa và viết thường. Ví dụ:
+
+- `tinh_toan.py`
+- `quan_ly_file.py`
+- `kiem_tra_du_lieu.py`
+
+Bạn nên tránh tên quá chung chung như `code.py`, `test.py`, `abc.py` vì nhìn vào không đoán được chức năng của file. Đặt tên tốt giúp project dễ đọc hơn ngay cả khi bạn quay lại sau vài tuần.
+
+## Những lỗi thường gặp với module trong Python
+
+- Đặt tên file trùng với tên module chuẩn như `math.py`.
+- Import sai tên file.
+- Quên rằng Python chỉ import được file ở đúng vị trí hoặc trong đường dẫn phù hợp.
+- Tạo vòng import lẫn nhau giữa hai file, làm chương trình khó chạy.
+
+Ví dụ nên tránh:
+
+```python
+# Khong nen dat ten file la math.py
+import math
+```
+
+Điều này có thể làm Python import nhầm file của bạn thay vì module chuẩn.
+
+Một lỗi nữa là tạo file `tinh_toan.py` nhưng lại viết:
+
+```python
+import tinhToan
+```
+
+Python phân biệt tên rất rõ. Bạn phải import đúng tên file.
+
+Nếu import không được, hãy kiểm tra lần lượt:
+
+- file có cùng thư mục với file đang chạy không
+- tên file có đúng không
+- có bị trùng với module chuẩn không
+- có lỗi cú pháp trong file module không
+
+## Bài tập thực hành
+
+Tạo file `chao.py` chứa hàm `xin_chao(ten)`. Sau đó tạo file khác và import hàm này để in lời chào cho 2 người khác nhau.
+
+Gợi ý:
+
+```python
+def xin_chao(ten):
+    print(f"Xin chào {ten}")
+```
+
+Bạn có thể mở rộng bài tập bằng cách tạo thêm hàm `tam_biet(ten)` trong cùng module và import sang file chính để gọi cả hai hàm.
+
+## Câu hỏi thường gặp về module trong Python
+
+### `import math` và `from math import sqrt` khác nhau thế nào?
+
+`import math` sẽ import cả module và bạn cần gọi bằng `math.sqrt()`. `from math import sqrt` chỉ import riêng `sqrt`, nên bạn gọi trực tiếp `sqrt()`. Với người mới, `import math` thường dễ đọc hơn vì bạn biết hàm đến từ đâu.
+
+### Khi nào nên tách code thành module?
+
+Hãy bắt đầu tách module khi bạn thấy một file đang quá dài hoặc có nhiều hàm cùng một nhóm chức năng. Làm vậy sớm sẽ giúp dự án gọn và dễ mở rộng hơn.
+
+### Module và thư viện có giống nhau không?
+
+Một module thường là một file `.py`. Thư viện có thể là tập hợp nhiều module phục vụ một mục đích lớn hơn. Bạn có thể hiểu đơn giản module là đơn vị nhỏ hơn bên trong thư viện.
+
+### Có nên import mọi thứ bằng dấu `*` không?
+
+Người mới không nên dùng `from module import *` vì cách này làm không gian tên bị lẫn lộn, khó biết một hàm đến từ đâu. Import rõ ràng sẽ an toàn và dễ đọc hơn.
+
+## Tóm tắt
+
+Bạn đã hiểu module trong Python là gì, cách dùng `import`, `from ... import`, cách tạo module riêng và khi nào nên tách code thành nhiều file. Đây là bước rất quan trọng để chuyển từ script ngắn sang project rõ cấu trúc hơn. Ở bài tiếp theo, chúng ta sẽ học **môi trường ảo Python** để quản lý thư viện cho từng project riêng biệt.

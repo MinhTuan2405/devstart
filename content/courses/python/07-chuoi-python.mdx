@@ -1,0 +1,207 @@
+---
+title: "Chuỗi trong Python: nối, cắt và xử lý văn bản"
+description: "Học cách làm việc với chuỗi trong Python, từ nối chuỗi, cắt chuỗi đến các phương thức xử lý văn bản cơ bản."
+slug: "chuoi-python"
+course: "python"
+order: 7
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["chuỗi trong python", "string trong python là gì", "nối chuỗi trong python", "cắt chuỗi trong python", "phương thức string python"]
+publishedAt: "2024-01-21"
+---
+
+## Chuỗi trong Python là gì?
+
+Chuỗi trong Python là kiểu dữ liệu dùng để lưu và xử lý văn bản như tên người dùng, email, tin nhắn hoặc nội dung nhập từ bàn phím. Khi học `chuỗi trong python`, bạn đang học cách làm việc với dữ liệu văn bản, một phần xuất hiện trong hầu hết mọi chương trình thực tế.
+
+Chuỗi thường được đặt trong dấu nháy đơn hoặc nháy kép. Python gọi kiểu dữ liệu này là `str`, viết tắt của `string`. Nếu số giúp bạn tính toán, thì chuỗi giúp bạn xử lý phần thông tin con người thường nhìn thấy và nhập vào.
+
+## Cách tạo chuỗi trong Python
+
+Bạn có thể tạo chuỗi bằng nhiều cách đơn giản.
+
+```python
+ten = "DevStart"
+loi_chao = 'Xin chao'
+
+print(ten)
+print(loi_chao)
+```
+
+Ngoài việc in ra màn hình, bạn cũng có thể lấy độ dài chuỗi bằng `len()`.
+
+```python
+text = "Python"
+print(len(text))
+```
+
+`len()` sẽ trả về số ký tự trong chuỗi. Đây là thao tác rất phổ biến khi kiểm tra độ dài tên đăng nhập, mật khẩu hoặc nội dung nhập vào.
+
+## Truy cập và cắt chuỗi trong Python
+
+Mỗi ký tự trong chuỗi có một vị trí gọi là chỉ số. Chỉ số bắt đầu từ `0`.
+
+```python
+text = "Python"
+
+print(text[0])
+print(text[1])
+print(text[-1])
+```
+
+Bạn cũng có thể cắt một phần chuỗi bằng cú pháp `start:end`.
+
+```python
+text = "Python"
+
+print(text[1:4])
+print(text[:3])
+print(text[3:])
+```
+
+Ý nghĩa:
+
+- `text[1:4]` lấy từ vị trí `1` đến trước vị trí `4`
+- `text[:3]` lấy từ đầu đến trước vị trí `3`
+- `text[3:]` lấy từ vị trí `3` đến hết
+
+Người mới hay nhầm rằng vị trí cuối cùng trong phần cắt sẽ được lấy luôn, nhưng thực tế Python không lấy phần tử ở chỉ số `end`. Bạn nên nhớ câu này: cắt chuỗi là lấy từ điểm bắt đầu đến trước điểm kết thúc.
+
+## Nối chuỗi trong Python
+
+Có hai cách rất phổ biến để nối chuỗi trong Python.
+
+```python
+ho = "Nguyen"
+ten = "An"
+
+print(ho + " " + ten)
+print(f"Xin chao {ho} {ten}")
+```
+
+Với người mới, `f-string` thường dễ đọc hơn vì bạn không phải ghép quá nhiều dấu `+`. Đây cũng là cách rất phổ biến trong Python hiện đại.
+
+Ví dụ thực tế:
+
+```python
+ten = "Lan"
+tuoi = 20
+
+print(f"Ban ten la {ten} va {tuoi} tuoi")
+```
+
+Khi cần chèn biến vào câu văn, `f-string` gần như luôn là lựa chọn rõ ràng và dễ bảo trì hơn.
+
+## Các phương thức string Python hay dùng
+
+Chuỗi có nhiều phương thức tiện lợi để xử lý văn bản.
+
+```python
+email = "  Hello@DevStart.vn  "
+
+print(email.lower())
+print(email.strip())
+print(email.replace("DevStart", "Python"))
+```
+
+Một số phương thức quan trọng:
+
+- `.lower()` chuyển về chữ thường
+- `.upper()` chuyển về chữ hoa
+- `.strip()` xóa khoảng trắng thừa ở đầu và cuối
+- `.replace()` thay thế nội dung
+- `.split()` tách chuỗi thành list
+
+Ví dụ với `.split()`:
+
+```python
+mon_hoc = "Python,HTML,CSS"
+print(mon_hoc.split(","))
+```
+
+Kết quả sẽ là một list gồm ba phần tử. Những phương thức này xuất hiện rất thường xuyên trong chương trình thực tế, nhất là khi xử lý dữ liệu người dùng nhập vào.
+
+## Duyệt chuỗi trong Python
+
+Vì chuỗi là một dãy ký tự, bạn có thể dùng vòng lặp để duyệt từng ký tự.
+
+```python
+for ky_tu in "Code":
+    print(ky_tu)
+```
+
+Điều này hữu ích khi bạn cần đếm số ký tự, kiểm tra từng phần của dữ liệu hoặc xử lý đầu vào theo từng bước. Ví dụ, bạn có thể dùng cách này để đếm số chữ cái viết hoa hoặc tìm xem một ký tự cụ thể có xuất hiện trong chuỗi hay không.
+
+## Những lỗi thường gặp với chuỗi trong Python
+
+- Cộng chuỗi với số mà chưa ép kiểu
+- Truy cập vị trí không tồn tại
+- Quên dùng `.strip()` khi xử lý dữ liệu nhập vào
+- Nhầm giữa sửa chuỗi và tạo chuỗi mới
+
+Ví dụ dễ nhầm:
+
+```python
+tuoi = 20
+
+# Sai
+# print("Tuoi cua ban la: " + tuoi)
+
+print("Tuoi cua ban la: " + str(tuoi))
+```
+
+Một lỗi khác là chỉ số vượt phạm vi:
+
+```python
+text = "Hi"
+
+# print(text[5])
+```
+
+Dòng trên sẽ báo lỗi vì chuỗi chỉ có hai ký tự. Bạn cũng nên nhớ rằng chuỗi trong Python không thay đổi trực tiếp từng ký tự như list. Nếu muốn có nội dung mới, bạn thường tạo ra chuỗi mới bằng cách ghép, cắt hoặc dùng phương thức xử lý.
+
+## Bài tập thực hành
+
+Cho biến sau:
+
+```python
+ho_ten = "  nguyen van a  "
+```
+
+Hãy viết code để:
+
+- Bỏ khoảng trắng thừa
+- Chuyển thành chữ thường
+- In ra độ dài chuỗi sau khi làm sạch
+- In ra ba ký tự đầu tiên
+
+Gợi ý:
+
+```python
+ho_ten = ho_ten.strip().lower()
+print(ho_ten)
+```
+
+Sau đó, hãy thử đổi dữ liệu đầu vào thành một địa chỉ email và dùng `.lower()` để chuẩn hóa nó. Nếu muốn luyện thêm, hãy tách một chuỗi dạng `"Python,HTML,CSS"` thành danh sách bằng `.split()`.
+
+## Câu hỏi thường gặp về chuỗi trong Python
+
+### `len()` trong Python dùng để làm gì?
+
+`len()` trả về độ dài của chuỗi, tức là số ký tự đang có trong chuỗi đó. Hàm này rất hữu ích khi kiểm tra độ dài tên, mật khẩu hoặc nội dung nhập vào.
+
+### Khi nào nên dùng `f-string`?
+
+Hãy dùng `f-string` khi bạn muốn chèn biến vào câu văn một cách gọn gàng, rõ ràng và dễ đọc.
+
+### Cắt chuỗi trong Python có lấy ký tự cuối không?
+
+Không. Với cú pháp `text[a:b]`, Python lấy từ vị trí `a` đến trước vị trí `b`, nên chỉ số `b` không được lấy.
+
+### Chuỗi có sửa trực tiếp từng ký tự được không?
+
+Không. Chuỗi trong Python là kiểu dữ liệu không sửa trực tiếp từng ký tự. Nếu cần nội dung mới, bạn phải tạo chuỗi mới từ dữ liệu cũ.
+
+## Tóm tắt
+
+Bạn đã học chuỗi trong Python, cách tạo chuỗi, truy cập ký tự, cắt chuỗi, nối chuỗi và dùng các phương thức xử lý văn bản cơ bản. Đây là kỹ năng rất quan trọng vì dữ liệu dạng chữ xuất hiện ở hầu hết mọi ứng dụng. Ở bài tiếp theo, chúng ta sẽ học **list trong Python** để lưu nhiều giá trị trong cùng một biến.

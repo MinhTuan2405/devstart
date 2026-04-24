@@ -1,0 +1,213 @@
+---
+title: "Box model CSS: margin, border, padding, content"
+description: "Tìm hiểu box model CSS và cách dùng margin, padding, border để kiểm soát khoảng cách và kích thước phần tử."
+slug: "box-model-css"
+course: "html-css"
+order: 7
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["box model css", "margin padding border css", "box model là gì", "margin và padding khác nhau", "box model css cho người mới"]
+publishedAt: "2024-01-26"
+---
+
+## Box model CSS là gì?
+
+Box model CSS là cách trình duyệt tính kích thước và khoảng cách của mỗi phần tử trên trang web. Nói ngắn gọn, mỗi phần tử HTML được xem như một cái hộp gồm phần nội dung, vùng đệm bên trong, đường viền và khoảng cách bên ngoài. Nếu bạn từng thấy một thẻ bị to hơn dự kiến, box model thường là nguyên nhân chính.
+
+Đây là kiến thức nền tảng bắt buộc phải hiểu nếu muốn làm layout ổn định. Khi mới học CSS, rất nhiều lỗi "khó hiểu" thực ra chỉ là do chưa phân biệt rõ `margin`, `padding`, `border` và `content`.
+
+## Cấu trúc cơ bản của box model CSS
+
+Box model gồm 4 phần:
+
+- `content`: nội dung bên trong
+- `padding`: khoảng cách từ nội dung tới viền
+- `border`: đường viền
+- `margin`: khoảng cách với phần tử bên ngoài
+
+```css
+.card {
+  width: 300px;
+  padding: 20px;
+  border: 1px solid #cbd5e1;
+  margin: 24px;
+}
+```
+
+Hãy tưởng tượng một chiếc hộp:
+
+- `content` là món đồ bên trong hộp
+- `padding` là lớp đệm giữa món đồ và thành hộp
+- `border` là thành hộp
+- `margin` là khoảng cách từ hộp này tới hộp khác
+
+Cách hình dung này rất hiệu quả với người mới vì box model là thứ cần "nhìn thấy bằng tư duy" trước khi bạn thực sự quen mắt với layout trên trình duyệt.
+
+## Cách dùng margin và padding trong CSS
+
+```html
+<div class="card">Noi dung the</div>
+```
+
+```css
+.card {
+  background-color: #f8fafc;
+  padding: 16px;
+  margin-top: 20px;
+}
+```
+
+Bạn có thể hiểu nhanh như sau:
+
+- `padding` làm nội dung “thoáng” hơn bên trong hộp
+- `margin` tạo khoảng cách giữa hộp này với hộp khác
+
+### Phân biệt `margin` và `padding` thật dễ
+
+Nếu bạn muốn phần chữ bên trong nút hoặc card bớt sát mép, hãy tăng `padding`.
+
+Nếu bạn muốn card này đứng xa card kia hơn, hãy tăng `margin`.
+
+Ví dụ minh họa:
+
+```css
+.button {
+  padding: 12px 20px;
+}
+
+.section {
+  margin-top: 32px;
+}
+```
+
+Ở đây, nút bấm thoáng hơn nhờ `padding`, còn cả section được đẩy xa phần phía trên nhờ `margin-top`.
+
+## Vì sao box model làm phần tử to hơn mong đợi?
+
+Nếu bạn đặt `width: 300px` rồi thêm `padding` và `border`, kích thước hiển thị thực tế có thể lớn hơn `300px`.
+
+```css
+.box {
+  width: 300px;
+  padding: 20px;
+  border: 2px solid black;
+}
+```
+
+Để dễ kiểm soát hơn, bạn sẽ thường thấy thêm:
+
+```css
+* {
+  box-sizing: border-box;
+}
+```
+
+### `content-box` và `border-box`
+
+Theo mặc định, trình duyệt thường tính `width` theo vùng `content`. Nghĩa là nếu bạn đặt `width: 300px` rồi thêm `padding: 20px` và `border`, kích thước tổng sẽ lớn hơn 300px.
+
+Khi dùng `box-sizing: border-box`, trình duyệt sẽ tính cả `padding` và `border` bên trong chiều rộng đã khai báo. Điều này giúp việc kiểm soát layout dễ hơn rất nhiều, nhất là khi bạn làm card, cột hoặc form.
+
+Ví dụ:
+
+```css
+.card {
+  box-sizing: border-box;
+  width: 300px;
+  padding: 20px;
+  border: 2px solid #cbd5e1;
+}
+```
+
+Lúc này, card vẫn giữ tổng chiều rộng gần đúng 300px thay vì bị nở ra ngoài mong đợi.
+
+## Ví dụ box model CSS trong giao diện thực tế
+
+Giả sử bạn đang làm một thẻ giới thiệu khóa học:
+
+```html
+<div class="course-card">
+  <h3>HTML CSS cho nguoi moi</h3>
+  <p>Hoc tu co ban den tu lam du an nho.</p>
+</div>
+```
+
+```css
+.course-card {
+  width: 320px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  margin-top: 24px;
+  background-color: white;
+}
+```
+
+Nhìn vào CSS này, bạn có thể đọc được rất rõ:
+
+- Card rộng 320px
+- Nội dung không dính sát mép vì có `padding`
+- Card có viền nhẹ
+- Card cách phần phía trên 24px
+
+Đây là một ví dụ box model CSS rất thực tế vì hầu như mọi giao diện đều dùng những khái niệm này.
+
+## Những lỗi thường gặp với box model CSS
+
+- Nhầm giữa `margin` và `padding`.
+- Đặt `width` rồi quên rằng `padding` làm hộp to hơn.
+- Chỉ chỉnh một cạnh nhưng lại mong toàn bộ hộp thay đổi đều.
+- Thêm `border` nhưng quên nó cũng làm phần tử thay đổi kích thước.
+- Dùng `margin` để tạo khoảng trống bên trong phần tử.
+
+Ví dụ sai tư duy phổ biến:
+
+```css
+.card {
+  margin: 20px;
+}
+```
+
+Nếu mục tiêu là làm chữ bên trong card bớt sát mép, `margin` không giải quyết đúng vấn đề. Khi đó bạn cần `padding`.
+
+## Bài tập thực hành
+
+Tạo một `div` có class `card`. Sau đó:
+
+- Đặt `width: 320px`
+- Thêm `padding: 20px`
+- Thêm `border`
+- Thêm `margin-top: 24px`
+
+Gợi ý:
+
+```css
+.card {
+  width: 320px;
+}
+```
+
+Sau khi làm xong, hãy thử thay `padding: 20px` thành `margin: 20px` và quan sát khác biệt. Đây là bài kiểm tra rất tốt để bạn tự cảm nhận sự khác nhau giữa hai thuộc tính này.
+
+## Câu hỏi thường gặp về box model CSS
+
+### `margin` và `padding` khác nhau thế nào?
+
+`padding` là khoảng cách bên trong phần tử, giữa nội dung và viền. `margin` là khoảng cách bên ngoài, giữa phần tử này với phần tử khác.
+
+### `box-sizing: border-box` dùng để làm gì?
+
+Nó giúp trình duyệt tính luôn `padding` và `border` vào bên trong kích thước đã khai báo. Nhờ vậy, việc kiểm soát chiều rộng và chiều cao sẽ dễ hơn nhiều.
+
+### `border` có làm phần tử to hơn không?
+
+Có. Nếu bạn không dùng `border-box`, đường viền sẽ làm tổng kích thước hiển thị tăng lên. Đây là lý do nhiều layout bị lệch chỉ vì thêm viền.
+
+### Nên dùng `padding` hay `margin` cho nút bấm?
+
+Thường dùng `padding` để tăng vùng bên trong nút, giúp nút nhìn cân đối và dễ bấm hơn. `margin` chỉ dùng khi bạn muốn tạo khoảng cách giữa nút và phần tử khác.
+
+## Tóm tắt
+
+Bạn đã hiểu box model CSS gồm `content`, `padding`, `border`, `margin`, biết sự khác nhau giữa `margin` và `padding`, và biết vì sao `box-sizing: border-box` lại quan trọng khi làm giao diện. Khi nắm chắc bài này, bạn sẽ đọc layout tự tin hơn và sửa lỗi khoảng cách nhanh hơn.
+
+Ở bài tiếp theo, chúng ta sẽ học **display, position và overflow** để hiểu sâu hơn cách phần tử xuất hiện, di chuyển và bị cắt nội dung trên trang.

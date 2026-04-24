@@ -3,59 +3,111 @@ title: "Vòng lặp trong Python: for và while"
 description: "Học cách sử dụng vòng lặp for và while trong Python để tự động hóa các tác vụ lặp đi lặp lại."
 slug: "vong-lap"
 course: "python"
-order: 3
+order: 5
 duration: "20 phút"
 difficulty: "Dễ"
 keywords: ["vòng lặp python", "for python", "while python", "loop python"]
 publishedAt: "2024-01-17"
 ---
 
-## Vòng lặp là gì?
+## Vòng lặp trong Python là gì?
 
-Vòng lặp giúp bạn thực hiện một đoạn code nhiều lần mà không cần viết lại. Python có 2 loại vòng lặp chính: `for` và `while`.
+Vòng lặp trong Python là cách để chương trình thực hiện lại một đoạn code nhiều lần mà bạn không cần viết lặp lại thủ công. Khi học `vòng lặp trong python`, bạn sẽ gặp hai loại quan trọng nhất là `for` và `while`, dùng để tự động hóa các việc lặp đi lặp lại.
 
-## Vòng lặp for
+Ví dụ, thay vì viết `print()` mười lần để in mười dòng, bạn có thể dùng một vòng lặp để làm việc đó gọn hơn, dễ sửa hơn và ít sai hơn.
 
-Dùng khi bạn biết trước số lần lặp:
+## Khi nào nên dùng vòng lặp?
+
+Bạn nên nghĩ đến vòng lặp khi gặp các tình huống như:
+
+- In ra danh sách nhiều phần tử
+- Tính tổng nhiều số
+- Duyệt qua từng ký tự trong chuỗi
+- Lặp đến khi một điều kiện không còn đúng
+- Tự động tạo bảng cửu chương hoặc báo cáo đơn giản
+
+Nếu thấy mình đang copy cùng một đoạn code nhiều lần và chỉ đổi một giá trị nhỏ, rất có thể bạn nên dùng vòng lặp.
+
+## Vòng lặp `for` trong Python
+
+`for trong python` thường dùng khi bạn biết trước số lần lặp hoặc muốn duyệt qua một tập dữ liệu như list, chuỗi hoặc `range()`.
 
 ```python
 for i in range(5):
-    print(f"Lần thứ {i + 1}")
+    print(f"Lan thu {i + 1}")
 ```
 
-Kết quả:
+`range(5)` tạo ra dãy số từ `0` đến `4`. Vì vậy vòng lặp sẽ chạy đúng 5 lần.
 
-```
-Lần thứ 1
-Lần thứ 2
-Lần thứ 3
-Lần thứ 4
-Lần thứ 5
-```
-
-Duyệt qua danh sách:
+Bạn cũng có thể chỉ định điểm bắt đầu và kết thúc:
 
 ```python
-fruits = ["Táo", "Cam", "Chuối"]
-for fruit in fruits:
-    print(f"Tôi thích ăn {fruit}")
+for i in range(1, 6):
+    print(i)
 ```
 
-## Vòng lặp while
+Ví dụ thực tế hơn là duyệt một danh sách:
 
-Dùng khi bạn muốn lặp cho đến khi một điều kiện không còn đúng:
+```python
+fruits = ["Tao", "Cam", "Chuoi"]
+
+for fruit in fruits:
+    print(f"Toi thich an {fruit}")
+```
+
+Đây là kiểu lặp bạn sẽ dùng rất thường xuyên khi xử lý list.
+
+## Vòng lặp `while` trong Python
+
+`while trong python` dùng khi bạn muốn lặp chừng nào điều kiện còn đúng. Bạn thường dùng nó khi không biết chính xác số lần lặp từ đầu.
 
 ```python
 count = 0
+
 while count < 3:
-    print(f"Đếm: {count}")
+    print(f"Dem: {count}")
     count += 1
 ```
 
-## break và continue
+Điều kiện `count < 3` được kiểm tra trước mỗi lần lặp. Khi điều kiện sai, vòng lặp dừng lại.
 
-- `break`: Thoát khỏi vòng lặp ngay lập tức
-- `continue`: Bỏ qua lần lặp hiện tại, chuyển sang lần tiếp theo
+Ví dụ gần với thực tế hơn:
+
+```python
+mat_khau = ""
+
+while mat_khau != "python123":
+    mat_khau = input("Nhap mat khau: ")
+
+print("Dang nhap thanh cong")
+```
+
+Kiểu lặp này phù hợp với các bài toán nhập lại dữ liệu cho đến khi hợp lệ.
+
+## `range()` trong Python hoạt động thế nào?
+
+`range()` thường đi cùng vòng lặp `for`. Có ba cách dùng cơ bản:
+
+```python
+print(list(range(5)))
+print(list(range(1, 5)))
+print(list(range(0, 10, 2)))
+```
+
+Ý nghĩa:
+
+- `range(5)` tạo dãy từ `0` đến `4`
+- `range(1, 5)` tạo dãy từ `1` đến `4`
+- `range(0, 10, 2)` tạo dãy tăng 2 đơn vị mỗi bước
+
+Người mới hay nhầm rằng `range(5)` sẽ ra đến số `5`, nhưng thực tế số cuối không được tính vào.
+
+## `break` và `continue` trong vòng lặp Python
+
+Hai từ khóa này giúp bạn điều khiển dòng chảy của vòng lặp.
+
+- `break` dừng hẳn vòng lặp ngay lập tức
+- `continue` bỏ qua lần lặp hiện tại và chuyển sang lần tiếp theo
 
 ```python
 for i in range(10):
@@ -66,15 +118,96 @@ for i in range(10):
     print(i)
 ```
 
-Kết quả: `1, 3` (bỏ qua số chẵn, dừng khi gặp 5)
+Trong ví dụ trên:
+
+- Khi `i` bằng `5`, vòng lặp dừng
+- Các số chẵn bị bỏ qua
+- Kết quả in ra là `1` và `3`
+
+Bạn nên dùng `break` và `continue` có chủ đích. Nếu lạm dụng, code sẽ khó đọc hơn.
+
+## Duyệt chuỗi và danh sách bằng vòng lặp
+
+Không chỉ số, bạn còn có thể dùng vòng lặp để duyệt từng ký tự hoặc từng phần tử.
+
+```python
+ten = "Python"
+
+for ky_tu in ten:
+    print(ky_tu)
+```
+
+```python
+diem = [8, 7, 9, 10]
+
+for item in diem:
+    print(item)
+```
+
+Đây là cách đơn giản và rất thường gặp khi xử lý dữ liệu.
+
+## Những lỗi thường gặp với vòng lặp trong Python
+
+- Quên tăng biến đếm trong `while`, gây lặp vô hạn
+- Nhầm phạm vi của `range()`
+- Thụt đầu dòng sai
+- Dùng `break` hoặc `continue` quá nhiều làm code khó hiểu
+- In sai biến khi đang lặp
+
+Ví dụ lỗi lặp vô hạn:
+
+```python
+# Sai vi khong tang i
+i = 0
+# while i < 5:
+#     print(i)
+```
+
+Ví dụ đúng:
+
+```python
+i = 0
+while i < 5:
+    print(i)
+    i += 1
+```
+
+
 
 ## Bài tập thực hành
 
-Viết chương trình in bảng cửu chương 5:
+Hãy làm hai bài tập nhỏ sau:
+
+- In bảng cửu chương 5 bằng `for`
+- Dùng `while` để in các số từ `1` đến `5`
+
+Gợi ý cho bài đầu tiên:
 
 ```python
 for i in range(1, 11):
     print(f"5 x {i} = {5 * i}")
 ```
 
-Chúc mừng! Bạn đã nắm vững vòng lặp trong Python. Tiếp tục học những bài tiếp theo nhé!
+Sau đó, thử thay số `5` bằng một biến để chương trình linh hoạt hơn.
+
+## Câu hỏi thường gặp về vòng lặp trong Python
+
+### Khi nào nên dùng `for` trong Python?
+
+Hãy dùng `for` khi bạn biết số lần lặp hoặc muốn duyệt qua một tập dữ liệu như list, chuỗi hoặc `range()`.
+
+### Khi nào nên dùng `while` trong Python?
+
+Hãy dùng `while` khi bạn muốn lặp dựa trên điều kiện, đặc biệt khi chưa biết trước số lần lặp chính xác.
+
+### `break` và `continue` khác nhau thế nào?
+
+`break` dừng toàn bộ vòng lặp. `continue` chỉ bỏ qua lần lặp hiện tại rồi chạy tiếp các lần sau.
+
+### Vì sao `while` dễ gây lặp vô hạn?
+
+Vì nếu điều kiện luôn đúng và bạn không cập nhật biến liên quan, vòng lặp sẽ chạy mãi. Khi viết `while`, hãy luôn tự hỏi: điều gì sẽ làm điều kiện trở thành sai?
+
+## Tóm tắt
+
+Bạn đã học vòng lặp trong Python với `for`, `while`, `range()`, cùng cách dùng `break` và `continue`. Đây là công cụ giúp chương trình xử lý công việc lặp lại một cách tự động. Ở bài tiếp theo, chúng ta sẽ học **hàm trong Python** để gom các đoạn xử lý thành phần có thể tái sử dụng.

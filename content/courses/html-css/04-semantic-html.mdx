@@ -1,0 +1,205 @@
+---
+title: "Semantic HTML: header, nav, main, section, footer"
+description: "Tìm hiểu semantic HTML là gì và cách dùng các thẻ như header, nav, main, section, footer để tạo bố cục web rõ ràng hơn."
+slug: "semantic-html"
+course: "html-css"
+order: 4
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["semantic html", "semantic html là gì", "thẻ semantic html", "header nav main footer html", "semantic html cho người mới"]
+publishedAt: "2024-01-23"
+---
+
+## Semantic HTML là gì?
+
+Semantic HTML là cách dùng các thẻ HTML mang ý nghĩa rõ ràng về vai trò của từng phần nội dung trên trang. Nói đơn giản, thay vì dùng một loạt `div` giống nhau, bạn chọn các thẻ như `header`, `nav`, `main`, `section`, `article`, `footer` để mô tả đúng bản chất của từng khối.
+
+Đây là bước rất quan trọng nếu bạn muốn viết HTML sạch, dễ đọc, thân thiện với SEO và dễ mở rộng sau này. Khi học semantic HTML cho người mới, mục tiêu không phải là nhớ thật nhiều thẻ, mà là hiểu vì sao chọn đúng thẻ sẽ tốt hơn chọn thẻ chung chung.
+
+## Cú pháp cơ bản của semantic HTML
+
+```html
+<header>
+  <h1>DevStart</h1>
+</header>
+
+<nav>
+  <a href="/">Trang chủ</a>
+  <a href="/blog">Blog</a>
+</nav>
+
+<main>
+  <section>
+    <h2>Khóa học nổi bật</h2>
+    <p>Nội dung giới thiệu khóa học.</p>
+  </section>
+</main>
+
+<footer>
+  <p>Bản quyền 2024</p>
+</footer>
+```
+
+Mỗi thẻ trong ví dụ trên đều mang ý nghĩa. Khi đọc code, bạn có thể đoán ngay phần nào là đầu trang, phần nào là menu, đâu là nội dung chính và đâu là chân trang.
+
+## Cách dùng semantic HTML để tạo bố cục trang
+
+Bạn có thể chia một trang thành các khối dễ hiểu như sau:
+
+- `header`: phần đầu trang
+- `nav`: menu điều hướng
+- `main`: nội dung chính
+- `section`: một nhóm nội dung liên quan
+- `footer`: phần cuối trang
+
+Khi dự án lớn hơn, cách chia này sẽ giúp code dễ đọc hơn rất nhiều so với việc dùng `div` cho mọi thứ.
+
+### Vai trò của từng thẻ semantic phổ biến
+
+- `header`: phần giới thiệu hoặc vùng đầu trang của toàn site hay một khu vực
+- `nav`: khối chứa các liên kết điều hướng chính
+- `main`: phần nội dung chính, thường chỉ nên có một trên mỗi trang
+- `section`: nhóm nội dung có chủ đề riêng
+- `article`: khối nội dung độc lập như bài viết, tin tức, card bài blog
+- `footer`: phần cuối với thông tin phụ, bản quyền hoặc liên kết bổ sung
+
+Nếu bạn đang xây dựng một trang bài viết, `article` thường hợp lý hơn `section` cho phần nội dung bài. Nếu bạn chỉ đang nhóm các mục liên quan trong cùng một phần lớn, `section` thường phù hợp hơn.
+
+## Semantic HTML tốt hơn `div` ở điểm nào?
+
+`div` vẫn hữu ích, nhưng nó không nói rõ ý nghĩa của nội dung. Semantic HTML giúp:
+
+- Dễ đọc code hơn
+- Hỗ trợ SEO tốt hơn
+- Hỗ trợ accessibility tốt hơn
+
+```html
+<!-- It y nghia -->
+<div class="header">...</div>
+
+<!-- Ro nghia hon -->
+<header>...</header>
+```
+
+Ngoài chuyện dễ đọc code, semantic HTML còn hỗ trợ tốt hơn cho trình đọc màn hình và công cụ tìm kiếm. Khi cấu trúc rõ ràng, máy móc cũng hiểu nội dung tốt hơn, không chỉ con người.
+
+## Ví dụ semantic HTML trong một bố cục thực tế
+
+Hãy nhìn một bố cục trang giới thiệu khóa học đơn giản:
+
+```html
+<header>
+  <h1>Hoc HTML CSS tu co ban</h1>
+</header>
+
+<nav>
+  <a href="#gioi-thieu">Gioi thieu</a>
+  <a href="#loi-ich">Loi ich</a>
+  <a href="#dang-ky">Dang ky</a>
+</nav>
+
+<main>
+  <section id="gioi-thieu">
+    <h2>Khoa hoc nay danh cho ai?</h2>
+    <p>Danh cho nguoi moi bat dau hoc lap trinh web.</p>
+  </section>
+
+  <section id="loi-ich">
+    <h2>Ban se hoc duoc gi?</h2>
+    <p>Nam duoc HTML, CSS va tu tay lam trang web don gian.</p>
+  </section>
+</main>
+
+<footer>
+  <p>Ban quyen 2024 DevStart</p>
+</footer>
+```
+
+Ngay cả khi chưa có CSS, bố cục này đã rõ ràng về mặt ý nghĩa. Đó chính là điểm mạnh của semantic HTML.
+
+## Khi nào vẫn nên dùng `div`?
+
+Nhiều bạn hiểu nhầm rằng đã học semantic HTML thì không được dùng `div`. Điều đó không đúng. `div` vẫn rất hữu ích khi:
+
+- Bạn cần một khối để gom phần tử nhằm áp dụng CSS
+- Khối đó không có ý nghĩa nội dung rõ ràng
+- Bạn chỉ cần wrapper kỹ thuật cho layout
+
+Ví dụ, bên trong một `section` bạn có thể dùng `div` để tạo cột, card hoặc nhóm nút. Quan trọng là các vùng lớn có ý nghĩa nên ưu tiên thẻ semantic trước.
+
+## Những lỗi thường gặp với semantic HTML
+
+- Dùng quá nhiều `div` dù nội dung có thể dùng thẻ semantic.
+- Dùng sai mục đích, ví dụ đặt mọi phần nội dung vào `header`.
+- Bỏ qua `main`, làm trang thiếu phần nội dung chính rõ ràng.
+- Dùng `section` liên tục nhưng không có tiêu đề hoặc chủ đề rõ ràng.
+- Nhầm `article` và `section` trong các trang nội dung.
+
+Ví dụ chưa tốt:
+
+```html
+<div class="header">...</div>
+<div class="menu">...</div>
+<div class="content">...</div>
+<div class="footer">...</div>
+```
+
+Ví dụ rõ nghĩa hơn:
+
+```html
+<header>...</header>
+<nav>...</nav>
+<main>...</main>
+<footer>...</footer>
+```
+
+## Bài tập thực hành
+
+Tạo một khung trang đơn giản gồm:
+
+- `header`
+- `nav`
+- `main`
+- `section`
+- `footer`
+
+Gợi ý:
+
+```html
+<header></header>
+<nav></nav>
+<main>
+  <section></section>
+</main>
+<footer></footer>
+```
+
+Sau khi dựng xong, hãy tự trả lời 3 câu hỏi:
+
+- Phần nào là nội dung chính của trang?
+- Phần nào chỉ dành cho điều hướng?
+- Có chỗ nào bạn đang dùng `div` nhưng có thể đổi sang thẻ semantic rõ nghĩa hơn không?
+
+## Câu hỏi thường gặp về semantic HTML
+
+### Có bắt buộc phải dùng semantic HTML không?
+
+Không bắt buộc tuyệt đối, nhưng rất nên dùng. Nó giúp cấu trúc trang rõ hơn, dễ bảo trì hơn, và thường tốt hơn cho SEO và accessibility.
+
+### Khi nào vẫn nên dùng `div`?
+
+Bạn vẫn nên dùng `div` khi chỉ cần một khối chung để nhóm phần tử hoặc áp dụng CSS, nhưng không có ý nghĩa nội dung rõ ràng.
+
+### Semantic HTML có giúp SEO không?
+
+Có, ở mức gián tiếp và thực tế. Semantic HTML giúp công cụ tìm kiếm hiểu cấu trúc nội dung tốt hơn, đặc biệt khi bạn dùng heading, `main`, `article`, `nav` hợp lý.
+
+### Một trang có thể có nhiều `section` không?
+
+Có. Bạn có thể có nhiều `section` nếu mỗi phần đại diện cho một nhóm nội dung riêng. Tốt nhất mỗi `section` nên có tiêu đề để dễ hiểu hơn.
+
+## Tóm tắt
+
+Bạn đã hiểu semantic HTML là gì, vì sao nên dùng thẻ có nghĩa thay cho `div` ở những vùng quan trọng, và cách áp dụng `header`, `nav`, `main`, `section`, `article`, `footer` vào bố cục thực tế. Đây là nền tảng quan trọng để code HTML vừa rõ ràng vừa thân thiện hơn với SEO và accessibility.
+
+Ở bài tiếp theo, chúng ta sẽ chuyển sang **CSS** để bắt đầu làm cho trang web không chỉ đúng cấu trúc mà còn dễ nhìn và chuyên nghiệp hơn.

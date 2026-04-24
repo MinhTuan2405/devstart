@@ -1,0 +1,244 @@
+---
+title: "Hàm trong C++: khai báo, tham số và return"
+description: "Học cách tạo hàm trong C++, truyền tham số, trả về kết quả và chia chương trình thành các phần dễ quản lý."
+slug: "ham-cpp"
+course: "cpp"
+order: 6
+difficulty: "Trung bình"
+duration: "20 phút"
+keywords: ["hàm trong c++", "function trong c++ là gì", "cách khai báo hàm trong c++", "tham số trong c++", "giá trị trả về trong c++"]
+publishedAt: "2024-01-23"
+---
+
+## Hàm trong C++ là gì?
+
+Hàm trong C++ là một khối code có tên, dùng để thực hiện một nhiệm vụ cụ thể. Khi biết cách dùng hàm, bạn sẽ tránh được việc lặp code, làm chương trình dễ đọc hơn, và dễ sửa hơn khi bài toán lớn dần lên.
+
+Nếu một đoạn code xuất hiện lặp lại nhiều lần, đó thường là lúc bạn nên tách nó thành hàm.
+
+Nói ngắn gọn, `hàm trong c++` giúp bạn chia chương trình thành các phần nhỏ, mỗi phần lo một việc.
+
+## Cú pháp cơ bản của hàm trong C++
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void chaoTen(string ten) {
+    cout << "Xin chao " << ten << endl;
+}
+
+int main() {
+    chaoTen("Minh");
+    chaoTen("Lan");
+    return 0;
+}
+```
+
+Trong ví dụ này:
+
+- `void` nghĩa là hàm không trả về giá trị.
+- `chaoTen` là tên hàm.
+- `ten` là tham số.
+
+Khi `main()` gọi `chaoTen("Minh")`, chương trình sẽ nhảy vào hàm `chaoTen`, chạy code trong đó rồi quay lại `main()`.
+
+## Cấu trúc đầy đủ của một hàm trong C++
+
+Một hàm thường có các phần sau:
+
+- Kiểu trả về
+- Tên hàm
+- Danh sách tham số
+- Thân hàm
+
+Ví dụ:
+
+```cpp
+int tinhTong(int a, int b) {
+    int tong = a + b;
+    return tong;
+}
+```
+
+Ở đây `int` đầu tiên là kiểu trả về, `tinhTong` là tên hàm, `a` và `b` là tham số, còn `return tong;` trả kết quả về nơi gọi hàm.
+
+## Cách dùng return trong C++
+
+Khi bạn muốn hàm trả kết quả để dùng tiếp, hãy dùng `return`.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int tinhTong(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int ketQua = tinhTong(5, 7);
+    cout << ketQua << endl;
+    return 0;
+}
+```
+
+`return` rất quan trọng vì nó cho phép bạn tái sử dụng kết quả ở nhiều nơi khác nhau trong chương trình.
+
+Khi một hàm có kiểu trả về như `int`, `double`, `bool`, bạn cần trả về đúng kiểu tương ứng.
+
+Ví dụ hàm trả về `bool`:
+
+```cpp
+bool laNguoiLon(int tuoi) {
+    return tuoi >= 18;
+}
+```
+
+Hàm này trả về `true` hoặc `false`, rất phù hợp cho các bài toán kiểm tra điều kiện.
+
+## Cách tạo hàm trong C++ cho bài toán thực tế
+
+Bạn có thể tách việc kiểm tra số chẵn thành một hàm riêng:
+
+```cpp
+bool laSoChan(int so) {
+    return so % 2 == 0;
+}
+
+int main() {
+    cout << laSoChan(8) << endl;
+    return 0;
+}
+```
+
+Cách viết này giúp phần `main()` gọn hơn và logic kiểm tra được đặt đúng chỗ.
+
+Hãy xem một ví dụ gần hơn với thực tế:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+double tinhDiemTrungBinh(double toan, double van, double anh) {
+    return (toan + van + anh) / 3;
+}
+
+int main() {
+    double dtb = tinhDiemTrungBinh(8.0, 7.5, 9.0);
+    cout << dtb << endl;
+    return 0;
+}
+```
+
+Thay vì viết công thức ở nhiều nơi, bạn gom nó vào một hàm duy nhất.
+
+## Khai báo hàm trước main
+
+Không phải lúc nào bạn cũng định nghĩa hàm ở trên `main()`. Nếu muốn đặt hàm phía dưới, bạn cần khai báo nguyên mẫu hàm.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int tinhHieu(int a, int b);
+
+int main() {
+    cout << tinhHieu(9, 4) << endl;
+    return 0;
+}
+
+int tinhHieu(int a, int b) {
+    return a - b;
+}
+```
+
+Phần `int tinhHieu(int a, int b);` nói với trình biên dịch rằng hàm này sẽ được định nghĩa ở phía sau.
+
+## Hàm void và hàm có giá trị trả về
+
+Người mới rất hay nhầm giữa hai loại này.
+
+### Hàm `void`
+
+Hàm `void` chỉ thực hiện hành động, không trả kết quả.
+
+```cpp
+void inLoiChao() {
+    cout << "Xin chao" << endl;
+}
+```
+
+### Hàm có `return`
+
+Hàm có kiểu trả về sẽ gửi kết quả về nơi gọi.
+
+```cpp
+int binhPhuong(int x) {
+    return x * x;
+}
+```
+
+Khi nào chọn loại nào?
+
+- Dùng `void` khi chỉ muốn in hoặc thực hiện hành động
+- Dùng hàm có `return` khi cần lấy kết quả để tính tiếp
+
+## Những lỗi thường gặp với hàm trong C++
+
+- Gọi hàm sai số lượng tham số.
+- Quên `return` trong hàm có kiểu trả về.
+- Khai báo kiểu dữ liệu trả về không khớp với kết quả.
+- Không khai báo nguyên mẫu khi định nghĩa hàm ở phía sau `main`
+
+Ví dụ:
+
+```cpp
+int nhanDoi(int x) {
+    return x * 2;
+}
+
+// Sai neu goi thieu tham so
+// nhanDoi();
+```
+
+Ví dụ sai kiểu trả về:
+
+```cpp
+int layTen() {
+    return "Minh";
+}
+```
+
+Đây là sai vì hàm khai báo trả về `int` nhưng lại trả về chuỗi.
+
+## Bài tập thực hành
+
+Viết hàm `tinhChuViHinhChuNhat(int dai, int rong)` và in kết quả ra màn hình.
+
+Gợi ý:
+
+```cpp
+int tinhChuViHinhChuNhat(int dai, int rong) {
+    // viet code o day
+}
+```
+
+Làm thêm một bài nhỏ nữa: viết hàm `laSoDuong(int n)` trả về `true` nếu `n > 0`, rồi gọi hàm trong `main()` với 3 giá trị khác nhau.
+
+## Câu hỏi thường gặp về hàm trong C++
+
+### Khi nào nên dùng `void` trong C++?
+
+Hãy dùng `void` khi hàm chỉ làm một việc như in ra màn hình hoặc cập nhật trạng thái mà không cần trả giá trị về.
+
+### Hàm trong C++ có bắt buộc phải khai báo trước `main` không?
+
+Nếu bạn định nghĩa hàm ở phía trên `main` thì không cần khai báo trước. Nếu hàm nằm sau `main`, bạn cần khai báo nguyên mẫu hàm ở phía trên.
+
+### Khi nào nên tách code thành hàm?
+
+Khi một đoạn code thực hiện một nhiệm vụ rõ ràng, hoặc xuất hiện lặp lại nhiều lần, bạn nên tách nó thành hàm.
+
+## Tóm tắt
+
+Bạn đã học cách khai báo hàm trong C++, dùng tham số, và trả kết quả bằng `return`. Đây là bước quan trọng để viết chương trình có cấu trúc hơn. Ở bài tiếp theo, chúng ta sẽ học **mảng trong C++** để lưu nhiều giá trị cùng lúc.

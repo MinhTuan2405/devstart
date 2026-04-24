@@ -15,32 +15,29 @@ Muc tieu cua khoa hoc nay la dua nguoi moi tu muc 0 den muc tu tin viet cac chuo
 |---|---|---|---|---|---|
 | 1 | Nen tang | Gioi thieu Python va cai dat | python la gi | Da co | Khop `01-gioi-thieu-python.mdx` |
 | 2 | Nen tang | Bien va kieu du lieu | bien va kieu du lieu trong python | Da co | Khop `02-bien-va-kieu-du-lieu.mdx` |
-| 3 | Nen tang | Toan tu trong Python | toan tu trong python | Can viet | Nen chen truoc bai dieu kien |
-| 4 | Nen tang | Cau lenh if else | cau lenh if else trong python | Can viet | Nen hoc truoc vong lap |
-| 5 | Nen tang | Vong lap for va while | vong lap trong python | Da co, nen doi vi tri | Noi dung da co o `03-vong-lap.mdx` nhung hop ly hon neu dung sau bai if else |
-| 6 | Nen tang | Ham trong Python | ham trong python | Can viet | Mo rong tu duy tai su dung code |
-| 7 | Du lieu | Chuoi trong Python | chuoi trong python | Can viet | Tap trung vao xu ly van ban co ban |
-| 8 | Du lieu | List trong Python | list trong python | Can viet | Cau truc du lieu can ban nhat |
-| 9 | Du lieu | Tuple trong Python | tuple trong python | Can viet | Giai thich khac biet voi list |
-| 10 | Du lieu | Set trong Python | set trong python | Can viet | Nhom khong trung lap |
-| 11 | Du lieu | Dictionary trong Python | dictionary trong python | Can viet | Key-value va duyet du lieu |
-| 12 | Thuc hanh | Input output va dinh dang chuoi | nhap xuat du lieu trong python | Can viet | `input`, `print`, f-string |
-| 13 | Thuc hanh | Module trong Python | module trong python | Can viet | `import`, `from ... import` va thu vien chuan |
-| 14 | Thuc hanh | pip va moi truong ao | moi truong ao python | Can viet | Quan ly thu vien cho project |
-| 15 | Thuc hanh | Doc ghi file | doc ghi file trong python | Can viet | `open`, `with`, file text |
-| 16 | Thuc hanh | Xu ly loi voi try except | try except trong python | Can viet | Bat loi cho nguoi moi |
-| 17 | Nang cao co ban | List comprehension | list comprehension trong python | Can viet | Toi uu cach viet lap danh sach |
-| 18 | Nang cao co ban | Lap trinh huong doi tuong co ban | lap trinh huong doi tuong trong python | Can viet | `class`, `object`, `self` |
-| 19 | Nang cao co ban | Lam viec voi JSON | json trong python | Can viet | Doc ghi du lieu co cau truc |
-| 20 | Du an | Du an Python dau tien | du an python dau tien | Can viet | Mini project tong hop cuoi khoa |
+| 3 | Nen tang | Toan tu trong Python | toan tu trong python | Da co | `03-toan-tu-python.mdx` |
+| 4 | Nen tang | Cau lenh if else | cau lenh if else trong python | Da co | `04-dieu-kien-if-else-python.mdx` |
+| 5 | Nen tang | Vong lap for va while | vong lap trong python | Da co | Frontmatter `order` da doi thanh 5 trong `03-vong-lap.mdx` |
+| 6 | Nen tang | Ham trong Python | ham trong python | Da co | `06-ham-python.mdx` |
+| 7 | Du lieu | Chuoi trong Python | chuoi trong python | Da co | `07-chuoi-python.mdx` |
+| 8 | Du lieu | List trong Python | list trong python | Da co | `08-list-python.mdx` |
+| 9 | Du lieu | Dictionary trong Python | dictionary trong python | Da co | `09-dictionary-python.mdx` |
+| 10 | Du lieu | Tuple trong Python | tuple trong python | Da co | `10-tuple-python.mdx` |
+| 11 | Du lieu | Set trong Python | set trong python | Da co | `11-set-python.mdx` |
+| 12 | Thuc hanh | Input output va dinh dang chuoi | nhap xuat du lieu trong python | Da co | `12-nhap-xuat-du-lieu-python.mdx` |
+| 13 | Thuc hanh | Module trong Python | module trong python | Da co | `13-module-python.mdx` |
+| 14 | Thuc hanh | pip va moi truong ao | moi truong ao python | Da co | `14-moi-truong-ao-python.mdx` |
+| 15 | Thuc hanh | Doc ghi file | doc ghi file trong python | Da co | `15-doc-ghi-file-python.mdx` |
+| 16 | Thuc hanh | Xu ly loi voi try except | try except trong python | Da co | `16-try-except-python.mdx` |
+| 17 | Nang cao co ban | List comprehension | list comprehension trong python | Da co | `17-list-comprehension-python.mdx` |
+| 18 | Nang cao co ban | Lap trinh huong doi tuong co ban | lap trinh huong doi tuong trong python | Da co | `18-oop-python.mdx` |
+| 19 | Nang cao co ban | Lam viec voi JSON | json trong python | Da co | `19-json-python.mdx` |
+| 20 | Du an | Du an Python dau tien | du an python dau tien | Da co | `20-du-an-python-dau-tien.mdx` |
 
 ## Thu tu uu tien de san xuat noi dung
 
-1. Viet bai 3, 4 de lam day lo hong giua bai 2 va bai vong lap hien tai.
-2. Chuan hoa bai 5 trong roadmap va cap nhat lien ket dieu huong neu muon doi thu tu that.
-3. Hoan thanh cum bai 6-11 de khoa hoc co day du nen tang xu ly du lieu.
-4. Hoan thanh cum bai 12-16 de hoc vien co the tu viet script thuc te.
-5. Ket thuc bang bai 17-20 de chuyen tu ly thuyet sang du an.
+1. Toan bo roadmap Python hien tai da co draft file lesson.
+2. Neu can polish, uu tien review lai do dai bai, vi du code, va thu tu `dictionary -> tuple -> set` trong curriculum neu muon sat hon logic nen tang du lieu.
 
 ## Dau ra keyword da tao
 

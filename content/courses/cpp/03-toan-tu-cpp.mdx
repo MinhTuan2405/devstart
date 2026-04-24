@@ -1,0 +1,257 @@
+---
+title: "Toán tử trong C++ cho người mới bắt đầu"
+description: "Tìm hiểu toán tử trong C++ gồm toán tử số học, so sánh, logic và các lỗi thường gặp khi mới học."
+slug: "toan-tu-cpp"
+course: "cpp"
+order: 3
+duration: "18 phút"
+difficulty: "Trung bình"
+keywords: ["toán tử trong c++", "toán tử số học trong c++", "toán tử so sánh trong c++", "toán tử logic trong c++", "toán tử c++ cho người mới"]
+publishedAt: "2024-01-20"
+---
+
+## Toán tử trong C++ là gì?
+
+Toán tử trong C++ là các ký hiệu giúp bạn tính toán, so sánh giá trị, hoặc kết hợp nhiều điều kiện với nhau. Đây là phần nền tảng trước khi học `if else`, vòng lặp, và các bài toán xử lý dữ liệu trong C++.
+
+Hiểu đơn giản: biến chứa dữ liệu, còn toán tử là công cụ để thao tác với dữ liệu đó.
+
+Sau khi biết cách khai báo biến, bước tiếp theo là học cách cộng, trừ, so sánh và cập nhật giá trị.
+
+## Cú pháp cơ bản của toán tử trong C++
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int a = 10;
+    int b = 3;
+
+    cout << a + b << endl;
+    cout << a - b << endl;
+    cout << a * b << endl;
+    cout << a / b << endl;
+    cout << a % b << endl;
+    return 0;
+}
+```
+
+Trong ví dụ trên:
+
+- `+`, `-`, `*`, `/` là toán tử số học.
+- `%` lấy phần dư của phép chia.
+- Vì `a` và `b` là `int`, nên `a / b` cho kết quả là `3`, không phải `3.333`.
+
+Điều quan trọng là kết quả phụ thuộc vào kiểu dữ liệu của toán hạng, không chỉ phụ thuộc vào phép toán.
+
+## Các nhóm toán tử trong C++ người mới cần biết
+
+### Toán tử số học trong C++
+
+- `+` cộng
+- `-` trừ
+- `*` nhân
+- `/` chia
+- `%` chia lấy dư
+
+Ví dụ:
+
+```cpp
+int tong = 8 + 2;
+int hieu = 8 - 2;
+int tich = 8 * 2;
+int thuong = 8 / 2;
+int du = 8 % 3;
+```
+
+### Toán tử gán trong C++
+
+```cpp
+int x = 10;
+x += 5;
+x -= 2;
+x *= 3;
+```
+
+Dạng rút gọn như `+=` hay `-=` rất thường gặp.
+
+### Toán tử so sánh trong C++
+
+Toán tử so sánh cho kết quả kiểu `bool`, tức là `true` hoặc `false`.
+
+- `==` bằng
+- `!=` khác
+- `>` lớn hơn
+- `<` nhỏ hơn
+- `>=` lớn hơn hoặc bằng
+- `<=` nhỏ hơn hoặc bằng
+
+Ví dụ:
+
+```cpp
+int a = 5;
+int b = 7;
+
+cout << (a < b) << endl;
+cout << (a == b) << endl;
+```
+
+### Toán tử logic trong C++
+
+Toán tử logic dùng để kết hợp nhiều điều kiện.
+
+- `&&` và
+- `||` hoặc
+- `!` phủ định
+
+## Cách dùng toán tử so sánh và logic trong C++
+
+Toán tử so sánh như `>`, `<`, `==`, `!=` thường được dùng chung với `if`.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int tuoi = 20;
+    bool coTheSinhVien = true;
+
+    if (tuoi >= 18 && coTheSinhVien) {
+        cout << "Du dieu kien dang ky" << endl;
+    }
+
+    return 0;
+}
+```
+
+Bạn cần nhớ:
+
+- `&&` là `and`.
+- `||` là `or`.
+- `!` là `not`.
+
+Ví dụ mở rộng:
+
+```cpp
+int diem = 9;
+bool lamBaiDayDu = true;
+
+cout << (diem >= 8 && lamBaiDayDu) << endl;
+cout << (diem < 5 || !lamBaiDayDu) << endl;
+```
+
+## Toán tử tăng giảm trong C++
+
+`i++` và `i--` là hai toán tử rất phổ biến trong vòng lặp. `i++` tăng giá trị thêm 1, còn `i--` giảm đi 1.
+
+## Những lỗi thường gặp với toán tử trong C++
+
+- Dùng `=` thay vì `==` khi so sánh điều kiện.
+- Quên rằng chia hai số nguyên sẽ ra kết quả nguyên.
+- Nhầm ý nghĩa của `i++` và `++i` khi mới bắt đầu.
+- Không thêm ngoặc khi biểu thức quá dài.
+
+Ví dụ tránh lỗi chia nguyên:
+
+```cpp
+int a = 10;
+int b = 3;
+
+cout << (double)a / b << endl;
+```
+
+Ép kiểu sang `double` giúp bạn lấy được kết quả thập phân.
+
+Ví dụ dễ nhầm giữa gán và so sánh:
+
+```cpp
+int x = 5;
+
+if (x == 5) {
+    cout << "Dung" << endl;
+}
+```
+
+Nếu bạn viết `if (x = 5)`, chương trình có thể vẫn biên dịch nhưng ý nghĩa đã khác.
+
+## Thứ tự ưu tiên toán tử
+
+Không phải toán tử nào cũng được thực hiện cùng lúc. Ví dụ:
+
+```cpp
+int ketQua = 2 + 3 * 4;
+cout << ketQua << endl;
+```
+
+Kết quả là `14`, vì phép nhân được thực hiện trước phép cộng.
+
+Nếu muốn rõ ràng hơn, hãy dùng ngoặc:
+
+```cpp
+int ketQua = (2 + 3) * 4;
+cout << ketQua << endl;
+```
+
+Kết quả lúc này là `20`. Với người mới, thêm ngoặc là cách tốt để tránh hiểu sai.
+
+## Ví dụ toán tử C++ trong bài toán thực tế
+
+Giả sử bạn muốn tính tiền sau giảm giá:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    double giaGoc = 200000;
+    double giamGia = 0.1;
+    double giaSauGiam = giaGoc - giaGoc * giamGia;
+
+    cout << giaSauGiam << endl;
+    cout << (giaSauGiam < 180000) << endl;
+    return 0;
+}
+```
+
+Trong ví dụ này, bạn đang kết hợp toán tử số học và toán tử so sánh.
+
+## Bài tập thực hành
+
+Viết chương trình khai báo 2 số nguyên và in ra:
+
+- Tổng
+- Hiệu
+- Tích
+- Thương
+- Phần dư
+- Kết quả kiểm tra số thứ nhất có lớn hơn số thứ hai không
+
+Gợi ý:
+
+```cpp
+int a = 15;
+int b = 4;
+
+// Hay tu viet cac dong cout o day
+```
+
+Làm thêm một yêu cầu nữa: in ra kết quả của biểu thức `a > b && a % 2 == 1`.
+
+## Câu hỏi thường gặp về toán tử trong C++
+
+### Vì sao `10 / 3` trong C++ lại ra `3`?
+
+Vì cả hai toán hạng đều là `int`, C++ sẽ chia theo kiểu số nguyên. Nếu muốn kết quả có phần thập phân, bạn cần ép một trong hai số sang `double` hoặc `float`.
+
+### Khi nào dùng `&&` và `||`?
+
+Dùng `&&` khi mọi điều kiện đều phải đúng. Dùng `||` khi chỉ cần một điều kiện đúng là đủ.
+
+### Vì sao nên thêm ngoặc trong biểu thức dài?
+
+Vì ngoặc giúp biểu thức rõ nghĩa hơn, tránh nhầm thứ tự ưu tiên toán tử và giúp bạn đọc lại code dễ hơn.
+
+## Tóm tắt
+
+Bạn đã học các nhóm toán tử quan trọng trong C++ gồm số học, so sánh, và logic. Đây là nền tảng trực tiếp cho bài `if else`. Ở bài tiếp theo, chúng ta sẽ dùng các toán tử này để học **câu lệnh if else và switch trong C++**.

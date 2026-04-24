@@ -1,0 +1,225 @@
+---
+title: "Mảng trong C++: khai báo, truy cập và duyệt"
+description: "Tìm hiểu mảng trong C++, cách khai báo, truy cập phần tử và dùng vòng lặp để xử lý dữ liệu cơ bản."
+slug: "mang-cpp"
+course: "cpp"
+order: 7
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["mảng trong c++", "array trong c++ là gì", "khai báo mảng trong c++", "duyệt mảng trong c++", "mảng c++ cho người mới"]
+publishedAt: "2024-01-24"
+---
+
+## Mảng trong C++ là gì?
+
+Mảng trong C++ là cấu trúc dữ liệu giúp bạn lưu nhiều giá trị cùng kiểu trong một biến duy nhất. Khi cần lưu danh sách điểm số, nhiệt độ, hoặc nhiều số nguyên, mảng là công cụ cơ bản nhất để bắt đầu.
+
+Mỗi phần tử trong mảng có một vị trí riêng, gọi là chỉ số.
+
+Nếu bạn tạo 10 biến riêng như `diem1`, `diem2`, `diem3`, chương trình sẽ nhanh chóng trở nên rối. `Mảng trong c++` giải quyết vấn đề này bằng cách gom các giá trị cùng kiểu vào một cấu trúc chung.
+
+## Cú pháp cơ bản của mảng trong C++
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int diem[4] = {8, 7, 9, 10};
+
+    cout << diem[0] << endl;
+    cout << diem[2] << endl;
+    return 0;
+}
+```
+
+Trong ví dụ trên:
+
+- `int diem[4]` tạo mảng 4 phần tử.
+- `diem[0]` là phần tử đầu tiên.
+- Chỉ số bắt đầu từ `0`, không phải `1`.
+
+Đây là nguyên tắc bạn phải nhớ thật chắc: phần tử đầu tiên của mảng luôn ở vị trí `0`.
+
+## Khai báo mảng trong C++ theo nhiều cách
+
+Bạn có thể khai báo mảng theo các cách phổ biến sau:
+
+```cpp
+int so[5];
+int diem[3] = {7, 8, 9};
+double nhietDo[] = {36.5, 37.0, 36.8};
+```
+
+Ý nghĩa:
+
+- `int so[5];` tạo mảng 5 phần tử nhưng chưa gán giá trị cụ thể
+- `int diem[3] = {7, 8, 9};` vừa khai báo vừa gán
+- `double nhietDo[] = {...};` để trình biên dịch tự đếm số phần tử
+
+Ở mức cơ bản, bạn nên ưu tiên khai báo rõ kích thước để dễ đọc.
+
+## Cách duyệt mảng trong C++ bằng vòng lặp
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int so[5] = {2, 4, 6, 8, 10};
+
+    for (int i = 0; i < 5; i++) {
+        cout << so[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+Đây là cách phổ biến nhất để đi qua toàn bộ mảng trong C++.
+
+`duyệt mảng trong c++` nghĩa là truy cập lần lượt từng phần tử để in ra, tính tổng hoặc tìm số lớn nhất.
+
+Bạn cũng có thể vừa duyệt vừa xử lý:
+
+```cpp
+int so[5] = {2, 4, 6, 8, 10};
+int tong = 0;
+
+for (int i = 0; i < 5; i++) {
+    tong += so[i];
+}
+
+cout << tong << endl;
+```
+
+## Cách dùng mảng trong C++ cho bài toán thực tế
+
+Bạn có thể dùng mảng để tính tổng điểm của một nhóm học viên:
+
+```cpp
+int diem[3] = {7, 8, 9};
+int tong = 0;
+
+for (int i = 0; i < 3; i++) {
+    tong += diem[i];
+}
+
+cout << tong << endl;
+```
+
+Ý tưởng này sẽ còn dùng lại rất nhiều khi học trung bình cộng, tìm số lớn nhất, hoặc thống kê dữ liệu đơn giản.
+
+Ví dụ tìm số lớn nhất trong mảng:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int so[5] = {3, 9, 2, 11, 6};
+    int lonNhat = so[0];
+
+    for (int i = 1; i < 5; i++) {
+        if (so[i] > lonNhat) {
+            lonNhat = so[i];
+        }
+    }
+
+    cout << lonNhat << endl;
+    return 0;
+}
+```
+
+Đây là một mẫu rất quan trọng vì nó kết hợp cả mảng, vòng lặp và điều kiện.
+
+## Nhập xuất mảng trong C++
+
+Ngoài việc gán sẵn, bạn cũng có thể nhập từng phần tử bằng `cin`.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int so[3];
+
+    for (int i = 0; i < 3; i++) {
+        cin >> so[i];
+    }
+
+    for (int i = 0; i < 3; i++) {
+        cout << so[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+Đây là kỹ thuật cơ bản để xử lý danh sách số do người dùng nhập vào.
+
+## Những lỗi thường gặp với mảng trong C++
+
+- Truy cập phần tử vượt quá kích thước mảng.
+- Nhầm chỉ số đầu tiên là `1`.
+- Khai báo kích thước không đủ để chứa dữ liệu.
+- Cho rằng mảng có thể tự đổi kích thước.
+
+Ví dụ cần tránh:
+
+```cpp
+int so[3] = {1, 2, 3};
+
+// Sai vi vi tri hop le chi la 0, 1, 2
+// cout << so[3] << endl;
+```
+
+Nếu bạn truy cập sai chỉ số, chương trình có thể in giá trị rác hoặc gây lỗi khó đoán.
+
+Một lỗi khác:
+
+```cpp
+int so[5] = {1, 2, 3, 4, 5};
+
+for (int i = 1; i <= 5; i++) {
+    cout << so[i] << endl;
+}
+```
+
+Vòng lặp trên sai ở cả điểm bắt đầu lẫn điều kiện dừng.
+
+## Bài tập thực hành
+
+Tạo một mảng gồm 5 số nguyên. Sau đó:
+
+- In ra tất cả phần tử
+- Tính tổng các phần tử
+- In ra phần tử lớn nhất
+
+Gợi ý:
+
+```cpp
+int so[5] = {3, 9, 2, 11, 6};
+
+// Viet them code o day
+```
+
+Bạn có thể tự mở rộng thêm: tính trung bình cộng của mảng, đếm số chẵn và in các phần tử lớn hơn 5.
+
+## Câu hỏi thường gặp về mảng trong C++
+
+### Mảng trong C++ có thay đổi kích thước được không?
+
+Mảng kiểu cơ bản trong C++ có kích thước cố định sau khi khai báo. Nếu cần linh hoạt hơn, bạn sẽ học `vector` ở các bài sau.
+
+### Khi nào nên dùng mảng thay vì nhiều biến riêng lẻ?
+
+Khi dữ liệu cùng kiểu và có nhiều phần tử giống nhau về vai trò, ví dụ 10 điểm số hoặc 7 ngày trong tuần, dùng mảng sẽ gọn và dễ xử lý hơn nhiều.
+
+### Mảng một chiều C++ là gì?
+
+Đó là mảng đơn giản nhất, trong đó các phần tử được sắp theo một hàng và truy cập bằng một chỉ số như `so[0]`, `so[1]`, `so[2]`.
+
+## Tóm tắt
+
+Bạn đã học cách khai báo mảng trong C++, truy cập phần tử theo chỉ số, và duyệt mảng bằng vòng lặp. Ở bài tiếp theo, chúng ta sẽ học **chuỗi trong C++** để xử lý văn bản và dữ liệu nhập từ người dùng.

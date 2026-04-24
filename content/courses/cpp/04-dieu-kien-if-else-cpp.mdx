@@ -1,0 +1,249 @@
+---
+title: "Câu lệnh if else và switch trong C++"
+description: "Học cách dùng if else và switch trong C++ để xử lý điều kiện, phân nhánh và viết chương trình dễ đọc hơn."
+slug: "dieu-kien-if-else-cpp"
+course: "cpp"
+order: 4
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["câu lệnh if else trong c++", "if else c++ là gì", "switch case trong c++", "điều kiện trong c++", "if else c++ cho người mới"]
+publishedAt: "2024-01-21"
+---
+
+## Câu lệnh if else trong C++ là gì?
+
+`if else` trong C++ giúp chương trình đưa ra quyết định dựa trên điều kiện đúng hay sai. Đây là phần bạn sẽ dùng rất thường xuyên khi kiểm tra điểm số, phân loại dữ liệu hoặc xử lý menu.
+
+Nếu chương trình của bạn cần hỏi “nếu điều này đúng thì làm gì?”, thì bạn đang cần `if else`.
+
+Nói cách khác, `điều kiện trong c++` là cách chương trình rẽ sang những hướng xử lý khác nhau dựa trên dữ liệu hiện tại.
+
+## Cú pháp cơ bản của câu lệnh if else trong C++
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int diem = 7;
+
+    if (diem >= 5) {
+        cout << "Ban da dau" << endl;
+    } else {
+        cout << "Ban can on them" << endl;
+    }
+
+    return 0;
+}
+```
+
+Bạn có thể dùng thêm `else if` khi có nhiều trường hợp.
+
+Ví dụ phân loại điểm chi tiết hơn:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int diem = 8;
+
+    if (diem >= 8) {
+        cout << "Gioi" << endl;
+    } else if (diem >= 6) {
+        cout << "Kha" << endl;
+    } else if (diem >= 5) {
+        cout << "Trung binh" << endl;
+    } else {
+        cout << "Can co gang them" << endl;
+    }
+
+    return 0;
+}
+```
+
+Trong chuỗi `if - else if - else`, chương trình sẽ kiểm tra từ trên xuống dưới và dừng ở nhánh đầu tiên đúng.
+
+## Cách dùng switch case trong C++
+
+`switch` phù hợp khi bạn cần xử lý nhiều lựa chọn dựa trên một giá trị cụ thể, ví dụ menu số.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int luaChon = 2;
+
+    switch (luaChon) {
+        case 1:
+            cout << "Xem thong tin" << endl;
+            break;
+        case 2:
+            cout << "Dang ky khoa hoc" << endl;
+            break;
+        default:
+            cout << "Lua chon khong hop le" << endl;
+    }
+
+    return 0;
+}
+```
+
+Hãy nhớ `break` để tránh rơi xuống các `case` bên dưới.
+
+`switch case trong c++` phù hợp khi bạn so sánh một biến với các giá trị cụ thể như `1`, `2`, `3`.
+
+## Cách dùng if else trong C++ cho nhiều điều kiện
+
+```cpp
+int tuoi = 20;
+bool coGiayTo = true;
+
+if (tuoi >= 18 && coGiayTo) {
+    cout << "Du dieu kien" << endl;
+} else {
+    cout << "Chua du dieu kien" << endl;
+}
+```
+
+Khi điều kiện là một khoảng giá trị hoặc logic phức tạp, `if else` thường linh hoạt hơn `switch`.
+
+Ví dụ kiểm tra đăng nhập:
+
+```cpp
+string tenDangNhap = "admin";
+string matKhau = "123456";
+
+if (tenDangNhap == "admin" && matKhau == "123456") {
+    cout << "Dang nhap thanh cong" << endl;
+} else {
+    cout << "Thong tin dang nhap khong dung" << endl;
+}
+```
+
+Ví dụ này cho thấy `if else` thường đi cùng toán tử so sánh và toán tử logic.
+
+## If lồng nhau trong C++
+
+Khi cần kiểm tra điều kiện bên trong một điều kiện khác, bạn có thể dùng `if` lồng nhau.
+
+```cpp
+int tuoi = 20;
+bool coVe = true;
+
+if (tuoi >= 18) {
+    if (coVe) {
+        cout << "Duoc vao" << endl;
+    } else {
+        cout << "Can mua ve" << endl;
+    }
+} else {
+    cout << "Chua du tuoi" << endl;
+}
+```
+
+Người mới có thể dùng `if` lồng nhau, nhưng không nên lồng quá sâu vì code sẽ khó đọc.
+
+## Khi nào nên dùng if else, khi nào nên dùng switch?
+
+Hãy dùng `if else` khi:
+
+- Điều kiện là khoảng giá trị
+- Cần so sánh bằng các toán tử như `>`, `<`, `>=`
+- Cần kết hợp nhiều điều kiện logic
+
+Hãy dùng `switch` khi:
+
+- So sánh một biến với nhiều giá trị cụ thể
+- Xử lý menu chọn số
+- Muốn code gọn khi mỗi trường hợp là một lựa chọn rõ ràng
+
+## Những lỗi thường gặp với if else trong C++
+
+- Dùng `=` thay vì `==` trong điều kiện.
+- Quên `break` trong `switch`.
+- Thiếu dấu `{}` khi khối lệnh có nhiều dòng.
+- Sắp xếp `else if` sai thứ tự khiến nhánh dưới không bao giờ chạy.
+
+Ví dụ cần tránh:
+
+```cpp
+int diem = 8;
+
+// Sai
+// if (diem = 8) {
+
+if (diem == 8) {
+    cout << "Dung phep so sanh" << endl;
+}
+```
+
+Ví dụ sai thứ tự điều kiện:
+
+```cpp
+int diem = 9;
+
+if (diem >= 5) {
+    cout << "Dat" << endl;
+} else if (diem >= 8) {
+    cout << "Gioi" << endl;
+}
+```
+
+Ở đây nhánh `diem >= 8` sẽ không bao giờ chạy vì `diem >= 5` đã đúng trước.
+
+## Ví dụ if else C++ trong bài toán thực tế
+
+Giả sử bạn cần tính tiền giao hàng:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int tongTien = 450000;
+
+    if (tongTien >= 500000) {
+        cout << "Mien phi giao hang" << endl;
+    } else {
+        cout << "Phi giao hang: 30000" << endl;
+    }
+
+    return 0;
+}
+```
+
+Ví dụ như vậy rất gần với các tình huống thật như kiểm tra giảm giá hoặc điều kiện đăng ký.
+
+## Bài tập thực hành
+
+Viết chương trình nhập tháng từ 1 đến 12 và in ra quý tương ứng.
+
+Gợi ý:
+
+```cpp
+int thang = 5;
+
+// Dung if else hoac switch de xu ly
+```
+
+Làm thêm một bài nhỏ nữa: nhập điểm từ 0 đến 10 và in ra `Rot`, `Trung binh`, `Kha`, hoặc `Gioi`.
+
+## Câu hỏi thường gặp về if else trong C++
+
+### Khi nào nên dùng `switch` thay vì `if else`?
+
+Hãy dùng `switch` khi bạn cần so sánh một biến với nhiều giá trị cụ thể như `1`, `2`, `3`. Nếu điều kiện là khoảng giá trị hoặc dùng toán tử logic, `if else` sẽ phù hợp hơn.
+
+### Có bắt buộc phải dùng dấu `{}` trong C++ không?
+
+Không bắt buộc nếu khối lệnh chỉ có một dòng, nhưng nên dùng để code rõ ràng hơn và tránh lỗi khi thêm dòng mới sau này.
+
+### `switch` có thay thế hoàn toàn `if else` không?
+
+Không. `switch` chỉ mạnh khi so sánh với các giá trị cụ thể. Khi cần điều kiện phức tạp, `if else` vẫn phù hợp hơn.
+
+## Tóm tắt
+
+Bạn đã biết cách dùng `if else`, `else if`, và `switch case` trong C++ để điều khiển luồng chương trình. Ở bài tiếp theo, chúng ta sẽ học **vòng lặp trong C++** để lặp lại công việc nhiều lần mà không cần viết lại code.

@@ -1,0 +1,215 @@
+---
+title: "Form trong HTML: input, label và button"
+description: "Tìm hiểu form trong HTML, cách dùng input, label, textarea và button để tạo biểu mẫu cơ bản cho website."
+slug: "form-va-input-html"
+course: "html-css"
+order: 3
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["form trong html", "thẻ form trong html", "input trong html", "cách tạo form html", "form html cho người mới"]
+publishedAt: "2024-01-22"
+---
+
+## Form trong HTML là gì?
+
+Form trong HTML là khu vực cho phép người dùng nhập và gửi dữ liệu như họ tên, email, mật khẩu, số điện thoại hoặc tin nhắn. Nói ngắn gọn, nếu bạn muốn website nhận dữ liệu từ người dùng thì bạn sẽ cần `form` trong HTML.
+
+Với người mới, đây là nhóm thẻ rất quan trọng vì hầu như website nào cũng có biểu mẫu: đăng ký tài khoản, đăng nhập, tìm kiếm, liên hệ, đặt hàng hoặc nhận tư vấn.
+
+## Cú pháp cơ bản của form trong HTML
+
+```html
+<form>
+  <label for="name">Họ tên</label>
+  <input type="text" id="name" name="name">
+
+  <button type="submit">Gửi</button>
+</form>
+```
+
+Trong đoạn code trên:
+
+- `<form>` là thẻ bao ngoài của biểu mẫu.
+- `<label>` giúp mô tả trường nhập.
+- `<input>` là nơi người dùng điền dữ liệu.
+- `<button>` là nút bấm gửi form.
+
+Đây là ví dụ form HTML tối thiểu. Trong thực tế, bạn thường gặp thêm `action` và `method`:
+
+```html
+<form action="/dang-ky" method="post">
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email">
+
+  <button type="submit">Dang ky</button>
+</form>
+```
+
+- `action` là nơi dữ liệu sẽ được gửi đến
+- `method` là cách gửi dữ liệu, thường là `get` hoặc `post`
+
+Khi mới học, bạn chưa cần đi sâu vào xử lý dữ liệu ở máy chủ. Điều quan trọng là hiểu cấu trúc và cách đặt tên các trường cho rõ ràng.
+
+## Cách dùng input và textarea trong HTML
+
+Bạn có thể thay đổi `type` của `input` để phù hợp với từng loại dữ liệu.
+
+```html
+<form>
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email">
+
+  <label for="message">Tin nhắn</label>
+  <textarea id="message" name="message"></textarea>
+
+  <button type="submit">Gửi liên hệ</button>
+</form>
+```
+
+Một số kiểu `input` phổ biến:
+
+- `text` cho văn bản ngắn
+- `email` cho địa chỉ email
+- `password` cho mật khẩu
+- `number` cho số
+
+Ngoài ra còn có `tel`, `date`, `checkbox`, `radio`, `file`. Bạn chưa cần học hết ngay trong một bài, nhưng nên biết rằng `input trong html` không chỉ có một kiểu duy nhất.
+
+### Khi nào dùng `input`, khi nào dùng `textarea`?
+
+- Dùng `input` khi dữ liệu ngắn và chỉ cần một dòng
+- Dùng `textarea` khi người dùng nhập nội dung dài hơn như lời nhắn, mô tả hoặc góp ý
+
+Ví dụ form liên hệ thực tế:
+
+```html
+<form>
+  <label for="fullname">Ho ten</label>
+  <input type="text" id="fullname" name="fullname">
+
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email">
+
+  <label for="message">Noi dung</label>
+  <textarea id="message" name="message"></textarea>
+
+  <button type="submit">Gui lien he</button>
+</form>
+```
+
+## Cách tạo form HTML dễ dùng hơn cho người mới
+
+Luôn gắn `label` với `input` bằng `for` và `id`. Cách này giúp người dùng hiểu ô nhập dùng để làm gì và cũng tốt hơn cho accessibility.
+
+```html
+<label for="phone">Số điện thoại</label>
+<input type="tel" id="phone" name="phone">
+```
+
+Khi click vào chữ của `label`, con trỏ cũng sẽ nhảy đúng vào ô nhập tương ứng.
+
+### Một số thuộc tính cơ bản nên biết
+
+Để form HTML cho người mới dễ dùng hơn, bạn nên biết thêm vài thuộc tính đơn giản:
+
+- `placeholder`: gợi ý ngắn trong ô nhập
+- `required`: bắt buộc nhập
+- `value`: giá trị mặc định
+- `name`: tên trường dữ liệu khi gửi form
+
+Ví dụ:
+
+```html
+<input type="email" id="email" name="email" placeholder="ban@email.com" required>
+```
+
+`placeholder` có thể hữu ích, nhưng không thay thế được `label`. Hãy xem nó là gợi ý thêm, không phải nhãn chính.
+
+## Ví dụ form đăng ký cơ bản
+
+Đây là một ví dụ form HTML gần với nhu cầu thực tế hơn:
+
+```html
+<form>
+  <label for="name">Ho ten</label>
+  <input type="text" id="name" name="name" required>
+
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email" required>
+
+  <label for="password">Mat khau</label>
+  <input type="password" id="password" name="password" required>
+
+  <button type="submit">Tao tai khoan</button>
+</form>
+```
+
+Mẫu này đủ để bạn luyện nhiều kỹ năng cùng lúc: đặt `label`, chọn `type` phù hợp, thêm `name`, và dùng `required` để nhắc người dùng nhập dữ liệu bắt buộc.
+
+## Những lỗi thường gặp với form trong HTML
+
+- Quên thêm `name` cho `input`.
+- Dùng `placeholder` thay cho `label`.
+- Chọn sai `type` nên dữ liệu nhập không đúng mục đích.
+- Đặt nút bấm nhưng quên `type="submit"` khi muốn gửi form.
+- Đặt nhiều trường nhập nhưng không nhóm và trình bày rõ ràng.
+
+Ví dụ nên tránh:
+
+```html
+<!-- Khong nen chi dung placeholder -->
+<input type="text" placeholder="Nhập họ tên">
+```
+
+Nên viết rõ ràng hơn bằng `label`.
+
+Một lỗi khác rất hay gặp là người mới tạo form nhìn được nhưng không hiểu vì sao dữ liệu không đi đâu cả. Lý do là HTML chỉ tạo giao diện nhập liệu. Để dữ liệu được lưu hoặc xử lý, bạn cần backend hoặc JavaScript ở bước sau.
+
+## Bài tập thực hành
+
+Tạo một form đăng ký đơn giản gồm:
+
+- Họ tên
+- Email
+- Mật khẩu
+- Nút gửi
+
+Gợi ý:
+
+```html
+<form>
+  <!-- them cac truong vao day -->
+</form>
+```
+
+Sau khi làm xong, hãy tự mở file trên trình duyệt và thử:
+
+- Nhấp vào chữ của từng `label` xem con trỏ có nhảy đúng ô không
+- Để trống trường bắt buộc xem trình duyệt phản ứng thế nào
+- Nhập email sai định dạng vào `type="email"`
+
+Đây là cách học rất tốt vì bạn thấy được HTML hỗ trợ trải nghiệm người dùng ra sao ngay cả khi chưa viết JavaScript.
+
+## Câu hỏi thường gặp về form trong HTML
+
+### Vì sao nên dùng `label` trong form HTML?
+
+`label` giúp người dùng hiểu chính xác ô nhập dùng để làm gì. Nó cũng giúp form dễ dùng hơn trên thiết bị hỗ trợ và tăng tính rõ ràng của giao diện.
+
+### `input` và `textarea` khác nhau thế nào?
+
+`input` thường dùng cho dữ liệu ngắn như tên hoặc email. `textarea` dùng khi người dùng cần nhập nội dung dài hơn như mô tả hoặc tin nhắn.
+
+### `name` trong `input` có quan trọng không?
+
+Có. Khi form được gửi đi, `name` là chìa khóa để hệ thống biết trường dữ liệu đó là gì. Nếu quên `name`, dữ liệu thường không được gửi đúng cách.
+
+### Có cần CSS để form hoạt động không?
+
+Không. Form vẫn hoạt động về mặt cấu trúc dù chưa có CSS. CSS chỉ giúp form dễ nhìn, dễ đọc và dễ sử dụng hơn.
+
+## Tóm tắt
+
+Bạn đã biết form trong HTML là gì, cách dùng `form`, `input`, `textarea`, `label`, `button`, cùng một số thuộc tính cơ bản như `name`, `required` và `placeholder`. Khi nắm chắc phần này, bạn đã có thể tạo các biểu mẫu web đơn giản nhưng đúng cấu trúc.
+
+Ở bài tiếp theo, chúng ta sẽ học **semantic HTML** để sắp xếp bố cục trang web rõ ràng, đúng nghĩa và dễ bảo trì hơn.

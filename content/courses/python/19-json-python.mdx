@@ -1,0 +1,188 @@
+---
+title: "JSON trong Python: đọc và ghi dữ liệu có cấu trúc"
+description: "Học cách làm việc với JSON trong Python bằng json.loads, json.dumps và đọc ghi file JSON qua ví dụ thực tế."
+slug: "json-python"
+course: "python"
+order: 19
+difficulty: "Trung bình"
+duration: "20 phút"
+keywords: ["json trong python", "cách dùng json python", "json.loads python", "json.dumps python", "đọc file json python"]
+publishedAt: "2024-02-02"
+---
+
+## JSON trong Python là gì?
+
+JSON trong Python thường được dùng để trao đổi hoặc lưu dữ liệu có cấu trúc, ví dụ thông tin người dùng, danh sách sản phẩm hoặc dữ liệu API. Với người mới, bạn có thể hiểu JSON là định dạng văn bản trông khá giống dictionary trong Python, nên học tương đối dễ.
+
+Rất nhiều ứng dụng web, API và file cấu hình đều dùng JSON. Vì vậy, nếu bạn biết đọc JSON trong Python và ghi JSON trong Python, bạn đã có thêm một kỹ năng rất thực tế để làm việc với dữ liệu ngoài chương trình.
+
+## Cú pháp cơ bản để xử lý JSON trong Python
+
+Python có module chuẩn `json`.
+
+```python
+import json
+
+du_lieu = '{"ten": "Minh", "tuoi": 20}'
+nguoi_dung = json.loads(du_lieu)
+
+print(nguoi_dung["ten"])
+```
+
+`json.loads()` dùng để chuyển chuỗi JSON thành object Python, thường là dictionary hoặc list.
+
+Ví dụ trên bắt đầu từ một chuỗi văn bản. Sau khi gọi `json.loads()`, bạn có thể truy cập dữ liệu như dictionary thông thường, ví dụ `nguoi_dung["ten"]` hoặc `nguoi_dung["tuoi"]`. Đây là bước rất quan trọng khi làm việc với dữ liệu trả về từ API.
+
+## Cách ghi dữ liệu Python thành JSON
+
+Bạn có thể dùng `json.dumps()` để chuyển dictionary thành chuỗi JSON.
+
+```python
+import json
+
+thong_tin = {
+    "ten": "Lan",
+    "diem": 8.5
+}
+
+json_text = json.dumps(thong_tin, ensure_ascii=False)
+print(json_text)
+```
+
+Nếu muốn hiển thị đẹp hơn, có thể thêm `indent=2`.
+
+```python
+json_text = json.dumps(thong_tin, ensure_ascii=False, indent=2)
+print(json_text)
+```
+
+`ensure_ascii=False` rất hữu ích khi dữ liệu có tiếng Việt, vì nó giữ nguyên ký tự có dấu thay vì chuyển thành mã Unicode khó đọc.
+
+## `json.loads` và `json.dumps` khác nhau thế nào?
+
+Đây là cặp hàm người mới rất hay nhầm:
+
+- `json.loads()` chuyển từ chuỗi JSON sang object Python
+- `json.dumps()` chuyển từ object Python sang chuỗi JSON
+
+Hãy chú ý chữ `s` ở cuối, vì nó gợi ý rằng đầu vào hoặc đầu ra liên quan đến string.
+
+## Cách đọc ghi file JSON trong Python
+
+```python
+import json
+
+du_lieu = {"khoa_hoc": "Python", "cap_do": "Co ban"}
+
+with open("data.json", "w", encoding="utf-8") as file:
+    json.dump(du_lieu, file, ensure_ascii=False, indent=2)
+
+with open("data.json", "r", encoding="utf-8") as file:
+    ket_qua = json.load(file)
+    print(ket_qua)
+```
+
+Đây là cách bạn sẽ dùng rất nhiều khi làm việc với file cấu hình hoặc dữ liệu lưu trữ đơn giản.
+
+Khác biệt cần nhớ là:
+
+- `json.dump()` ghi object Python vào file JSON
+- `json.load()` đọc JSON trực tiếp từ file
+
+Nếu dữ liệu đang nằm trong file, bạn dùng `load` hoặc `dump`. Nếu dữ liệu đang nằm trong chuỗi, bạn dùng `loads` hoặc `dumps`.
+
+## JSON trong Python và dictionary giống nhau không?
+
+Chúng giống về hình thức nhưng không hoàn toàn giống nhau.
+
+- dictionary là kiểu dữ liệu của Python
+- JSON là định dạng văn bản để lưu hoặc trao đổi dữ liệu
+
+Ví dụ Python dictionary:
+
+```python
+thong_tin = {"ten": "Lan", "tuoi": 20}
+```
+
+Ví dụ chuỗi JSON tương đương:
+
+```python
+du_lieu_json = '{"ten": "Lan", "tuoi": 20}'
+```
+
+Điểm khác quan trọng là JSON phải dùng nháy kép cho key và chuỗi. Khi bạn hiểu điều này, việc xử lý JSON Python sẽ bớt nhầm lẫn hơn nhiều.
+
+## Những lỗi thường gặp với JSON trong Python
+
+- Nhầm giữa dictionary Python và chuỗi JSON.
+- Quên import module `json`.
+- Dùng nháy đơn trong JSON thay vì nháy kép.
+- Quên thêm `ensure_ascii=False` khi muốn ghi tiếng Việt dễ đọc.
+
+Ví dụ JSON hợp lệ phải dùng nháy kép:
+
+```python
+du_lieu = '{"ten": "An"}'
+```
+
+Ví dụ dễ sai:
+
+```python
+# Sai theo chuẩn JSON
+# du_lieu = "{'ten': 'An'}"
+```
+
+Chuỗi trên có thể trông giống dictionary Python, nhưng lại không phải JSON hợp lệ. Nếu đem vào `json.loads()`, bạn sẽ gặp lỗi.
+
+Ngoài ra, khi đọc file JSON bị lỗi định dạng, Python có thể báo exception. Đây là lý do bạn nên ghi JSON một cách có cấu trúc bằng `json.dump()` thay vì tự gõ tay quá nhiều.
+
+## Ví dụ JSON Python gần với ứng dụng thực tế
+
+Giả sử bạn muốn lưu thông tin khóa học:
+
+```python
+import json
+
+khoa_hoc = {
+    "ten": "Python cơ bản",
+    "bai_hoc": 20,
+    "mien_phi": True
+}
+
+with open("khoa_hoc.json", "w", encoding="utf-8") as file:
+    json.dump(khoa_hoc, file, ensure_ascii=False, indent=2)
+```
+
+Sau đó bạn có thể đọc lại file để hiển thị hoặc dùng tiếp trong chương trình. Đây là một ví dụ rất điển hình cho việc chuyển dict sang JSON Python rồi lưu thành file.
+
+## Bài tập thực hành
+
+Tạo một dictionary lưu thông tin một học viên gồm tên, tuổi và khóa học. Sau đó:
+
+- Ghi dữ liệu ra file `hoc_vien.json`
+- Đọc lại file đó
+- In ra nội dung đọc được
+
+Sau khi hoàn thành, hãy thử nâng bài bằng cách thêm danh sách kỹ năng vào dictionary, ví dụ `"ky_nang": ["biến", "if else", "hàm"]`, rồi ghi lại ra JSON. Bạn sẽ thấy JSON rất phù hợp để lưu dữ liệu có cấu trúc lồng nhau.
+
+## Câu hỏi thường gặp về JSON trong Python
+
+### `json.loads()` và `json.load()` khác nhau thế nào?
+
+`json.loads()` dùng khi đầu vào là chuỗi JSON. `json.load()` dùng khi bạn đọc JSON trực tiếp từ file.
+
+### Khi nào nên dùng JSON thay vì file text thường?
+
+Hãy dùng JSON khi dữ liệu có cấu trúc rõ ràng, ví dụ key-value hoặc danh sách object. Nó phù hợp hơn nhiều so với file text thuần khi dữ liệu bắt đầu có nhiều trường.
+
+### JSON có thay thế hoàn toàn database không?
+
+Không. JSON rất tiện cho dữ liệu nhỏ, file cấu hình hoặc bài tập thực hành. Nhưng khi dữ liệu lớn, nhiều người cùng dùng hoặc cần truy vấn phức tạp, database sẽ phù hợp hơn.
+
+### Vì sao nên dùng `indent=2`?
+
+`indent=2` không bắt buộc, nhưng giúp file JSON dễ đọc hơn rất nhiều. Khi bạn mở file bằng mắt thường để kiểm tra, dữ liệu sẽ được thụt lề rõ ràng thay vì dồn trên một dòng.
+
+## Tóm tắt
+
+Bạn đã học JSON trong Python, hiểu sự khác nhau giữa `load`, `loads`, `dump`, `dumps`, biết cách đọc ghi file JSON và tránh những lỗi phổ biến về định dạng. Đây là bước rất quan trọng trước khi bắt tay vào mini project hoàn chỉnh. Ở bài tiếp theo, chúng ta sẽ dùng các kiến thức đã học để làm **dự án Python đầu tiên**.

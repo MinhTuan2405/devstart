@@ -1,0 +1,202 @@
+---
+title: "Đọc ghi file trong Python với open và with"
+description: "Học cách đọc ghi file trong Python bằng open, with, read, write và xử lý file text qua ví dụ thực tế."
+slug: "doc-ghi-file-python"
+course: "python"
+order: 15
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["đọc ghi file trong python", "open trong python", "with open python", "ghi file text python", "đọc file python cho người mới"]
+publishedAt: "2024-01-29"
+---
+
+## Đọc ghi file trong Python là gì?
+
+Đọc ghi file trong Python là cách chương trình lưu dữ liệu ra file trên máy và lấy lại khi cần. Nhờ đó, dữ liệu không bị mất sau khi chương trình kết thúc. Đây là kỹ năng rất quan trọng nếu bạn muốn chuyển từ bài tập nhỏ sang ứng dụng thực tế.
+
+Khi làm việc với file text Python, bạn có thể lưu danh sách công việc, ghi chú, log, điểm số, cấu hình hoặc dữ liệu người dùng. Nói cách khác, file là cầu nối giữa chương trình và dữ liệu tồn tại lâu dài bên ngoài bộ nhớ RAM.
+
+## Cú pháp cơ bản của open trong Python
+
+Bạn có thể mở file bằng `open()`.
+
+```python
+file = open("ghi_chu.txt", "r", encoding="utf-8")
+noi_dung = file.read()
+print(noi_dung)
+file.close()
+```
+
+Ở đây:
+
+- `"ghi_chu.txt"` là tên file
+- `"r"` là chế độ đọc
+- `encoding="utf-8"` giúp đọc đúng tiếng Việt
+
+Tuy nhiên, cách an toàn hơn là dùng `with`.
+
+```python
+with open("ghi_chu.txt", "r", encoding="utf-8") as file:
+    noi_dung = file.read()
+    print(noi_dung)
+```
+
+`with` giúp tự đóng file sau khi dùng xong. Đây là cách bạn nên dùng mặc định trong hầu hết trường hợp.
+
+## Các chế độ mở file trong Python
+
+Khi học `mở file trong Python`, bạn cần phân biệt các chế độ cơ bản:
+
+- `r`: đọc file
+- `w`: ghi file mới, có thể ghi đè dữ liệu cũ
+- `a`: thêm nội dung vào cuối file
+
+Ba chế độ này đã đủ cho phần lớn bài tập cơ bản. Sau này bạn có thể gặp thêm `rb`, `wb` khi làm việc với file nhị phân như ảnh hoặc PDF, nhưng ở giai đoạn đầu hãy tập trung vào file text.
+
+## Cách ghi file text trong Python
+
+```python
+with open("ket_qua.txt", "w", encoding="utf-8") as file:
+    file.write("Xin chào Python")
+```
+
+Nếu muốn thêm nội dung vào cuối file thay vì ghi đè, hãy dùng chế độ `a`.
+
+```python
+with open("ket_qua.txt", "a", encoding="utf-8") as file:
+    file.write("\nDong moi")
+```
+
+Khác biệt rất quan trọng là:
+
+- `w` ghi lại từ đầu, có thể xóa nội dung cũ
+- `a` giữ nội dung cũ và nối thêm vào cuối file
+
+Ví dụ thực tế:
+
+```python
+with open("nhat_ky.txt", "a", encoding="utf-8") as file:
+    file.write("Hôm nay tôi học về đọc ghi file trong Python\n")
+```
+
+Cách này phù hợp cho ghi log hoặc lưu lịch sử từng dòng.
+
+## Khi nào nên dùng with open trong Python?
+
+`with open` gần như là cách nên dùng mặc định vì:
+
+- An toàn hơn
+- Không quên đóng file
+- Code gọn hơn
+
+Bạn sẽ gặp cách này thường xuyên trong project thật.
+
+Một ví dụ đọc file rồi xử lý từng dòng:
+
+```python
+with open("todo.txt", "r", encoding="utf-8") as file:
+    for dong in file:
+        print(dong.strip())
+```
+
+`strip()` giúp loại bỏ ký tự xuống dòng ở cuối mỗi dòng. Đây là mẹo rất hay gặp khi đọc file text Python.
+
+## Đường dẫn file trong Python cần hiểu thế nào?
+
+Người mới thường tưởng cứ ghi tên file là luôn đọc được. Thực tế, Python sẽ tìm file theo thư mục làm việc hiện tại. Vì vậy, nếu bạn chạy chương trình ở nơi khác, file có thể không được tìm thấy.
+
+Ví dụ:
+
+- `todo.txt` là đường dẫn tương đối
+- `data/todo.txt` là file nằm trong thư mục `data`
+
+Nếu gặp lỗi không tìm thấy file, hãy kiểm tra:
+
+- file có thực sự tồn tại không
+- tên file có đúng chính tả không
+- bạn đang chạy chương trình ở thư mục nào
+
+## Những lỗi thường gặp khi đọc file trong Python
+
+- Mở file không đúng đường dẫn.
+- Quên `encoding="utf-8"` khi làm việc với tiếng Việt.
+- Dùng chế độ `w` rồi vô tình ghi đè toàn bộ nội dung cũ.
+- Quên rằng file có thể chưa tồn tại khi mở bằng chế độ đọc.
+
+Ví dụ nên cẩn thận:
+
+```python
+with open("du_lieu.txt", "w", encoding="utf-8") as file:
+    file.write("Noi dung moi")
+```
+
+Lệnh trên sẽ xóa nội dung cũ và ghi lại từ đầu.
+
+Ngoài ra, lỗi sau cũng rất phổ biến:
+
+```python
+with open("khong_ton_tai.txt", "r", encoding="utf-8") as file:
+    print(file.read())
+```
+
+Nếu file chưa tồn tại, Python sẽ báo `FileNotFoundError`. Ở bài sau về `try except`, bạn sẽ học cách xử lý trường hợp này an toàn hơn.
+
+## Ví dụ đọc ghi file trong Python theo luồng thực tế
+
+Giả sử bạn muốn lưu danh sách công việc rồi đọc lại:
+
+```python
+cong_viec = ["Học Python", "Làm bài tập", "Đọc tài liệu"]
+
+with open("todo.txt", "w", encoding="utf-8") as file:
+    for item in cong_viec:
+        file.write(item + "\n")
+
+with open("todo.txt", "r", encoding="utf-8") as file:
+    noi_dung = file.read()
+    print(noi_dung)
+```
+
+Đây là một ví dụ đọc ghi file Python rất gần với project thật. Bạn ghi dữ liệu ra file để lưu lại, rồi đọc lại để hiển thị hoặc xử lý tiếp.
+
+## Bài tập thực hành
+
+Tạo file `todo.txt`, sau đó viết chương trình:
+
+- Ghi 3 công việc vào file
+- Đọc lại nội dung từ file
+- In kết quả ra màn hình
+
+Gợi ý:
+
+```python
+with open("todo.txt", "w", encoding="utf-8") as file:
+    file.write("Hoc Python\nLam bai tap\nDoc tai lieu")
+```
+
+Sau khi làm xong, hãy thử sửa bài theo hai hướng:
+
+- dùng chế độ `a` để thêm công việc mới thay vì ghi đè
+- đọc từng dòng bằng vòng lặp `for` rồi in ra theo định dạng `- tên công việc`
+
+## Câu hỏi thường gặp về đọc ghi file trong Python
+
+### `r`, `w`, `a` trong Python khác nhau thế nào?
+
+`r` dùng để đọc file, `w` dùng để ghi mới và có thể ghi đè nội dung cũ, còn `a` dùng để thêm nội dung vào cuối file. Đây là ba chế độ bạn dùng nhiều nhất khi làm việc với file text.
+
+### Vì sao nên dùng `with open` thay vì `open` thường?
+
+Vì `with open` giúp Python tự đóng file sau khi xong việc. Cách này an toàn hơn và tránh lỗi quên đóng file trong các chương trình dài.
+
+### Khi nào cần thêm `encoding="utf-8"`?
+
+Gần như nên dùng mặc định khi làm việc với tiếng Việt. Nếu không khai báo encoding phù hợp, dữ liệu có dấu có thể bị lỗi hiển thị hoặc đọc ghi không đúng.
+
+### File text và JSON khác nhau thế nào?
+
+File text phù hợp khi dữ liệu chỉ là các dòng chữ đơn giản. JSON phù hợp hơn khi dữ liệu có cấu trúc rõ ràng như tên, tuổi, danh sách sản phẩm hoặc thông tin người dùng theo dạng key-value.
+
+## Tóm tắt
+
+Bạn đã biết cách đọc ghi file trong Python bằng `open()`, `with open()`, `read()`, `write()`, các chế độ `r`, `w`, `a` và cách tránh những lỗi cơ bản về đường dẫn, encoding và ghi đè dữ liệu. Ở bài tiếp theo, chúng ta sẽ học **try except trong Python** để xử lý lỗi khi nhập sai dữ liệu hoặc mở file không tồn tại.

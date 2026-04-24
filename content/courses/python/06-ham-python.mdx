@@ -1,0 +1,188 @@
+---
+title: "Hàm trong Python: cách tạo và sử dụng"
+description: "Tìm hiểu hàm trong Python, cách dùng def, tham số, return và cách tách code thành các phần dễ tái sử dụng."
+slug: "ham-python"
+course: "python"
+order: 6
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["hàm trong python", "function trong python là gì", "cách tạo hàm trong python", "def trong python", "return trong python"]
+publishedAt: "2024-01-20"
+---
+
+## Hàm trong Python là gì?
+
+Hàm trong Python là một khối code có tên, dùng để thực hiện một công việc cụ thể và có thể gọi lại nhiều lần. Khi học `hàm trong python`, bạn đang học cách chia chương trình thành các phần nhỏ, gọn và dễ tái sử dụng thay vì viết lặp cùng một đoạn code ở nhiều nơi.
+
+Nếu bạn thấy mình copy một đoạn xử lý hai hoặc ba lần, đó thường là dấu hiệu nên tách nó ra thành hàm. Đây là một bước rất quan trọng để chuyển từ viết code ngắn sang viết code có cấu trúc.
+
+## Vì sao nên dùng hàm trong Python?
+
+Hàm giúp chương trình tốt hơn ở nhiều mặt:
+
+- Giảm lặp code
+- Dễ đọc hơn vì mỗi phần có tên rõ ràng
+- Dễ sửa lỗi vì chỉ cần sửa một chỗ
+- Dễ kiểm tra từng phần nhỏ của chương trình
+- Dễ tái sử dụng trong nhiều bài toán khác nhau
+
+Ví dụ, thay vì viết đi viết lại đoạn tính diện tích, bạn gói nó vào một hàm rồi gọi khi cần. Khi công thức thay đổi, bạn chỉ sửa trong hàm thay vì sửa ở nhiều nơi khác nhau.
+
+## Cách tạo hàm trong Python với `def`
+
+Bạn tạo hàm bằng từ khóa `def`.
+
+```python
+def chao_ten(ten):
+    print(f"Xin chao {ten}!")
+
+chao_ten("Minh")
+chao_ten("Lan")
+```
+
+Trong ví dụ trên:
+
+- `chao_ten` là tên hàm
+- `ten` là tham số
+- Phần thụt vào là thân hàm
+- `chao_ten("Minh")` là lúc gọi hàm
+
+Khi đặt tên hàm, bạn nên chọn tên thể hiện rõ việc hàm làm. Ví dụ `tinh_tong` dễ hiểu hơn `lam_viec`. Tên tốt giúp người khác đọc code hiểu nhanh, và chính bạn sau này cũng dễ quay lại xem hơn.
+
+## Tham số trong Python là gì?
+
+Tham số là biến xuất hiện trong phần định nghĩa hàm. Nó giúp hàm nhận dữ liệu từ bên ngoài.
+
+```python
+def tinh_tong(a, b):
+    print(a + b)
+
+tinh_tong(3, 5)
+tinh_tong(10, 20)
+```
+
+Một hàm có thể có không tham số, một tham số hoặc nhiều tham số, tùy bài toán.
+
+```python
+def chao():
+    print("Xin chao ban")
+
+chao()
+```
+
+Với người mới, bạn nên thành thạo hàm có vài tham số cơ bản trước khi học các kiểu nâng cao hơn như tham số mặc định hoặc `*args`. Điều quan trọng trước mắt là hiểu dữ liệu đi vào hàm như thế nào và đi ra khỏi hàm ra sao.
+
+## `return` trong Python dùng để làm gì?
+
+`return trong python` dùng để trả kết quả từ hàm về nơi gọi. Đây là điểm rất quan trọng vì nhiều người mới hay nhầm giữa `print()` và `return`.
+
+```python
+def tinh_dien_tich_hinh_chu_nhat(chieu_dai, chieu_rong):
+    dien_tich = chieu_dai * chieu_rong
+    return dien_tich
+
+ket_qua = tinh_dien_tich_hinh_chu_nhat(5, 3)
+print(ket_qua)
+```
+
+Sự khác nhau:
+
+- `print()` chỉ in kết quả ra màn hình
+- `return` trả giá trị để bạn dùng tiếp ở chỗ khác
+
+Ví dụ:
+
+```python
+def cong(a, b):
+    return a + b
+
+tong = cong(2, 3)
+print(tong * 2)
+```
+
+Nếu hàm chỉ `print()` mà không `return`, bạn sẽ khó dùng kết quả đó cho bước xử lý tiếp theo. Vì vậy với những hàm cần tạo ra dữ liệu để tái sử dụng, `return` thường là lựa chọn đúng hơn.
+
+## Hàm trong Python cho bài toán thực tế
+
+Hãy xem cách tách bài toán kiểm tra số chẵn thành hàm riêng:
+
+```python
+def la_so_chan(so):
+    return so % 2 == 0
+
+print(la_so_chan(8))
+print(la_so_chan(11))
+```
+
+Hoặc ví dụ tính điểm trung bình:
+
+```python
+def tinh_trung_binh(toan, van, anh):
+    return (toan + van + anh) / 3
+
+diem_tb = tinh_trung_binh(8, 7, 9)
+print(diem_tb)
+```
+
+Khi bài toán lớn hơn, việc chia thành nhiều hàm nhỏ giúp bạn dễ kiểm soát hơn rất nhiều. Bạn có thể có một hàm nhập dữ liệu, một hàm tính toán và một hàm in kết quả. Mỗi hàm làm một việc rõ ràng sẽ giúp chương trình gọn và dễ sửa lỗi hơn.
+
+## Những lỗi thường gặp với hàm trong Python
+
+- Quên gọi hàm sau khi định nghĩa
+- Dùng `print()` khi thật ra cần `return`
+- Truyền thiếu hoặc thừa tham số
+- Đặt tên hàm quá mơ hồ
+- Thụt đầu dòng sai trong thân hàm
+
+Ví dụ dễ nhầm:
+
+```python
+def cong(a, b):
+    return a + b
+
+# Sai: thieu tham so
+# print(cong(5))
+
+print(cong(5, 2))
+```
+
+Một lỗi khác là tưởng rằng định nghĩa hàm xong thì nó tự chạy. Thực tế, bạn phải gọi hàm thì code bên trong mới thực thi. Khi mới học, hãy luôn kiểm tra xem mình đã vừa định nghĩa hàm hay đã gọi hàm.
+
+## Bài tập thực hành
+
+Hãy viết hàm `tinh_trung_binh(a, b, c)` để trả về điểm trung bình của ba môn học. Sau đó:
+
+- Gọi hàm với ít nhất hai bộ điểm khác nhau
+- In ra kết quả
+- Viết thêm một hàm `xep_loai(diem_tb)` để in `Dat` hoặc `Can co gang`
+
+Gợi ý:
+
+```python
+def tinh_trung_binh(a, b, c):
+    return (a + b + c) / 3
+```
+
+Nếu muốn luyện thêm, hãy thử viết một hàm `chao_ten(ten)` nhận tên người dùng rồi in lời chào. Bài tập nhỏ này giúp bạn luyện cả hàm có tham số lẫn hàm không trả về giá trị.
+
+## Câu hỏi thường gặp về hàm trong Python
+
+### Tham số và đối số trong Python khác nhau thế nào?
+
+Tham số là tên biến khi bạn định nghĩa hàm. Đối số là giá trị thật được truyền vào khi bạn gọi hàm.
+
+### Khi nào nên dùng `return` thay vì `print`?
+
+Hãy dùng `return` khi bạn muốn lấy kết quả để tiếp tục xử lý, tính toán hoặc dùng trong hàm khác. Dùng `print` khi bạn chỉ muốn hiển thị thông tin ra màn hình.
+
+### Hàm trong Python có bắt buộc phải có tham số không?
+
+Không. Hàm có thể không có tham số nếu công việc đó không cần dữ liệu đầu vào từ bên ngoài.
+
+### Một hàm nên làm bao nhiêu việc?
+
+Với người mới, hãy cố gắng để mỗi hàm làm một việc chính. Hàm càng rõ mục đích thì càng dễ hiểu, dễ kiểm tra và dễ sửa lỗi.
+
+## Tóm tắt
+
+Bạn đã biết hàm trong Python là gì, cách tạo hàm với `def`, cách dùng tham số và `return`, cùng những lỗi phổ biến khi mới học. Từ đây, code của bạn sẽ gọn và có cấu trúc hơn. Ở bài tiếp theo, chúng ta sẽ học **chuỗi trong Python** để xử lý văn bản hiệu quả hơn.

@@ -1,0 +1,226 @@
+---
+title: "Vector trong C++: mảng động dễ dùng cho người mới"
+description: "Tìm hiểu vector trong C++, cách thêm phần tử, truy cập dữ liệu và duyệt vector dễ hơn mảng thường."
+slug: "vector-cpp"
+course: "cpp"
+order: 11
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["vector trong c++", "vector c++ là gì", "cách dùng vector trong c++", "push_back trong c++", "vector c++ cho người mới"]
+publishedAt: "2024-01-28"
+---
+
+## Vector trong C++ là gì?
+
+Vector trong C++ là một cấu trúc dữ liệu động cho phép bạn thêm hoặc bớt phần tử dễ dàng hơn mảng thường. Nếu mảng có kích thước cố định ngay từ đầu, thì vector có thể lớn lên khi bạn thêm dữ liệu. Vì vậy, vector trong C++ rất phù hợp cho người mới khi cần lưu danh sách điểm, tên môn học, sản phẩm, hoặc bất kỳ nhóm dữ liệu nào có số lượng thay đổi.
+
+Với người mới, vector thường là lựa chọn dễ dùng hơn mảng truyền thống vì cú pháp rõ ràng, có sẵn nhiều hàm tiện lợi, và giảm bớt nhiều lỗi thường gặp khi làm việc với mảng.
+
+## Cú pháp cơ bản của vector trong C++
+
+Để dùng vector, bạn cần include thư viện `vector`.
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    vector<int> so = {1, 2, 3};
+
+    cout << so[0] << endl;
+    cout << so.size() << endl;
+    return 0;
+}
+```
+
+`vector<int>` nghĩa là vector lưu các số nguyên.
+
+Trong ví dụ trên:
+
+- `vector<int> so` tạo một vector tên là `so`
+- `{1, 2, 3}` là ba phần tử ban đầu
+- `so[0]` lấy phần tử đầu tiên
+- `so.size()` cho biết số lượng phần tử hiện có
+
+Bạn có thể dùng nhiều kiểu dữ liệu khác nhau với vector như `int`, `double`, `string`, hoặc thậm chí là `class` tự tạo. Đây là lý do vector xuất hiện rất nhiều trong các bài toán C++ thực tế.
+
+## Cách dùng push_back trong C++
+
+Bạn có thể thêm phần tử mới vào cuối vector bằng `push_back()`.
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    vector<string> monHoc;
+    monHoc.push_back("Python");
+    monHoc.push_back("C++");
+
+    cout << monHoc.size() << endl;
+    return 0;
+}
+```
+
+Đây là điểm tiện nhất của vector so với mảng thường.
+
+Hàm `push_back()` rất quan trọng vì nó cho phép danh sách tăng kích thước khi chương trình đang chạy. Bạn không cần biết trước sẽ có bao nhiêu phần tử.
+
+Ví dụ thực tế hơn:
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    vector<int> diem;
+
+    diem.push_back(8);
+    diem.push_back(9);
+    diem.push_back(10);
+
+    cout << "So phan tu: " << diem.size() << endl;
+    cout << "Phan tu cuoi: " << diem[diem.size() - 1] << endl;
+    return 0;
+}
+```
+
+Ở đây, vector bắt đầu rỗng nhưng sau mỗi lần `push_back()`, nó lại có thêm một phần tử mới. Đây là cách dùng vector trong C++ mà bạn sẽ gặp rất thường xuyên.
+
+## Cách duyệt vector trong C++
+
+```cpp
+vector<int> diem = {8, 9, 7, 10};
+
+for (int i = 0; i < diem.size(); i++) {
+    cout << diem[i] << endl;
+}
+```
+
+Bạn cũng có thể dùng vòng lặp for-each ở các bài sau, nhưng với người mới, cách duyệt bằng chỉ số vẫn dễ hiểu hơn.
+
+Cách duyệt bằng chỉ số giúp bạn hiểu rõ hai ý quan trọng:
+
+- Chỉ số đầu tiên luôn là `0`
+- Chỉ số cuối cùng luôn là `size() - 1`
+
+Bạn cũng nên biết rằng có thể vừa duyệt vừa sửa phần tử:
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    vector<int> diem = {5, 6, 7};
+
+    for (int i = 0; i < diem.size(); i++) {
+        diem[i] = diem[i] + 1;
+    }
+
+    for (int i = 0; i < diem.size(); i++) {
+        cout << diem[i] << endl;
+    }
+
+    return 0;
+}
+```
+
+Đoạn code trên tăng mỗi điểm thêm `1`. Ví dụ này cho thấy vector không chỉ để lưu dữ liệu mà còn để bạn xử lý dữ liệu theo nhóm rất tiện.
+
+Ngoài `push_back()` và `size()`, bạn nên ghi nhớ thêm rằng vector hỗ trợ truy cập như mảng với cú pháp `tenVector[chiSo]`. Điều này giúp việc chuyển từ mảng thường sang vector khá nhẹ nhàng.
+
+## Vector và mảng trong C++ khác nhau thế nào?
+
+Mảng thường phù hợp khi bạn biết chắc kích thước ngay từ đầu và chỉ cần cấu trúc đơn giản. Trong khi đó, vector linh hoạt hơn và thường an toàn hơn cho người mới.
+
+So sánh nhanh:
+
+- Mảng có kích thước cố định
+- Vector có thể thay đổi kích thước
+- Vector có sẵn các hàm như `size()` và `push_back()`
+- Vector thuận tiện hơn cho các bài toán danh sách thực tế
+
+Nếu bạn đang phân vân giữa vector và mảng, với hầu hết bài tập cơ bản hãy ưu tiên vector. Đây cũng là lời khuyên thường thấy khi học C++ hiện đại.
+
+## Những lỗi thường gặp với vector trong C++
+
+- Quên `#include <vector>`.
+- Truy cập phần tử vượt quá kích thước hiện có.
+- Nhầm `size()` với chỉ số cuối cùng.
+
+- Tạo vector rỗng rồi truy cập ngay `so[0]`.
+- Quên rằng `size()` trả về số lượng phần tử, không phải vị trí cuối.
+
+Ví dụ:
+
+```cpp
+vector<int> so = {1, 2, 3};
+
+// size() = 3, chi so cuoi cung la 2
+// cout << so[3] << endl;
+```
+
+Nếu vector đang rỗng, bạn không thể lấy `so[0]` ngay. Hãy thêm phần tử trước hoặc kiểm tra kích thước:
+
+```cpp
+if (so.size() > 0) {
+    cout << so[0] << endl;
+}
+```
+
+Một lỗi khác là viết vòng lặp với điều kiện `i <= so.size()`. Điều này sẽ làm `i` đi quá chỉ số cuối cùng. Cách đúng là `i < so.size()`.
+
+## Bài tập thực hành
+
+Tạo một vector lưu tên 3 môn học. Sau đó:
+
+- Thêm một môn mới bằng `push_back()`
+- In số lượng phần tử
+- Duyệt toàn bộ vector để in từng môn học
+
+Gợi ý:
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+int main() {
+    vector<string> monHoc = {"Toan", "Ly", "Hoa"};
+
+    // Viet tiep tai day
+
+    return 0;
+}
+```
+
+Sau khi hoàn thành, hãy thử làm thêm một bước nhỏ: thêm một vòng lặp để in ra độ dài của từng tên môn học. Bài tập này giúp bạn quen hơn với việc xử lý dữ liệu trong vector.
+
+## Câu hỏi thường gặp về vector trong C++
+
+### Vector khác mảng trong C++ ở điểm nào?
+
+Mảng thường có kích thước cố định, còn vector có thể tăng giảm linh hoạt. Ngoài ra, vector còn có nhiều hàm hỗ trợ tiện lợi hơn cho người mới.
+
+### Khi nào nên dùng vector thay vì mảng?
+
+Hãy ưu tiên vector khi bạn không chắc trước số lượng phần tử hoặc muốn thêm dữ liệu trong lúc chương trình đang chạy.
+
+### Có cần luôn dùng `push_back()` không?
+
+Không. Nếu đã có sẵn dữ liệu, bạn có thể tạo vector bằng danh sách giá trị như `vector<int> so = {1, 2, 3};`. Tuy nhiên, `push_back()` là cách rất phổ biến khi dữ liệu được nhập dần trong lúc chương trình chạy.
+
+### Vector có lưu được chuỗi hoặc object không?
+
+Có. Bạn có thể dùng `vector<string>` để lưu chuỗi và sau này có thể dùng `vector<SinhVien>` hoặc `vector<SanPham>` để lưu object. Đây là điểm rất mạnh của vector trong C++.
+
+## Tóm tắt
+
+Bạn đã hiểu vector trong C++ là gì, biết cách tạo vector, thêm dữ liệu bằng `push_back()`, duyệt dữ liệu bằng vòng lặp, và phân biệt vector với mảng thường. Bạn cũng đã thấy vì sao vector rất phù hợp cho người mới khi cần lưu danh sách dữ liệu có kích thước thay đổi.
+
+Ở bài tiếp theo, chúng ta sẽ học **class trong C++** để không chỉ lưu dữ liệu đơn lẻ mà còn tổ chức dữ liệu và hành vi theo kiểu hướng đối tượng.

@@ -1,0 +1,263 @@
+---
+title: "Chuỗi trong C++: string, getline và xử lý văn bản"
+description: "Học cách dùng string trong C++, nhập chuỗi với getline, nối chuỗi và tránh các lỗi phổ biến khi xử lý văn bản."
+slug: "chuoi-cpp"
+course: "cpp"
+order: 8
+duration: "18 phút"
+difficulty: "Trung bình"
+keywords: ["chuỗi trong c++", "string trong c++ là gì", "getline trong c++", "nối chuỗi c++", "chuỗi c++ cho người mới"]
+publishedAt: "2024-01-25"
+---
+
+## Chuỗi trong C++ là gì?
+
+Chuỗi trong C++ là kiểu dữ liệu dùng để lưu văn bản như tên người dùng, địa chỉ email, hoặc câu nhập từ bàn phím. Với người mới, làm việc tốt với `string` rất quan trọng vì hầu hết chương trình đều cần xử lý dữ liệu dạng chữ.
+
+Trong C++ hiện đại, bạn nên dùng `string` thay vì mảng ký tự kiểu cũ.
+
+Nếu bạn đang tìm hiểu `chuỗi trong c++`, hãy nhớ rằng chuỗi là tập hợp nhiều ký tự ghép lại.
+
+## Cú pháp cơ bản của chuỗi trong C++
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string ten = "DevStart";
+    cout << ten << endl;
+    cout << ten.length() << endl;
+    return 0;
+}
+```
+
+Bạn có thể nối chuỗi bằng toán tử `+`.
+
+```cpp
+string ho = "Nguyen";
+string ten = "Lan";
+
+cout << ho + " " + ten << endl;
+```
+
+Ở đây, dấu cách ở giữa được thêm bằng chuỗi `" "`.
+
+## Cách dùng string trong C++ cơ bản
+
+`string trong c++ là gì` không chỉ là khái niệm lưu chữ. Bạn còn có thể:
+
+- Lấy độ dài chuỗi bằng `.length()`
+- Truy cập ký tự theo chỉ số
+- Nối chuỗi bằng `+`
+- So sánh hai chuỗi bằng `==`
+
+Ví dụ:
+
+```cpp
+string matKhau = "abc123";
+
+cout << matKhau.length() << endl;
+cout << matKhau[0] << endl;
+cout << (matKhau == "abc123") << endl;
+```
+
+Bạn nên nhớ rằng chỉ số ký tự cũng bắt đầu từ `0`, giống như mảng.
+
+## Cách nhập chuỗi trong C++ bằng getline
+
+Nếu chuỗi có khoảng trắng, `getline()` là lựa chọn an toàn hơn `cin`.
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string hoTen;
+    getline(cin, hoTen);
+    cout << "Xin chao " << hoTen << endl;
+    return 0;
+}
+```
+
+`cin >> ten` sẽ chỉ đọc tới khoảng trắng đầu tiên, còn `getline()` đọc cả dòng.
+
+Đây là điểm rất quan trọng khi nhập chuỗi trong C++.
+
+Ví dụ so sánh:
+
+```cpp
+string ten;
+cin >> ten;
+```
+
+Nếu người dùng nhập `Nguyen Van A`, biến `ten` chỉ nhận `Nguyen`.
+
+Trong khi đó:
+
+```cpp
+string hoTen;
+getline(cin, hoTen);
+```
+
+sẽ nhận toàn bộ dòng `Nguyen Van A`.
+
+## Lỗi thường gặp khi dùng cin rồi getline
+
+Một lỗi rất phổ biến là dùng `cin` trước, rồi gọi `getline()` ngay sau đó. Ký tự xuống dòng còn sót lại trong bộ đệm sẽ khiến `getline()` đọc rỗng.
+
+Ví dụ:
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int tuoi;
+    string hoTen;
+
+    cin >> tuoi;
+    cin.ignore();
+    getline(cin, hoTen);
+
+    cout << tuoi << endl;
+    cout << hoTen << endl;
+    return 0;
+}
+```
+
+`cin.ignore();` giúp bỏ qua ký tự xuống dòng còn lại.
+
+## Cách dùng string trong C++ để xử lý văn bản
+
+Bạn có thể kiểm tra độ dài, nối chuỗi, và truy cập ký tự theo chỉ số.
+
+```cpp
+string monHoc = "Python";
+
+cout << monHoc[0] << endl;
+cout << monHoc.length() << endl;
+```
+
+Những thao tác này rất thường gặp khi xử lý tên file, email, mã sản phẩm, hoặc thông tin người dùng.
+
+Bạn có thể kết hợp nhiều thao tác trong một chương trình nhỏ:
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string ho = "Tran";
+    string ten = "Minh";
+    string hoTen = ho + " " + ten;
+
+    cout << hoTen << endl;
+    cout << hoTen.length() << endl;
+    cout << hoTen[0] << endl;
+    return 0;
+}
+```
+
+Đây là ví dụ tổng hợp cho các thao tác nối chuỗi, lấy độ dài chuỗi và truy cập ký tự đầu tiên.
+
+## Những lỗi thường gặp với chuỗi trong C++
+
+- Quên `#include <string>` khi dùng `string`.
+- Dùng `cin` rồi `getline()` ngay sau đó nhưng không xử lý ký tự xuống dòng còn sót lại.
+- Nhầm giữa `char` và `string`.
+- Quên rằng chuỗi có thể rỗng.
+
+Ví dụ dễ nhầm:
+
+```cpp
+char kyTu = 'A';
+string chuoi = "A";
+```
+
+`char` là một ký tự, còn `string` là một chuỗi ký tự.
+
+Ví dụ truy cập sai chỉ số:
+
+```cpp
+string monHoc = "CPP";
+
+// Sai vi chi so hop le la 0, 1, 2
+// cout << monHoc[3] << endl;
+```
+
+Một lỗi khác là lấy ký tự đầu tiên của chuỗi rỗng:
+
+```cpp
+string ten = "";
+
+// Can kiem tra rong truoc khi truy cap ten[0]
+```
+
+Khi xử lý dữ liệu từ người dùng, đừng giả định lúc nào chuỗi cũng có nội dung.
+
+## Ví dụ string C++ trong bài toán thực tế
+
+Giả sử bạn muốn kiểm tra tên đăng nhập:
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string tenDangNhap;
+    getline(cin, tenDangNhap);
+
+    if (tenDangNhap == "admin") {
+        cout << "Quyen quan tri" << endl;
+    } else {
+        cout << "Nguoi dung thuong" << endl;
+    }
+
+    return 0;
+}
+```
+
+Ví dụ này cho thấy chuỗi còn được dùng trong so sánh điều kiện.
+
+## Bài tập thực hành
+
+Viết chương trình nhập họ tên người dùng bằng `getline()`, sau đó in ra:
+
+- Toàn bộ họ tên
+- Độ dài của chuỗi
+- Ký tự đầu tiên của chuỗi
+
+Gợi ý:
+
+```cpp
+string hoTen;
+getline(cin, hoTen);
+
+// Viet them code o day
+```
+
+Bạn có thể mở rộng thêm: in ký tự cuối cùng của chuỗi, nối thêm câu `", chao mung ban den voi C++"` và kiểm tra xem chuỗi có rỗng hay không.
+
+## Câu hỏi thường gặp về chuỗi trong C++
+
+### Khi nào nên dùng `getline()` thay vì `cin`?
+
+Hãy dùng `getline()` khi dữ liệu có thể chứa khoảng trắng, ví dụ họ tên đầy đủ hoặc tên sản phẩm. `cin` phù hợp hơn với dữ liệu một từ.
+
+### `string` và `char` khác nhau thế nào?
+
+`char` chỉ lưu một ký tự như `'A'`, còn `string` lưu nhiều ký tự như `"Hello"`. Đây là khác biệt rất cơ bản nhưng người mới hay nhầm.
+
+### Khi nào nên dùng `cin`, khi nào nên dùng `getline()`?
+
+Hãy dùng `cin` khi dữ liệu chỉ là một từ không có khoảng trắng. Dùng `getline()` khi dữ liệu có thể chứa khoảng trắng như họ tên, địa chỉ hoặc tiêu đề.
+
+## Tóm tắt
+
+Bạn đã biết cách khai báo chuỗi trong C++, nối chuỗi, nhập chuỗi bằng `getline()`, và xử lý một số thao tác văn bản cơ bản. Ở các bài tiếp theo, bạn có thể mở rộng sang pointer, vector, hoặc đọc ghi file để xử lý dữ liệu thực tế.
