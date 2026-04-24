@@ -12,7 +12,9 @@ publishedAt: "2024-01-21"
 
 ## Thẻ tiêu đề (Heading)
 
-HTML có 6 cấp tiêu đề, từ `h1` (lớn nhất) đến `h6` (nhỏ nhất):
+Các thẻ HTML cơ bản là những thẻ bạn sẽ dùng gần như mỗi ngày khi viết trang web. Nếu cần câu trả lời ngắn gọn, hãy nhớ nhóm quan trọng nhất cho người mới là thẻ tiêu đề, đoạn văn, liên kết, hình ảnh, danh sách và bảng.
+
+HTML có 6 cấp tiêu đề, từ `h1` lớn nhất đến `h6` nhỏ nhất:
 
 ```html
 <h1>Tiêu đề cấp 1</h1>
@@ -20,7 +22,7 @@ HTML có 6 cấp tiêu đề, từ `h1` (lớn nhất) đến `h6` (nhỏ nhất
 <h3>Tiêu đề cấp 3</h3>
 ```
 
-Mỗi trang chỉ nên có **một thẻ h1** duy nhất (quan trọng cho SEO).
+Mỗi trang chỉ nên có một `h1` chính để mô tả nội dung quan trọng nhất. Các thẻ `h2`, `h3` giúp chia ý nhỏ hơn. Cách dùng heading hợp lý làm bài viết dễ đọc hơn cho người dùng và cũng tốt hơn cho SEO.
 
 ## Đoạn văn và định dạng
 
@@ -30,6 +32,10 @@ Mỗi trang chỉ nên có **một thẻ h1** duy nhất (quan trọng cho SEO).
 <p>Xuống dòng bằng thẻ <br> tự đóng.</p>
 ```
 
+`p` là một trong các tag HTML phổ biến nhất vì nội dung chữ trên web thường được hiển thị theo đoạn. `strong` giúp nhấn mạnh nội dung quan trọng, còn `em` thường dùng để nhấn theo ngữ nghĩa mềm hơn.
+
+Người mới hay lạm dụng `br` để tạo khoảng cách lớn. Bạn chỉ nên dùng `br` khi thực sự muốn xuống dòng trong cùng một đoạn, còn khoảng cách giữa các khối nội dung thường nên để CSS xử lý.
+
 ## Liên kết (Link)
 
 ```html
@@ -38,13 +44,26 @@ Mỗi trang chỉ nên có **một thẻ h1** duy nhất (quan trọng cho SEO).
 <a href="https://google.com" target="_blank">Mở tab mới</a>
 ```
 
+Thẻ `a` trong HTML dùng để tạo liên kết. Thuộc tính quan trọng nhất là `href`, nơi bạn đặt địa chỉ muốn chuyển tới. Có hai kiểu liên kết cơ bản:
+
+- Liên kết tuyệt đối: đầy đủ như `https://example.com`
+- Liên kết tương đối: như `/khoa-hoc`, thường dùng trong cùng website
+
+Nếu dùng `target="_blank"`, liên kết sẽ mở tab mới. Hãy dùng khi hợp lý, vì mở quá nhiều tab mới có thể làm người dùng khó chịu.
+
 ## Hình ảnh
 
 ```html
 <img src="hinh-anh.jpg" alt="Mô tả hình ảnh" width="300">
 ```
 
-Thuộc tính `alt` rất quan trọng cho SEO và accessibility.
+`img` là thẻ hình ảnh rất quen thuộc. Thuộc tính `src` chỉ đường dẫn ảnh, còn `alt` mô tả nội dung ảnh bằng chữ. `alt` quan trọng vì:
+
+- Giúp công cụ tìm kiếm hiểu ảnh nói về gì
+- Hỗ trợ người dùng dùng trình đọc màn hình
+- Hiển thị mô tả khi ảnh lỗi hoặc chưa tải được
+
+Khi viết `alt`, hãy mô tả ngắn gọn và đúng nội dung thật của ảnh, không nhồi từ khóa.
 
 ## Danh sách
 
@@ -68,4 +87,101 @@ Danh sách có thứ tự:
 </ol>
 ```
 
-Bài tiếp theo sẽ giới thiệu về **form và input trong HTML** để bạn bắt đầu tạo biểu mẫu thực tế.
+`ul` dùng khi thứ tự không quan trọng, ví dụ danh sách kỹ năng hoặc món ăn. `ol` dùng khi các bước có thứ tự rõ ràng, ví dụ hướng dẫn cài đặt. Còn `li` là từng mục trong danh sách.
+
+## Bảng trong HTML dùng khi nào?
+
+Nhiều bạn nghe về table ngay từ đầu nhưng chưa rõ khi nào nên dùng. Bảng chỉ phù hợp khi dữ liệu có hàng và cột, ví dụ bảng học phí hoặc lịch học.
+
+```html
+<table>
+  <tr>
+    <th>Khoa hoc</th>
+    <th>Thoi luong</th>
+  </tr>
+  <tr>
+    <td>HTML/CSS</td>
+    <td>4 tuan</td>
+  </tr>
+</table>
+```
+
+Bạn không nên dùng bảng để dựng bố cục toàn trang. Việc đó trước đây từng phổ biến, nhưng hiện nay đã lỗi thời. Layout nên dùng semantic HTML kết hợp CSS.
+
+## Cách kết hợp các thẻ HTML cơ bản trong một trang nhỏ
+
+Ví dụ dưới đây gom nhiều thẻ HTML cơ bản vào cùng một đoạn giao diện:
+
+```html
+<h1>Hoc HTML co ban</h1>
+<p>Day la bai viet dau tien cua toi ve HTML.</p>
+
+<img src="html-basic.jpg" alt="Minh hoa bai hoc HTML">
+
+<h2>Noi dung chinh</h2>
+<ul>
+  <li>Heading</li>
+  <li>Paragraph</li>
+  <li>Link</li>
+</ul>
+
+<a href="/bai-tiep-theo">Xem bai tiep theo</a>
+```
+
+Nhìn ví dụ này, bạn có thể thấy mỗi thẻ có một vai trò riêng. Khi hiểu đúng vai trò, bạn sẽ viết code rõ nghĩa và dễ bảo trì hơn.
+
+## Những lỗi thường gặp khi học các tag HTML phổ biến
+
+- Dùng nhiều `h1` trên cùng một trang mà không có lý do rõ ràng
+- Quên `href` trong thẻ `a` nên liên kết không hoạt động
+- Quên `alt` trong thẻ `img`
+- Đặt `li` bên ngoài `ul` hoặc `ol`
+- Dùng table cho bố cục thay vì dữ liệu dạng bảng
+
+Ví dụ sai:
+
+```html
+<li>HTML</li>
+<li>CSS</li>
+```
+
+Ví dụ đúng:
+
+```html
+<ul>
+  <li>HTML</li>
+  <li>CSS</li>
+</ul>
+```
+
+## Bài tập thực hành
+
+Hãy tạo một trang giới thiệu khóa học giả lập với các yêu cầu sau:
+
+- Có một `h1` làm tiêu đề chính
+- Có ít nhất hai đoạn văn bằng thẻ `p`
+- Có một ảnh với `alt` rõ nghĩa
+- Có một danh sách 3 mục bằng `ul`
+- Có một liên kết tới trang đăng ký
+
+Sau khi làm xong, hãy tự kiểm tra xem mỗi thẻ có đang được dùng đúng mục đích không. Đây là bước quan trọng hơn việc viết thật nhiều thẻ.
+
+## Câu hỏi thường gặp
+
+### Mỗi trang có bắt buộc chỉ có một `h1` không?
+
+Trong hầu hết trường hợp, nên có một `h1` chính để thể hiện chủ đề của trang. Điều này giúp cấu trúc nội dung rõ ràng hơn.
+
+### Thẻ `strong` khác gì với việc làm chữ đậm bằng CSS?
+
+`strong` mang ý nghĩa nhấn mạnh về nội dung, còn CSS chỉ thay đổi cách hiển thị. Tốt nhất là dùng HTML đúng ngữ nghĩa trước, rồi dùng CSS để làm đẹp sau.
+
+### Khi nào nên dùng `ol` thay vì `ul`?
+
+Hãy dùng `ol` khi thứ tự là quan trọng, ví dụ các bước hướng dẫn. Nếu chỉ là liệt kê thông thường, `ul` là đủ.
+
+## Tóm tắt
+
+Bạn đã đi qua các thẻ HTML cơ bản quan trọng nhất gồm heading, paragraph, link, image, list và table. Đây là nhóm thẻ tạo nên phần lớn nội dung của một trang web đơn giản.
+
+Bài tiếp theo sẽ giới thiệu **form và input trong HTML** để bạn bắt đầu thu thập dữ liệu từ người dùng thay vì chỉ hiển thị nội dung tĩnh.

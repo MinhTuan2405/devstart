@@ -12,9 +12,9 @@ publishedAt: "2024-01-29"
 
 ## Class trong C++ là gì?
 
-Class trong C++ là cách bạn gom dữ liệu và hành vi liên quan vào cùng một cấu trúc. Với người mới, bạn có thể hiểu class là “bản thiết kế”, còn object là “phiên bản được tạo ra từ bản thiết kế đó”. Đây là bước đầu tiên để học lập trình hướng đối tượng trong C++.
+Class trong C++ là cách bạn gom dữ liệu và hành vi liên quan vào cùng một cấu trúc. Với người mới, bạn có thể hiểu class là “bản thiết kế”, còn object là “phiên bản được tạo ra từ bản thiết kế đó”. Đây là bước đầu tiên để học lập trình hướng đối tượng, hay còn gọi là OOP trong C++.
 
-Khi chương trình có nhiều đối tượng giống nhau, class giúp code gọn và rõ hơn.
+Khi chương trình có nhiều đối tượng giống nhau như sinh viên, sản phẩm, tài khoản, hoặc bài viết, class giúp code gọn hơn, dễ đọc hơn, và dễ mở rộng hơn. Thay vì để dữ liệu nằm rời rạc trong nhiều biến riêng lẻ, bạn gom chúng vào một cấu trúc có ý nghĩa rõ ràng.
 
 ## Cú pháp cơ bản của class trong C++
 
@@ -47,6 +47,17 @@ Trong ví dụ trên:
 - `gioiThieu()` là phương thức
 - `hv1` là một object
 
+Bạn có thể nhìn class theo hai phần:
+
+- Dữ liệu mà object sở hữu, ví dụ `ten`, `tuoi`
+- Hành động mà object có thể làm, ví dụ `gioiThieu()`
+
+Đây là ý tưởng cốt lõi của object trong C++. Dữ liệu và hành vi được đặt gần nhau, giúp chương trình dễ hiểu hơn.
+
+Từ khóa `public:` cũng rất quan trọng. Những gì đặt sau `public:` sẽ được truy cập từ bên ngoài class. Nếu bỏ phần này, người mới thường gặp lỗi khi cố gán giá trị hoặc gọi phương thức.
+
+Ví dụ, `hv1.ten = "Lan";` chỉ hoạt động vì `ten` đang thuộc phạm vi `public`.
+
 ## Cách dùng constructor trong C++
 
 Constructor giúp object có dữ liệu ngay khi được tạo.
@@ -72,6 +83,53 @@ int main() {
 
 Đây là cách rất phổ biến khi làm việc với object thực tế.
 
+Constructor là hàm đặc biệt có tên trùng với tên class. Nó chạy tự động khi object được tạo ra. Điều này giúp bạn tránh quên gán dữ liệu ban đầu.
+
+Ví dụ trên cho thấy khi viết `SanPham sp1("Ban phim", 500000);`, constructor được gọi ngay và gán dữ liệu vào `ten` và `gia`.
+
+Bạn có thể mở rộng ví dụ này để có thêm phương thức:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class SanPham {
+public:
+    string ten;
+    int gia;
+
+    SanPham(string t, int g) {
+        ten = t;
+        gia = g;
+    }
+
+    void hienThi() {
+        cout << ten << " - " << gia << endl;
+    }
+};
+
+int main() {
+    SanPham sp1("Chuot", 200000);
+    sp1.hienThi();
+    return 0;
+}
+```
+
+Ở đây, object không chỉ giữ dữ liệu mà còn biết cách tự hiển thị thông tin của chính nó.
+
+## Thuộc tính và phương thức trong C++ hoạt động ra sao?
+
+Thuộc tính là dữ liệu bên trong object. Phương thức là hàm nằm trong class và thường dùng để xử lý dữ liệu đó.
+
+Ví dụ với class `HocVien`:
+
+- `ten` và `tuoi` là thuộc tính
+- `gioiThieu()` là phương thức
+
+Khi bạn gọi `hv1.gioiThieu()`, phương thức này sử dụng chính dữ liệu của object `hv1`. Đây là điểm khác với các hàm rời rạc bên ngoài class.
+
+Người mới thường thấy OOP trong C++ dễ hiểu hơn khi nghĩ theo câu hỏi: “Đối tượng này có dữ liệu gì?” và “Đối tượng này làm được gì?”. Nếu trả lời được hai câu đó, bạn gần như đã biết cách viết một class cơ bản.
+
 ## Struct và class trong C++ khác nhau thế nào?
 
 Về mặt cú pháp cơ bản, `struct` và `class` khá giống nhau. Điểm khác phổ biến nhất với người mới là:
@@ -81,11 +139,18 @@ Về mặt cú pháp cơ bản, `struct` và `class` khá giống nhau. Điểm 
 
 Trong bài đầu tiên về OOP, bạn chỉ cần nhớ như vậy là đủ.
 
+Điều này có nghĩa là nếu bạn viết `struct SinhVien { string ten; };` thì `ten` mặc định có thể truy cập từ bên ngoài. Nhưng nếu viết `class SinhVien { string ten; };` thì `ten` mặc định là riêng tư.
+
+Ở mức cơ bản, cả `struct` và `class` đều dùng được để nhóm dữ liệu. Tuy nhiên, khi bắt đầu học OOP bài bản, `class` là từ khóa bạn sẽ gặp nhiều hơn.
+
 ## Những lỗi thường gặp với class trong C++
 
 - Quên dấu `;` sau khi kết thúc class.
 - Nhầm giữa class và object.
 - Quên khai báo `public:` nên không truy cập được thuộc tính hoặc phương thức.
+
+- Tạo object nhưng quên gán dữ liệu trước khi dùng.
+- Nghĩ rằng class tự động in ra thông tin mà không cần phương thức.
 
 Ví dụ cần nhớ:
 
@@ -98,6 +163,23 @@ public:
 
 Class trong C++ luôn cần dấu `;` ở cuối.
 
+Một nhầm lẫn khác là coi class và object là một. Hãy nhớ:
+
+- Class là bản thiết kế
+- Object là thứ được tạo ra từ bản thiết kế
+
+Ví dụ, `HocVien` là class, còn `hv1` và `hv2` là hai object khác nhau. Mỗi object có thể có dữ liệu riêng dù cùng chung cấu trúc.
+
+Nếu bạn quên `public:`, đoạn sau sẽ báo lỗi truy cập:
+
+```cpp
+class HocVien {
+    string ten;
+};
+```
+
+Khi mới học, hãy dùng `public:` rõ ràng để tránh rối.
+
 ## Bài tập thực hành
 
 Tạo class `SinhVien` với:
@@ -107,6 +189,25 @@ Tạo class `SinhVien` với:
 - Phương thức `hienThi()` để in thông tin sinh viên
 
 Sau đó tạo 2 object khác nhau từ class này.
+
+Gợi ý:
+
+```cpp
+#include <iostream>
+using namespace std;
+
+class SinhVien {
+public:
+    string ten;
+    float diem;
+
+    void hienThi() {
+        cout << ten << " - " << diem << endl;
+    }
+};
+```
+
+Sau khi làm xong, hãy thử nâng cấp thêm một chút: tạo constructor để khỏi phải gán từng thuộc tính bằng tay sau khi tạo object.
 
 ## Câu hỏi thường gặp về class trong C++
 
@@ -118,6 +219,16 @@ Hãy dùng class khi dữ liệu và hành vi liên quan chặt với nhau, ví 
 
 Không bắt buộc trong mọi class, nhưng rất hữu ích khi bạn muốn object có giá trị rõ ràng ngay từ lúc tạo ra.
 
+### Một class có thể tạo nhiều object không?
+
+Có. Đây chính là mục đích của class. Bạn viết class một lần rồi tạo nhiều object khác nhau từ đó, mỗi object có dữ liệu riêng. Ví dụ có thể tạo `hv1`, `hv2`, `hv3` cùng từ class `HocVien`.
+
+### Vì sao OOP trong C++ quan trọng với người mới?
+
+Vì khi chương trình lớn dần, việc gom dữ liệu và hành vi vào class sẽ giúp bạn tổ chức code tốt hơn. Nếu mọi thứ đều để rời rạc trong `main()`, chương trình sẽ rất nhanh trở nên khó hiểu.
+
 ## Tóm tắt
 
-Bạn đã biết class trong C++ là gì, cách tạo object, thêm phương thức và dùng constructor cơ bản. Ở bài tiếp theo, chúng ta sẽ học **đọc ghi file trong C++** để lưu dữ liệu ra ngoài chương trình.
+Bạn đã biết class trong C++ là gì, hiểu mối liên hệ giữa class và object, biết cách khai báo thuộc tính, phương thức, và constructor cơ bản. Bạn cũng đã phân biệt sơ bộ `struct` với `class` và thấy vì sao OOP giúp chương trình có cấu trúc rõ ràng hơn.
+
+Ở bài tiếp theo, chúng ta sẽ học **đọc ghi file trong C++** để những dữ liệu trong object hoặc danh sách không bị mất sau khi chương trình kết thúc.

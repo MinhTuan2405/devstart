@@ -12,32 +12,63 @@ publishedAt: "2024-01-23"
 
 ## Dictionary trong Python là gì?
 
-Dictionary trong Python là kiểu dữ liệu lưu thông tin dưới dạng `key-value`, tức là mỗi giá trị được gắn với một khóa cụ thể. Nó rất phù hợp khi bạn muốn lưu hồ sơ người dùng, cấu hình ứng dụng, hoặc bất kỳ dữ liệu nào có tên trường rõ ràng.
+Dictionary trong Python là kiểu dữ liệu lưu thông tin dưới dạng `key-value`, tức là mỗi giá trị được gắn với một khóa cụ thể. Khi học `dictionary trong python`, bạn đang học cách lưu dữ liệu có nhãn như tên, tuổi, email, địa chỉ hoặc cấu hình ứng dụng.
 
-Nếu list phù hợp cho dữ liệu có thứ tự, thì dictionary phù hợp cho dữ liệu có nhãn.
+Nếu list phù hợp cho dữ liệu có thứ tự, thì dictionary phù hợp cho dữ liệu có ý nghĩa theo từng trường thông tin. Bạn không cần nhớ `ten` đang nằm ở vị trí số mấy, vì bạn có thể truy cập trực tiếp bằng key.
 
-## Cú pháp cơ bản của dictionary trong Python
+## Cách tạo dictionary trong Python
+
+Dictionary được viết trong dấu `{}`. Mỗi cặp dữ liệu có dạng `key: value`.
 
 ```python
 sinh_vien = {
     "ten": "Minh",
     "tuoi": 20,
-    "lop": "Python cơ bản"
+    "lop": "Python co ban"
+}
+
+print(sinh_vien)
+```
+
+Trong ví dụ trên:
+
+- `ten`, `tuoi`, `lop` là key
+- `Minh`, `20`, `Python co ban` là value
+- Toàn bộ dữ liệu được gom trong một dictionary
+
+Key thường là chuỗi vì chúng dễ đọc và rõ nghĩa. Khi mới học, bạn nên chọn key ngắn gọn nhưng rõ ý nghĩa như `ten`, `email`, `gia`, `so_luong`.
+
+## Truy cập giá trị trong dictionary Python
+
+Bạn có thể lấy giá trị bằng key.
+
+```python
+sinh_vien = {
+    "ten": "Minh",
+    "tuoi": 20,
+    "lop": "Python co ban"
 }
 
 print(sinh_vien["ten"])
 print(sinh_vien["tuoi"])
 ```
 
-Trong dictionary:
+Đây là điểm khác list: list dùng chỉ số, còn dictionary dùng khóa.
 
-- `ten`, `tuoi`, `lop` là key.
-- Giá trị nằm sau dấu `:`.
-- Toàn bộ dictionary được đặt trong dấu `{}`.
+Nếu không chắc key có tồn tại hay không, bạn nên dùng `.get()`.
 
-## Cách dùng dictionary trong Python để cập nhật dữ liệu
+```python
+nguoi_dung = {"ten": "An"}
 
-Bạn có thể thêm hoặc cập nhật giá trị rất nhanh.
+print(nguoi_dung.get("email"))
+print(nguoi_dung.get("email", "Chua co email"))
+```
+
+`get()` giúp chương trình an toàn hơn khi xử lý dữ liệu không đầy đủ. Đây là thói quen rất tốt với người mới vì dữ liệu thực tế không phải lúc nào cũng đủ như ví dụ trong sách.
+
+## Thêm và cập nhật dữ liệu trong dictionary
+
+Bạn có thể thêm key mới hoặc cập nhật giá trị cũ bằng cùng một cú pháp.
 
 ```python
 sinh_vien = {"ten": "Lan", "tuoi": 19}
@@ -48,59 +79,126 @@ sinh_vien["email"] = "lan@example.com"
 print(sinh_vien)
 ```
 
-Bạn cũng có thể duyệt dictionary bằng vòng lặp:
+Trong ví dụ trên:
+
+- `tuoi` đã có nên được cập nhật
+- `email` chưa có nên được thêm mới
+
+Bạn cũng có thể xóa dữ liệu bằng `pop()` hoặc `del`.
 
 ```python
+sinh_vien.pop("tuoi")
+print(sinh_vien)
+```
+
+Điểm hay của dictionary là bạn có thể mở rộng dữ liệu rất linh hoạt. Ban đầu chỉ có `ten` và `tuoi`, sau đó bạn có thể thêm `email`, `sdt`, `dia_chi` mà không cần thay đổi cấu trúc theo vị trí như list.
+
+## Duyệt dictionary trong Python
+
+Để đi qua từng phần của dictionary, bạn thường dùng vòng lặp `for`.
+
+```python
+sinh_vien = {
+    "ten": "Lan",
+    "tuoi": 20,
+    "email": "lan@example.com"
+}
+
 for key, value in sinh_vien.items():
     print(key, value)
 ```
 
+Ngoài `.items()`, bạn còn có thể dùng:
+
+- `.keys()` để lấy danh sách key
+- `.values()` để lấy danh sách value
+
+Ví dụ:
+
+```python
+for key in sinh_vien.keys():
+    print(key)
+```
+
+Khi mới học, bạn chỉ cần nhớ ba cách này là đủ để làm rất nhiều bài tập cơ bản với dictionary.
+
+## Khi nào nên dùng dictionary trong Python?
+
+Dictionary rất phù hợp khi dữ liệu có cấu trúc theo trường thông tin.
+
+Ví dụ:
+
+- Hồ sơ học viên
+- Thông tin sản phẩm
+- Cấu hình chương trình
+- Dữ liệu trả về từ API
+
+So với list, dictionary dễ đọc hơn khi bạn muốn biết rõ từng giá trị đang đại diện cho cái gì. Nếu bạn nhìn thấy `nguoi_dung["email"]`, bạn hiểu ngay dữ liệu đó là email mà không cần nhớ vị trí số mấy.
+
 ## Những lỗi thường gặp với dictionary trong Python
 
-- Truy cập key không tồn tại nên bị `KeyError`.
-- Tạo trùng key khiến giá trị cũ bị ghi đè.
-- Nhầm giữa dictionary và list khi truy cập dữ liệu.
+- Truy cập key không tồn tại bằng dấu `[]`
+- Tạo trùng key làm giá trị cũ bị ghi đè
+- Nhầm dictionary với list khi truy cập dữ liệu
+- Dùng key không rõ nghĩa làm code khó đọc
 
-Ví dụ an toàn hơn với `.get()`:
+Ví dụ dễ nhầm:
 
 ```python
 nguoi_dung = {"ten": "An"}
 
-print(nguoi_dung.get("email", "Chưa có email"))
+# Sai neu key khong ton tai
+# print(nguoi_dung["email"])
+
+print(nguoi_dung.get("email", "Chua co email"))
 ```
 
-`.get()` giúp bạn tránh lỗi nếu key chưa tồn tại.
+Bạn cũng nên nhớ rằng nếu viết trùng key, Python sẽ giữ lại giá trị cuối cùng. Vì thế khi tạo dictionary dài, hãy kiểm tra kỹ xem key có bị lặp hay không.
 
 ## Bài tập thực hành
 
-Tạo dictionary lưu thông tin một cuốn sách gồm:
+Tạo một dictionary lưu thông tin một cuốn sách gồm:
 
 - Tên sách
 - Tác giả
 - Năm xuất bản
 
-Sau đó, hãy in ra từng cặp key-value bằng vòng lặp.
+Sau đó:
+
+- In ra tên sách bằng key
+- Thêm một key `gia`
+- Duyệt toàn bộ dictionary để in từng cặp `key value`
 
 Gợi ý:
 
 ```python
 sach = {
-    "ten": "Python cho người mới",
+    "ten": "Python cho nguoi moi",
     "tac_gia": "DevStart",
     "nam": 2024
 }
 ```
 
+Nếu muốn luyện thêm, hãy tạo dictionary thông tin một học viên rồi cập nhật thêm email và trạng thái hoàn thành khóa học.
+
 ## Câu hỏi thường gặp về dictionary trong Python
 
 ### Dictionary và list khác nhau thế nào?
 
-List dùng chỉ số số học như `0`, `1`, `2` để truy cập phần tử. Dictionary dùng key có ý nghĩa như `ten`, `email`, `tuoi` nên dễ đọc hơn khi lưu dữ liệu có cấu trúc.
+List dùng chỉ số như `0`, `1`, `2` để truy cập phần tử. Dictionary dùng key như `ten`, `email`, `tuoi`, nên phù hợp hơn cho dữ liệu có nhãn.
 
-### Khi nào nên dùng `.get()` thay vì dấu `[]`?
+### Khi nào nên dùng `.get()` thay vì `[]`?
 
-Hãy dùng `.get()` khi bạn không chắc key đó có tồn tại hay không. Cách này giúp chương trình an toàn hơn và tránh lỗi không cần thiết.
+Hãy dùng `.get()` khi bạn không chắc key có tồn tại hay không. Cách này giúp tránh lỗi và viết code an toàn hơn.
+
+### `dict` trong Python là gì?
+
+`dict` là tên kiểu dữ liệu dictionary trong Python. Khi gọi `type()` trên một dictionary, bạn sẽ thấy kết quả là `dict`.
+
+### Dictionary có giữ thứ tự không?
+
+Trong Python hiện đại, dictionary giữ thứ tự thêm phần tử. Tuy vậy với người mới, điều quan trọng hơn vẫn là hiểu dictionary được dùng để truy cập bằng key, không phải để dựa hoàn toàn vào vị trí như list.
 
 ## Tóm tắt
 
-Bạn đã biết cách tạo dictionary trong Python, truy cập dữ liệu key-value, cập nhật thông tin, và duyệt qua từng cặp dữ liệu. Ở các bài tiếp theo, bạn có thể kết hợp dictionary với input, file, và JSON để xử lý dữ liệu thực tế.
+Bạn đã biết cách tạo dictionary trong Python, truy cập dữ liệu theo key, thêm cập nhật xóa thông tin và duyệt qua từng cặp dữ liệu. Đây là cấu trúc rất quan trọng khi xử lý dữ liệu thực tế. Ở bài tiếp theo, chúng ta sẽ học **tuple trong Python** để hiểu thêm một kiểu dữ liệu lưu nhiều giá trị nhưng không thể thay đổi.

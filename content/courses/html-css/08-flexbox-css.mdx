@@ -12,9 +12,9 @@ publishedAt: "2024-01-27"
 
 ## Flexbox CSS là gì?
 
-Flexbox CSS là một hệ thống layout giúp bạn sắp xếp phần tử theo hàng hoặc cột rất nhanh. Với flexbox, việc căn giữa nút bấm, chia các cột đều nhau, hay tạo thanh điều hướng sẽ dễ hơn nhiều so với cách cũ.
+Flexbox CSS là một hệ thống layout giúp bạn sắp xếp phần tử theo một chiều chính, thường là hàng hoặc cột, rất nhanh và rõ ràng. Nếu bạn đang tìm câu trả lời ngắn cho "flexbox là gì", hãy hiểu nó là công cụ giúp căn hàng, căn cột, chia khoảng cách và căn giữa các phần tử dễ hơn nhiều so với cách làm cũ.
 
-Đây là công cụ layout mà người mới nên học sớm vì dùng cực kỳ thường xuyên.
+Đây là một trong những phần quan trọng nhất của CSS hiện đại. Người mới nên học flexbox sớm vì menu, nhóm nút, card list, thanh điều hướng và nhiều khối giao diện thường dùng nó.
 
 ## Cú pháp cơ bản của flexbox CSS
 
@@ -37,6 +37,12 @@ Bạn chỉ cần đặt `display: flex` cho phần tử cha.
 
 Sau đó, các phần tử con sẽ nằm trên cùng một hàng theo mặc định.
 
+### Flex container và flex item là gì?
+
+Khi bạn đặt `display: flex` cho phần tử cha, phần tử cha đó trở thành **flex container**. Các phần tử con bên trong nó trở thành **flex item**. Đây là tư duy quan trọng nhất khi học cách dùng flexbox CSS.
+
+Nhiều lỗi của người mới xuất phát từ việc áp dụng thuộc tính flex cho nhầm phần tử con thay vì phần tử cha.
+
 ## Cách dùng justify-content và align-items
 
 ```css
@@ -53,6 +59,26 @@ Hai thuộc tính quan trọng nhất:
 - `justify-content`: căn phần tử theo trục ngang
 - `align-items`: căn phần tử theo trục dọc
 
+Thực ra chính xác hơn là:
+
+- `justify-content` căn theo **trục chính**
+- `align-items` căn theo **trục phụ**
+
+Mặc định khi `flex-direction: row`, trục chính nằm ngang. Nhưng nếu bạn đổi sang `column`, trục chính sẽ chạy dọc. Đây là điểm khiến nhiều bạn mới học dễ nhầm.
+
+Ví dụ căn giữa hoàn toàn một khối:
+
+```css
+.center-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 240px;
+}
+```
+
+Đây là một ví dụ cực phổ biến khi cần căn giữa nút, icon, chữ hoặc thông báo rỗng trong giao diện.
+
 ## Cách đổi hướng layout bằng flex-direction
 
 Bạn có thể chuyển layout từ hàng sang cột rất dễ.
@@ -67,11 +93,69 @@ Bạn có thể chuyển layout từ hàng sang cột rất dễ.
 
 Điều này rất hữu ích khi làm danh sách thẻ, sidebar, hoặc bố cục mobile đơn giản.
 
+### Một vài thuộc tính flexbox quan trọng khác
+
+Ngoài `justify-content`, `align-items`, `flex-direction` và `gap`, bạn cũng nên biết sơ qua:
+
+- `flex-wrap`: cho phép phần tử xuống hàng khi không đủ chỗ
+- `align-self`: căn riêng một phần tử con
+- `flex`: điều khiển cách item co giãn
+
+Ví dụ:
+
+```css
+.cards {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+```
+
+Nếu không có `flex-wrap`, các phần tử có thể bị ép nhỏ hoặc tràn ngang khi màn hình hẹp.
+
+## Ví dụ flexbox CSS trong menu và card list
+
+Ví dụ menu ngang:
+
+```html
+<nav class="menu">
+  <a href="#">Trang chu</a>
+  <a href="#">Khoa hoc</a>
+  <a href="#">Blog</a>
+</nav>
+```
+
+```css
+.menu {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+```
+
+Ví dụ danh sách card:
+
+```css
+.course-list {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.course-card {
+  width: 280px;
+}
+```
+
+Nhờ flexbox, bạn không cần tính toán phức tạp để các phần tử đứng cạnh nhau một cách gọn gàng.
+
 ## Những lỗi thường gặp với flexbox CSS
 
 - Đặt `display: flex` cho phần tử con thay vì phần tử cha.
 - Nhầm `justify-content` và `align-items`.
 - Quên thêm `gap` nên các phần tử dính sát nhau.
+- Quên `flex-wrap` khi có nhiều item trên màn hình nhỏ.
+- Đổi `flex-direction` sang `column` nhưng vẫn nghĩ `justify-content` là căn ngang.
 
 Ví dụ cần nhớ:
 
@@ -82,6 +166,8 @@ Ví dụ cần nhớ:
 ```
 
 Phần tử cha mới là nơi kích hoạt flexbox.
+
+Một lỗi khác rất hay gặp là dùng flexbox để giải quyết mọi thứ, kể cả những layout phức tạp hai chiều. Flexbox rất mạnh, nhưng nó phù hợp nhất với bố cục theo một chiều chính. Các bố cục lưới phức tạp có thể cần grid ở giai đoạn sau.
 
 ## Bài tập thực hành
 
@@ -99,6 +185,13 @@ Gợi ý:
 }
 ```
 
+Hãy thử làm thêm một biến thể thứ hai:
+
+- Trên desktop: menu nằm ngang
+- Trên mobile: menu xếp dọc bằng `flex-direction: column`
+
+Chỉ với thay đổi nhỏ này, bạn sẽ thấy flexbox linh hoạt thế nào trong giao diện thực tế.
+
 ## Câu hỏi thường gặp về flexbox CSS
 
 ### Khi nào nên dùng flexbox?
@@ -109,6 +202,16 @@ Hãy dùng flexbox khi bạn cần sắp xếp phần tử theo một chiều ch
 
 `gap` tạo khoảng cách đều giữa các phần tử con mà không cần thêm `margin` cho từng phần tử. Cách này giúp code gọn và dễ kiểm soát hơn.
 
+### Khi nào nên dùng `flex-direction: column`?
+
+Khi bạn muốn các phần tử xếp theo cột dọc, ví dụ danh sách card trên mobile, sidebar, form đơn giản hoặc một nhóm nút đặt chồng lên nhau.
+
+### Vì sao phần tử flex của tôi bị tràn hàng?
+
+Nguyên nhân thường là tổng chiều rộng các item quá lớn và container chưa có `flex-wrap: wrap`. Hãy kiểm tra lại chiều rộng item và khả năng xuống dòng.
+
 ## Tóm tắt
 
-Bạn đã học cách dùng flexbox CSS với `display: flex`, `justify-content`, `align-items`, `flex-direction`, và `gap`. Đây là nền tảng rất mạnh để xây giao diện hiện đại. Ở bài tiếp theo, chúng ta sẽ học **responsive web và media query** để giao diện hiển thị tốt hơn trên điện thoại và màn hình lớn.
+Bạn đã học cách dùng flexbox CSS với `display: flex`, hiểu khái niệm container và item, biết dùng `justify-content`, `align-items`, `flex-direction`, `gap`, `flex-wrap` để sắp xếp phần tử nhanh hơn. Đây là nền tảng rất mạnh để xây giao diện hiện đại mà không cần mẹo layout cũ.
+
+Ở bài tiếp theo, chúng ta sẽ học **responsive web và media query** để những layout flexbox này hiển thị tốt hơn trên điện thoại, tablet và màn hình lớn.

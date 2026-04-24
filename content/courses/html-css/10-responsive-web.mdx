@@ -12,9 +12,9 @@ publishedAt: "2024-01-29"
 
 ## Responsive web là gì?
 
-Responsive web là cách thiết kế website để giao diện tự thích nghi với nhiều kích thước màn hình khác nhau như điện thoại, tablet, và laptop. Nếu trang web chỉ đẹp trên máy tính nhưng vỡ layout trên điện thoại, thì đó là dấu hiệu bạn chưa làm responsive tốt.
+Responsive web là cách thiết kế website để giao diện tự thích nghi với nhiều kích thước màn hình như điện thoại, tablet và laptop. Nếu bạn đang hỏi "responsive web là gì", hãy hiểu đơn giản rằng một trang responsive là trang vẫn dễ đọc, dễ bấm và không vỡ bố cục dù người dùng mở trên thiết bị nào.
 
-Ngày nay, responsive gần như là yêu cầu cơ bản của mọi website.
+Ngày nay, responsive gần như là yêu cầu cơ bản của mọi website. Người dùng truy cập bằng điện thoại rất nhiều, nên một trang chỉ đẹp trên màn hình lớn là chưa đủ.
 
 ## Cú pháp cơ bản của media query CSS
 
@@ -33,6 +33,16 @@ Media query giúp bạn áp dụng CSS khác nhau tùy theo kích thước màn 
 ```
 
 Trong ví dụ này, khi màn hình từ `768px` trở lên, phần tử `.container` sẽ có khoảng đệm lớn hơn.
+
+### Media query hoạt động ra sao?
+
+Bạn có thể xem media query như một điều kiện. Nếu điều kiện về kích thước màn hình đúng, nhóm CSS bên trong sẽ được áp dụng. Đây là nền tảng của `media query css` mà hầu như mọi website responsive đều dùng.
+
+Các mốc phổ biến người mới hay gặp là:
+
+- `480px` cho điện thoại nhỏ
+- `768px` cho tablet hoặc màn hình trung bình
+- `1024px` trở lên cho desktop lớn hơn
 
 ## Cách làm responsive web cho người mới
 
@@ -54,6 +64,16 @@ Một cách rất phổ biến là bắt đầu theo tư duy mobile-first, nghĩ
 
 Nhờ vậy, giao diện mobile sẽ gọn hơn và dễ kiểm soát hơn ngay từ đầu.
 
+### Vì sao nên theo tư duy mobile-first?
+
+Mobile-first nghĩa là bạn viết CSS cho màn hình nhỏ trước, sau đó mở rộng dần cho màn hình lớn. Cách làm này có lợi vì:
+
+- Bạn tập trung vào nội dung quan trọng nhất trước
+- Layout trên điện thoại thường cần gọn và rõ, nên dễ kiểm soát hơn
+- Khi mở rộng lên desktop, bạn chỉ thêm phần cần thiết thay vì sửa quá nhiều
+
+Đây là cách rất hợp với người mới học responsive HTML CSS.
+
 ## Những yếu tố cần kiểm tra khi làm responsive
 
 - Kích thước chữ có đủ dễ đọc trên điện thoại không
@@ -63,11 +83,61 @@ Nhờ vậy, giao diện mobile sẽ gọn hơn và dễ kiểm soát hơn ngay 
 
 Responsive không chỉ là chuyện co giãn layout, mà còn là trải nghiệm sử dụng thực tế.
 
+## Ví dụ responsive web với card list
+
+Giả sử bạn có ba thẻ khóa học:
+
+```html
+<section class="cards">
+  <div class="card">HTML</div>
+  <div class="card">CSS</div>
+  <div class="card">JavaScript</div>
+</section>
+```
+
+Bạn có thể viết CSS như sau:
+
+```css
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  padding: 20px;
+  border: 1px solid #cbd5e1;
+}
+
+@media (min-width: 768px) {
+  .cards {
+    flex-direction: row;
+  }
+
+  .card {
+    width: 33.33%;
+  }
+}
+```
+
+Trên mobile, các card xếp một cột để dễ đọc. Trên màn hình rộng hơn, chúng xếp ngang để tận dụng không gian. Đây là ví dụ responsive CSS rất phổ biến.
+
+## Một số thói quen tốt khi làm responsive
+
+- Ưu tiên chiều rộng linh hoạt thay vì width cố định quá lớn
+- Dùng khoảng cách và cỡ chữ vừa đủ cho mobile trước
+- Kiểm tra giao diện bằng DevTools thay vì chỉ thu nhỏ cửa sổ ngẫu nhiên
+- Kiểm tra cả chiều dài nội dung vì chữ dài có thể làm vỡ layout
+
+Responsive tốt không có nghĩa là mọi thứ co nhỏ lại, mà là bố cục thay đổi hợp lý theo thiết bị.
+
 ## Những lỗi thường gặp với responsive web
 
 - Chỉ thiết kế trên màn hình lớn rồi ép nhỏ lại.
 - Dùng width cố định quá nhiều.
 - Quên test trên màn hình nhỏ.
+- Chữ quá nhỏ trên mobile hoặc nút quá khó chạm.
+- Có media query nhưng đặt mốc không hợp lý nên CSS chồng chéo khó hiểu.
 
 Ví dụ nên tránh:
 
@@ -78,6 +148,8 @@ Ví dụ nên tránh:
 ```
 
 Chiều rộng cố định lớn như vậy dễ làm layout bị tràn trên thiết bị nhỏ.
+
+Thay vào đó, bạn có thể dùng `width: 100%`, `max-width` hoặc flexbox để phần tử co giãn hợp lý hơn.
 
 ## Bài tập thực hành
 
@@ -95,6 +167,12 @@ Gợi ý:
 }
 ```
 
+Sau khi hoàn thành, hãy kiểm tra thêm:
+
+- Card có bị tràn ngang không
+- Chữ trong card có còn dễ đọc trên mobile không
+- Khoảng cách giữa các card có bị quá chật trên màn hình nhỏ không
+
 ## Câu hỏi thường gặp về responsive web
 
 ### Mobile-first là gì?
@@ -105,6 +183,16 @@ Mobile-first là cách bắt đầu thiết kế từ màn hình nhỏ trước,
 
 Không cần càng nhiều càng tốt. Bạn chỉ nên thêm media query khi layout thực sự cần thay đổi rõ rệt để giữ CSS gọn và dễ quản lý.
 
+### Responsive web có phải chỉ là thu nhỏ giao diện không?
+
+Không. Responsive là điều chỉnh bố cục, khoảng cách, cỡ chữ và cách sắp xếp nội dung để phù hợp với từng màn hình, chứ không chỉ co toàn bộ giao diện lại.
+
+### Làm sao kiểm tra responsive nhanh?
+
+Bạn có thể dùng chế độ mô phỏng thiết bị trong DevTools của trình duyệt để xem trang trên nhiều kích thước khác nhau mà không cần thiết bị thật cho mọi trường hợp.
+
 ## Tóm tắt
 
-Bạn đã hiểu responsive web là gì, cách dùng media query, và tư duy mobile-first để xây giao diện thích ứng tốt hơn. Ở bài tiếp theo, chúng ta sẽ tổng hợp kiến thức để làm **landing page HTML CSS đầu tiên**.
+Bạn đã hiểu responsive web là gì, cách viết media query CSS, vì sao nên theo tư duy mobile-first và cần kiểm tra những yếu tố nào khi tối ưu giao diện cho nhiều màn hình. Đây là bước rất quan trọng để trang web của bạn không chỉ đúng mà còn thực sự usable.
+
+Ở bài tiếp theo, chúng ta sẽ tổng hợp toàn bộ kiến thức để làm **landing page HTML CSS đầu tiên** và biến các khái niệm đã học thành một dự án hoàn chỉnh.

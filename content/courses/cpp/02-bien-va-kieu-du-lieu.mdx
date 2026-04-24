@@ -12,15 +12,37 @@ publishedAt: "2024-01-19"
 
 ## Khai báo biến trong C++
 
-Khác với Python, C++ yêu cầu bạn phải khai báo kiểu dữ liệu khi tạo biến:
+C++ yêu cầu bạn khai báo kiểu dữ liệu ngay khi tạo biến. Nếu bạn đang tìm hiểu `biến và kiểu dữ liệu trong c++`, hãy nhớ ý tưởng cốt lõi này: biến là nơi lưu dữ liệu, còn kiểu dữ liệu cho C++ biết dữ liệu đó là số nguyên, số thực, ký tự, chuỗi hay giá trị đúng sai.
+
+Khác với Python, C++ không tự đoán mọi thứ linh hoạt như vậy. Sự chặt chẽ này giúp chương trình rõ ràng hơn.
+
+Ví dụ cơ bản:
 
 ```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
 int tuoi = 20;
 float diem = 8.5;
 char kyTu = 'A';
 string ten = "Minh";
 bool daPass = true;
+
+    return 0;
+}
 ```
+
+Trong ví dụ trên:
+
+- `int` dùng cho số nguyên
+- `float` dùng cho số thực
+- `char` dùng cho một ký tự
+- `string` dùng cho văn bản
+- `bool` dùng cho giá trị `true` hoặc `false`
+
+Tên biến nên có nghĩa rõ ràng như `tuoi`, `diem`, `hoTen` thay vì đặt quá ngắn và khó hiểu.
 
 ## Các kiểu dữ liệu cơ bản
 
@@ -33,10 +55,47 @@ bool daPass = true;
 | `string` | varies | `"Hello"` |
 | `bool` | 1 byte | `true` |
 
+Bạn không cần học thuộc kích thước từng kiểu ngay lập tức, nhưng nên hiểu ý nghĩa thực tế:
+
+- `int` phù hợp cho tuổi, số lượng, điểm nguyên
+- `float` và `double` phù hợp cho dữ liệu có phần thập phân
+- `char` phù hợp khi chỉ cần lưu một ký tự như mã hạng `A`
+- `string` phù hợp cho tên người, địa chỉ, nội dung văn bản
+- `bool` phù hợp cho trạng thái có hoặc không
+
+Một lỗi phổ biến của người mới là dùng sai kiểu dữ liệu. Nếu cần lưu họ tên thì dùng `string`, không dùng `char`.
+
+## Cách khai báo biến trong C++ đúng và dễ đọc
+
+Một biến thường có 3 phần:
+
+- Kiểu dữ liệu
+- Tên biến
+- Giá trị khởi tạo, nếu có
+
+Ví dụ:
+
+```cpp
+int soLuong = 10;
+double giaTien = 19.99;
+char hang = 'B';
+bool daDangNhap = false;
+```
+
+Bạn cũng có thể khai báo rồi gán sau:
+
+```cpp
+int namSinh;
+namSinh = 2005;
+```
+
+Cách này hữu ích khi bạn chưa biết giá trị ngay từ đầu.
+
 ## Nhập xuất dữ liệu
 
 ```cpp
 #include <iostream>
+ #include <string>
 using namespace std;
 
 int main() {
@@ -54,6 +113,28 @@ int main() {
 }
 ```
 
+`cout` dùng để in dữ liệu ra màn hình. `cin` dùng để nhập dữ liệu từ bàn phím.
+
+## Giá trị khởi tạo và cập nhật biến
+
+Biến không phải giá trị cố định. Bạn có thể thay đổi giá trị của biến trong lúc chương trình chạy.
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    int soDu = 100;
+    soDu = soDu + 50;
+    soDu = soDu - 20;
+
+    cout << soDu << endl;
+    return 0;
+}
+```
+
+Biến `soDu` ban đầu là `100`, sau đó tăng lên `150`, rồi giảm còn `130`.
+
 ## Hằng số
 
 Dùng `const` để tạo giá trị không thay đổi:
@@ -63,4 +144,97 @@ const float PI = 3.14159;
 const int MAX_STUDENTS = 50;
 ```
 
-Bài tiếp theo sẽ hướng dẫn bạn về **toán tử trong C++** để chuẩn bị cho phần điều kiện và vòng lặp.
+`const` rất hữu ích khi một giá trị phải giữ nguyên trong toàn bộ chương trình.
+
+## Khi nào dùng int, float, char, string, bool?
+
+Đây là phần quan trọng vì người mới thường chỉ nhớ tên kiểu mà chưa biết lúc nào nên dùng.
+
+### `int`
+
+Dùng khi dữ liệu là số nguyên như tuổi, số lượng sản phẩm, số học sinh.
+
+### `float` hoặc `double`
+
+Dùng khi dữ liệu có phần thập phân như điểm trung bình, chiều cao, giá tiền.
+
+### `char`
+
+Dùng khi chỉ lưu một ký tự duy nhất như `'A'`, `'B'`, `'x'`.
+
+### `string`
+
+Dùng khi lưu nhiều ký tự ghép thành chuỗi như tên, địa chỉ, tiêu đề.
+
+### `bool`
+
+Dùng khi chỉ có hai trạng thái như đúng/sai, bật/tắt, đã đăng nhập/chưa đăng nhập.
+
+## Những lỗi thường gặp với biến C++
+
+- Quên khai báo kiểu dữ liệu trước tên biến
+- Gán chuỗi cho biến số hoặc ngược lại
+- Nhầm giữa dấu nháy đơn và nháy kép
+- Dùng biến chưa gán giá trị
+
+Ví dụ cần phân biệt:
+
+```cpp
+char xepLoai = 'A';
+string tenMon = "Toan";
+```
+
+`'A'` là một ký tự nên dùng nháy đơn. `"Toan"` là một chuỗi nên dùng nháy kép.
+
+Một lỗi khác là:
+
+```cpp
+int tuoi = "20";
+```
+
+Đây là sai, vì `"20"` là chuỗi chứ không phải số nguyên.
+
+## Bài tập thực hành
+
+Viết chương trình khai báo và in ra thông tin của một học viên gồm:
+
+- Họ tên
+- Tuổi
+- Điểm trung bình
+- Xếp loại bằng một ký tự
+- Trạng thái đã hoàn thành bài tập hay chưa
+
+Gợi ý:
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string hoTen = "";
+    int tuoi = 0;
+    double diemTrungBinh = 0;
+    char xepLoai = 'A';
+    bool daHoanThanh = false;
+
+    // Tu in thong tin ra day
+    return 0;
+}
+```
+
+## Câu hỏi thường gặp
+
+### Biến C++ là gì?
+
+Biến C++ là vùng nhớ có tên dùng để lưu dữ liệu. Bạn có thể đọc, in hoặc thay đổi giá trị của biến trong chương trình.
+
+### `const` trong C++ dùng khi nào?
+
+Hãy dùng `const` khi bạn muốn tạo một giá trị không được phép thay đổi, ví dụ `PI`, số ngày trong tuần hoặc giới hạn tối đa.
+
+## Tóm tắt
+
+Bạn đã học phần nền tảng của `biến và kiểu dữ liệu trong c++`: cách khai báo biến, vai trò của các kiểu `int`, `float`, `double`, `char`, `string`, `bool`, cách nhập xuất cơ bản và cách dùng `const`.
+
+Bài tiếp theo sẽ giúp bạn thao tác với các giá trị này bằng **toán tử trong C++** như cộng, trừ, so sánh và kiểm tra điều kiện.

@@ -12,9 +12,9 @@ publishedAt: "2024-01-28"
 
 ## Display trong CSS là gì?
 
-`display` trong CSS quyết định phần tử sẽ hiển thị như thế nào trên trang, ví dụ nằm trên một dòng mới, nằm cùng hàng, hay không hiển thị. Khi kết hợp thêm `position` và `overflow`, bạn sẽ hiểu rõ hơn cách phần tử chiếm chỗ, di chuyển và cắt nội dung trong layout.
+`display` trong CSS quyết định phần tử sẽ xuất hiện như thế nào trên trang, ví dụ chiếm cả một dòng, nằm trong dòng chữ, hay biến mất hoàn toàn. Khi kết hợp thêm `position` và `overflow`, bạn sẽ hiểu rõ hơn cách phần tử chiếm chỗ, di chuyển và xử lý nội dung bị tràn.
 
-Đây là nhóm thuộc tính rất quan trọng trước khi đi sâu vào flexbox và responsive.
+Đây là nhóm thuộc tính cực kỳ quan trọng trước khi bạn học flexbox và responsive. Nếu không hiểu `display trong css`, bạn sẽ khó lý giải vì sao có phần tử tự xuống dòng còn có phần tử lại nằm chung một hàng.
 
 ## Cú pháp cơ bản của display trong CSS
 
@@ -40,6 +40,14 @@ Hiểu nhanh:
 - `inline`: nằm trong dòng chữ
 - `inline-block`: nằm cùng hàng nhưng vẫn chỉnh được width, height
 
+### Phân biệt `block`, `inline` và `inline-block`
+
+- Phần tử `block` như `div`, `p`, `h1` thường tự xuống dòng và chiếm chiều ngang lớn
+- Phần tử `inline` như `span`, `a` nằm cùng dòng với chữ
+- `inline-block` là kiểu ở giữa: vẫn nằm cùng hàng nhưng có thể đặt kích thước dễ hơn
+
+Ví dụ thực tế, một nút bấm hoặc card nhỏ hiển thị cạnh nhau thường phù hợp với `inline-block` nếu bạn chưa dùng flexbox.
+
 ## Cách dùng position trong CSS
 
 `position` giúp bạn kiểm soát vị trí phần tử theo nhiều cách khác nhau.
@@ -59,6 +67,13 @@ Một số giá trị phổ biến:
 - `absolute`: bám theo phần tử cha gần nhất có `position`
 - `fixed`: bám theo màn hình
 
+Ngoài việc nhớ tên, bạn nên hiểu hành vi thật của từng giá trị:
+
+- `static`: phần tử nằm theo luồng bình thường
+- `relative`: phần tử vẫn giữ chỗ cũ nhưng có thể dịch nhẹ khỏi vị trí ban đầu
+- `absolute`: phần tử tách khỏi luồng bình thường và bám vào phần tử cha phù hợp
+- `fixed`: phần tử đứng yên theo màn hình khi cuộn trang, ví dụ nút chat hoặc menu nổi
+
 Ví dụ với `absolute`:
 
 ```css
@@ -72,6 +87,8 @@ Ví dụ với `absolute`:
   right: 0;
 }
 ```
+
+Nếu bạn đang học cách dùng `position relative absolute`, hãy ghi nhớ quy tắc vàng này: phần tử con `absolute` thường cần một phần tử cha có `position: relative` để bám đúng vị trí mong muốn.
 
 ## Overflow trong CSS dùng để làm gì?
 
@@ -92,11 +109,63 @@ Một số giá trị hay dùng:
 - `scroll`: luôn hiện thanh cuộn
 - `auto`: chỉ hiện thanh cuộn khi cần
 
+`overflow trong css` thường xuất hiện khi bạn giới hạn chiều cao của card, hộp mô tả hoặc khung ảnh. Nếu nội dung dài hơn khung chứa, bạn phải quyết định cho nó tràn ra, bị cắt, hay có thanh cuộn.
+
+Ví dụ thực tế:
+
+```css
+.description {
+  max-height: 100px;
+  overflow: auto;
+}
+```
+
+Cách này hữu ích khi bạn muốn giữ bố cục ổn định nhưng vẫn cho người dùng cuộn xem nội dung dài.
+
+## Ví dụ kết hợp display, position và overflow
+
+Giả sử bạn có một card sản phẩm với nhãn giảm giá ở góc trên và mô tả dài:
+
+```html
+<div class="card">
+  <span class="badge">Moi</span>
+  <h3>Khoa hoc HTML CSS</h3>
+  <p class="content">Noi dung mo ta rat dai de ban quan sat overflow hoat dong nhu the nao trong mot the co chieu cao gioi han.</p>
+</div>
+```
+
+```css
+.card {
+  position: relative;
+  width: 260px;
+  height: 160px;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-block;
+}
+```
+
+Trong ví dụ này:
+
+- `position: relative` giúp `.badge` bám đúng card
+- `position: absolute` đặt nhãn vào góc
+- `overflow: hidden` cắt phần nội dung tràn ra ngoài
+- `display: inline-block` giúp badge hiển thị gọn như một nhãn nhỏ
+
 ## Những lỗi thường gặp với display, position và overflow
 
 - Dùng `absolute` nhưng quên đặt `position: relative` cho phần tử cha.
 - Nhầm `inline` với `inline-block`.
 - Nội dung bị cắt mà không hiểu nguyên nhân do `overflow: hidden`.
+- Dùng `fixed` quá nhiều làm giao diện rối và che mất nội dung.
+- Đổi `display` mà quên rằng hành vi width, height, margin cũng thay đổi theo.
 
 Ví dụ rất hay gặp:
 
@@ -112,6 +181,8 @@ Ví dụ rất hay gặp:
 
 Nếu không có `position: relative` ở cha, phần tử con `absolute` có thể nhảy đi chỗ khác ngoài dự đoán.
 
+Một lỗi nữa là dùng `display: none` để ẩn phần tử rồi quên mất nó đã biến mất khỏi luồng bố cục. Khi đó khoảng trống của phần tử cũng không còn.
+
 ## Bài tập thực hành
 
 Tạo một khối `.card` có kích thước cố định. Sau đó:
@@ -119,6 +190,8 @@ Tạo một khối `.card` có kích thước cố định. Sau đó:
 - Đặt một nhãn nhỏ ở góc trên bên phải bằng `position: absolute`
 - Ẩn nội dung bị tràn bằng `overflow: hidden`
 - Thử đổi `display` của một phần tử từ `block` sang `inline-block`
+
+Sau khi hoàn thành, hãy thử đổi `overflow: hidden` thành `overflow: auto` để thấy khác biệt. Việc tự so sánh trực tiếp sẽ giúp bạn nhớ lâu hơn nhiều so với chỉ đọc lý thuyết.
 
 ## Câu hỏi thường gặp về display, position và overflow
 
@@ -130,6 +203,16 @@ Tạo một khối `.card` có kích thước cố định. Sau đó:
 
 Hãy dùng khi bạn muốn cắt phần nội dung vượt ra ngoài khung, ví dụ ảnh trong card, hộp mô tả ngắn, hoặc vùng có bo góc.
 
+### `absolute` có làm phần tử mất chỗ trong bố cục không?
+
+Có. Phần tử `absolute` thường tách khỏi luồng bố cục bình thường, nên các phần tử khác sẽ không chừa chỗ cho nó như với `static` hoặc `relative`.
+
+### Khi nào nên dùng `fixed`?
+
+Bạn nên dùng `fixed` cho một số thành phần thật sự cần bám theo màn hình như nút liên hệ, nút quay lên đầu trang hoặc thanh thông báo nhỏ. Không nên lạm dụng vì dễ che nội dung.
+
 ## Tóm tắt
 
-Bạn đã biết `display`, `position`, và `overflow` trong CSS dùng để làm gì và cách ảnh hưởng của chúng tới layout. Ở bài tiếp theo, chúng ta sẽ học **flexbox CSS** để sắp xếp phần tử theo hàng và cột nhanh hơn.
+Bạn đã biết `display`, `position` và `overflow` trong CSS dùng để làm gì, hiểu khác nhau giữa `block`, `inline`, `inline-block`, biết cách dùng `relative`, `absolute`, `fixed`, và biết xử lý nội dung bị tràn trong khung chứa. Đây là bộ kiến thức rất quan trọng để đọc và sửa layout cơ bản.
+
+Ở bài tiếp theo, chúng ta sẽ học **flexbox CSS** để sắp xếp phần tử theo hàng và cột nhanh, gọn và hiện đại hơn.

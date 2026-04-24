@@ -12,69 +12,146 @@ publishedAt: "2024-01-17"
 
 ## Toán tử trong Python là gì?
 
-Toán tử trong Python là các ký hiệu giúp bạn tính toán, so sánh dữ liệu, hoặc kết hợp nhiều điều kiện với nhau. Nếu không nắm phần này, bạn sẽ rất khó viết `if else`, vòng lặp, hoặc xử lý dữ liệu trong các bài tập cơ bản.
+Toán tử trong Python là các ký hiệu hoặc từ khóa giúp bạn tính toán, so sánh và kết hợp điều kiện giữa các giá trị. Khi học `toán tử trong python`, bạn đang học cách ra lệnh cho chương trình xử lý dữ liệu thay vì chỉ lưu dữ liệu trong biến.
 
-Hiểu đơn giản: biến là nơi chứa dữ liệu, còn toán tử là cách bạn thao tác với dữ liệu đó.
+Đây là phần nền tảng vì toán tử xuất hiện ở khắp nơi: tính điểm trung bình, kiểm tra điều kiện đậu rớt, lặp qua danh sách hay viết hàm xử lý dữ liệu.
 
-## Cú pháp cơ bản của toán tử trong Python
+## Toán tử số học Python
 
-Python có 3 nhóm toán tử người mới dùng nhiều nhất: số học, so sánh, và logic.
+Nhóm toán tử đầu tiên là toán tử số học. Chúng giúp bạn thực hiện các phép tính quen thuộc.
 
 ```python
 a = 10
 b = 3
 
-print(a + b)   # 13
-print(a - b)   # 7
-print(a * b)   # 30
-print(a / b)   # 3.333...
-print(a % b)   # 1
-print(a ** b)  # 1000
+print(a + b)
+print(a - b)
+print(a * b)
+print(a / b)
+print(a % b)
+print(a ** b)
+print(a // b)
 ```
 
-Trong đó:
+Ý nghĩa của từng toán tử:
 
-- `+`, `-`, `*`, `/` dùng để tính toán.
-- `%` lấy phần dư.
-- `**` là lũy thừa.
+- `+` cộng
+- `-` trừ
+- `*` nhân
+- `/` chia lấy kết quả số thực
+- `%` chia lấy phần dư
+- `**` lũy thừa
+- `//` chia lấy phần nguyên
 
-Toán tử so sánh trả về `True` hoặc `False`:
+Ví dụ, nếu muốn kiểm tra số chẵn lẻ, bạn thường dùng `%`:
+
+```python
+so = 8
+print(so % 2)
+```
+
+Nếu phần dư bằng `0`, số đó là số chẵn.
+
+
+
+## Toán tử so sánh trong Python
+
+Toán tử so sánh Python dùng để kiểm tra mối quan hệ giữa hai giá trị. Kết quả trả về sẽ là `True` hoặc `False`.
 
 ```python
 tuoi = 18
 
-print(tuoi > 16)   # True
-print(tuoi == 18)  # True
-print(tuoi != 20)  # True
+print(tuoi > 16)
+print(tuoi >= 18)
+print(tuoi == 18)
+print(tuoi != 20)
+print(tuoi < 30)
 ```
 
-## Cách dùng toán tử logic trong Python
+Các toán tử so sánh phổ biến:
 
-Khi cần kiểm tra nhiều điều kiện cùng lúc, bạn sẽ dùng toán tử logic như `and`, `or`, `not`.
+- `==` bằng nhau
+- `!=` khác nhau
+- `>` lớn hơn
+- `<` nhỏ hơn
+- `>=` lớn hơn hoặc bằng
+- `<=` nhỏ hơn hoặc bằng
+
+Nhóm này sẽ được dùng rất nhiều trong `if else` và `while`.
+
+## Toán tử logic trong Python
+
+Khi một điều kiện là chưa đủ, bạn cần kết hợp nhiều điều kiện với nhau bằng toán tử logic Python.
 
 ```python
 tuoi = 20
-co_the_sinh_vien = True
+co_cccd = True
 
-if tuoi >= 18 and co_the_sinh_vien:
-    print("Bạn đủ điều kiện đăng ký")
-else:
-    print("Bạn chưa đủ điều kiện")
+print(tuoi >= 18 and co_cccd)
+print(tuoi < 18 or co_cccd)
+print(not co_cccd)
 ```
 
-Ví dụ trên cho thấy:
+Ý nghĩa:
 
-- `and` chỉ đúng khi cả hai điều kiện đều đúng.
-- `or` đúng khi chỉ cần một điều kiện đúng.
-- `not` đảo ngược giá trị đúng sai.
+- `and` đúng khi tất cả điều kiện đều đúng
+- `or` đúng khi chỉ cần một điều kiện đúng
+- `not` đảo ngược kết quả đúng sai
 
-Bạn sẽ gặp nhóm toán tử này rất nhiều trong bài học `if else` ngay sau bài này.
+Ví dụ thực tế:
+
+```python
+diem = 7
+chuyen_can = True
+
+if diem >= 5 and chuyen_can:
+    print("Ban du dieu kien qua mon")
+else:
+    print("Ban chua du dieu kien")
+```
+
+Để dễ nhớ, bạn có thể đọc `and` là "và", `or` là "hoặc", còn `not` là "không".
+
+## Toán tử gán trong Python
+
+Ngoài các nhóm trên, người mới cũng nên biết toán tử gán. Đây là các cách rút gọn khi cập nhật giá trị biến.
+
+```python
+so = 5
+so += 2
+print(so)
+
+so *= 3
+print(so)
+```
+
+`so += 2` có nghĩa là `so = so + 2`. Cách viết này gọn hơn và rất hay gặp trong vòng lặp.
+
+Bạn cũng sẽ gặp các dạng như `x -= 1`, `x *= 2`, `x /= 5`. Chúng chỉ là cách viết ngắn gọn cho thao tác cập nhật biến.
+
+## Thứ tự ưu tiên của toán tử
+
+Giống như trong toán học, Python cũng có thứ tự ưu tiên khi tính biểu thức. Nhân chia thường được tính trước cộng trừ.
+
+```python
+ket_qua_1 = 2 + 3 * 4
+ket_qua_2 = (2 + 3) * 4
+
+print(ket_qua_1)
+print(ket_qua_2)
+```
+
+Nếu biểu thức dài, bạn nên dùng ngoặc để làm rõ ý định. Điều này giúp code dễ đọc và tránh hiểu sai.
+
+Nếu biểu thức dài, hãy thêm ngoặc hoặc tách thành nhiều biến trung gian để code dễ đọc hơn.
 
 ## Những lỗi thường gặp với toán tử trong Python
 
-- Dùng `=` thay vì `==` khi so sánh điều kiện.
-- Quên rằng phép chia `/` luôn trả về số thực.
-- Viết biểu thức quá dài nhưng không dùng ngoặc để làm rõ thứ tự ưu tiên.
+- Dùng `=` thay vì `==` khi muốn so sánh
+- Quên rằng `/` luôn trả về số thực
+- Viết điều kiện dài nhưng không dùng ngoặc
+- Nhầm giữa `%` và `//`
+- So sánh dữ liệu khác kiểu mà không kiểm tra trước
 
 Ví dụ dễ nhầm:
 
@@ -84,20 +161,32 @@ diem = 8
 # Sai
 # if diem = 8:
 
-# Đúng
 if diem == 8:
-    print("Đúng rồi")
+    print("Dung roi")
 ```
+
+Một lỗi khác là ghép chuỗi với số:
+
+```python
+tuoi = 20
+
+# print("Tuoi: " + tuoi)
+print("Tuoi: " + str(tuoi))
+```
+
+
 
 ## Bài tập thực hành
 
-Viết chương trình nhận 2 số rồi in ra:
+Hãy viết chương trình với hai biến `a` và `b`, sau đó in ra:
 
 - Tổng
 - Hiệu
 - Tích
 - Thương
-- Kết quả kiểm tra xem số thứ nhất có lớn hơn số thứ hai không
+- Phần dư
+- Kết quả kiểm tra `a` có lớn hơn `b` không
+- Kết quả kiểm tra cả `a > 0` và `b > 0`
 
 Gợi ý:
 
@@ -105,19 +194,25 @@ Gợi ý:
 a = 12
 b = 5
 
-# Hãy tự in ra các kết quả cần thiết
+print(a + b)
 ```
+
+Sau đó, hãy thử đổi giá trị `a` và `b` để xem kết quả thay đổi như thế nào.
 
 ## Câu hỏi thường gặp về toán tử trong Python
 
 ### Toán tử `%` trong Python dùng để làm gì?
 
-Toán tử `%` dùng để lấy phần dư của phép chia. Nó rất hữu ích khi bạn muốn kiểm tra số chẵn lẻ, chia nhóm dữ liệu, hoặc tạo các điều kiện lặp.
+Toán tử `%` dùng để lấy phần dư của phép chia. Nó rất hữu ích khi kiểm tra số chẵn lẻ, chia nhóm hoặc xử lý bài toán lặp theo chu kỳ.
 
 ### Khi nào nên dùng `and` và `or`?
 
-Dùng `and` khi bạn muốn mọi điều kiện đều phải đúng. Dùng `or` khi chỉ cần một điều kiện đúng là đủ.
+Dùng `and` khi mọi điều kiện đều phải đúng. Dùng `or` khi chỉ cần ít nhất một điều kiện đúng là đủ.
+
+### Toán tử `//` khác gì `/`?
+
+`/` trả về kết quả chia dạng số thực. `//` lấy phần nguyên của phép chia. Ví dụ `7 / 2` là `3.5`, còn `7 // 2` là `3`.
 
 ## Tóm tắt
 
-Trong bài này, bạn đã học các nhóm toán tử trong Python gồm số học, so sánh, và logic. Đây là nền tảng để viết điều kiện, vòng lặp, và xử lý dữ liệu. Ở bài tiếp theo, chúng ta sẽ dùng chính các toán tử này để học **câu lệnh if else trong Python**.
+Bạn đã học toán tử trong Python gồm toán tử số học, so sánh, logic và gán. Đây là nền tảng để viết điều kiện, vòng lặp và nhiều bài toán thực tế. Ở bài tiếp theo, chúng ta sẽ học **câu lệnh if else trong Python** để chương trình có thể đưa ra quyết định.

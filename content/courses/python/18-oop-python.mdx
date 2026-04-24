@@ -12,9 +12,9 @@ publishedAt: "2024-02-01"
 
 ## Lập trình hướng đối tượng trong Python là gì?
 
-Lập trình hướng đối tượng trong Python là cách tổ chức chương trình xoay quanh các đối tượng có dữ liệu và hành vi riêng. Với người mới, bạn chỉ cần hiểu class là “bản thiết kế”, còn object là “đối tượng được tạo ra từ bản thiết kế đó”.
+Lập trình hướng đối tượng trong Python là cách tổ chức chương trình xoay quanh các đối tượng có dữ liệu và hành vi riêng. Với người mới, bạn chỉ cần nhớ một ý đơn giản: `class` là bản thiết kế, còn `object` là đối tượng cụ thể được tạo ra từ bản thiết kế đó.
 
-Khi dữ liệu và hành động đi cùng nhau, code thường dễ quản lý hơn.
+Khi dữ liệu và hành động đi cùng nhau, code thường dễ quản lý hơn. Thay vì giữ nhiều biến rời rạc như tên, tuổi và điểm số ở nhiều nơi, bạn gom chúng vào một cấu trúc có ý nghĩa rõ ràng. Đây là lý do OOP Python rất phổ biến trong các dự án lớn hơn.
 
 ## Cú pháp cơ bản của class trong Python
 
@@ -33,9 +33,25 @@ hv1.gioi_thieu()
 
 Trong ví dụ trên:
 
-- `class HocVien` tạo class mới.
-- `__init__` là hàm khởi tạo.
-- `self` đại diện cho chính object hiện tại.
+- `class HocVien` tạo class mới
+- `__init__` là hàm khởi tạo
+- `self` đại diện cho chính object hiện tại
+
+Bạn có thể hiểu `__init__` là nơi gán giá trị ban đầu cho object ngay khi nó được tạo. Khi viết `HocVien("Minh", 20)`, Python sẽ tự gọi `__init__` với các giá trị đó.
+
+## Class trong Python và object trong Python khác nhau thế nào?
+
+Đây là điểm dễ nhầm nhất khi mới học OOP.
+
+- `class` là khuôn mẫu
+- `object` là phiên bản cụ thể tạo ra từ khuôn mẫu đó
+
+Ví dụ:
+
+- `HocVien` là class
+- `hv1 = HocVien("Minh", 20)` là object
+
+Nếu ví class là bản thiết kế của một chiếc xe, thì object là chiếc xe thật được tạo ra từ bản thiết kế đó.
 
 ## Cách tạo object trong Python
 
@@ -54,6 +70,35 @@ print(sp1.gia)
 
 Đây là cách rất phổ biến để gom dữ liệu liên quan về cùng một chỗ.
 
+Bạn có thể tạo nhiều object khác nhau từ cùng một class:
+
+```python
+sp1 = SanPham("Bàn phím", 500000)
+sp2 = SanPham("Chuột", 250000)
+
+print(sp1.ten)
+print(sp2.ten)
+```
+
+Hai object này dùng chung cấu trúc nhưng chứa dữ liệu khác nhau. Đây chính là sức mạnh lớn của class trong Python.
+
+## `self` trong Python là gì?
+
+Trong các ví dụ OOP đầu tiên, `self` thường làm người mới bối rối. Bạn chỉ cần hiểu `self` là cách object tự tham chiếu đến chính nó.
+
+Nhờ có `self`, mỗi object giữ được dữ liệu riêng:
+
+```python
+class HocVien:
+    def __init__(self, ten):
+        self.ten = ten
+
+    def xin_chao(self):
+        print(f"Xin chào, mình là {self.ten}")
+```
+
+Nếu không có `self`, Python sẽ không biết thuộc tính `ten` thuộc về object nào.
+
 ## Khi nào nên học OOP trong Python?
 
 OOP đặc biệt hữu ích khi:
@@ -62,13 +107,44 @@ OOP đặc biệt hữu ích khi:
 - Muốn nhóm dữ liệu và hành vi vào cùng một cấu trúc.
 - Dự án bắt đầu dài hơn và khó quản lý bằng biến rời rạc.
 
-Ví dụ phù hợp là quản lý học viên, sản phẩm, nhân viên, hoặc đơn hàng.
+Ví dụ phù hợp là quản lý học viên, sản phẩm, nhân viên hoặc đơn hàng.
+
+Trong các bài nhỏ, bạn có thể chưa thấy OOP thật sự cần thiết. Nhưng khi project bắt đầu có nhiều dữ liệu liên quan, class giúp code bớt rối rõ rệt. Ví dụ, thay vì dùng 3 list riêng cho tên, tuổi và điểm, bạn có thể tạo class `SinhVien` rồi tạo nhiều object `SinhVien`.
+
+## Thuộc tính và phương thức trong Python
+
+Trong OOP, hai khái niệm bạn sẽ gặp liên tục là:
+
+- thuộc tính: dữ liệu của object, ví dụ `ten`, `gia`, `diem`
+- phương thức: hành vi của object, ví dụ `gioi_thieu()` hoặc `xep_loai()`
+
+Ví dụ:
+
+```python
+class SinhVien:
+    def __init__(self, ten, diem):
+        self.ten = ten
+        self.diem = diem
+
+    def xep_loai(self):
+        if self.diem >= 5:
+            return "Đậu"
+        return "Rớt"
+```
+
+Trong class trên:
+
+- `ten` và `diem` là thuộc tính
+- `xep_loai()` là phương thức
+
+Việc đặt phương thức ngay trong class giúp logic liên quan đi cùng dữ liệu của nó.
 
 ## Những lỗi thường gặp khi học OOP Python
 
 - Quên `self` trong phương thức.
 - Nhầm giữa class và object.
 - Đặt quá nhiều logic phức tạp vào bài đầu tiên về OOP.
+- Tạo class chỉ để chứa dữ liệu đơn giản nhưng không hiểu vì sao cần dùng class.
 
 Ví dụ lỗi hay gặp:
 
@@ -80,13 +156,35 @@ class Test:
 
 Phương thức bên trong class thường cần `self` làm tham số đầu tiên.
 
+Một lỗi khác là cố học luôn kế thừa, đóng gói và đa hình ngay ở buổi đầu. Với người mới, điều đó chỉ làm rối thêm. Ở giai đoạn này, bạn chỉ cần nắm chắc tạo class, tạo object, gán thuộc tính qua `__init__` và gọi phương thức.
+
+## Ví dụ class python gần với bài toán thực tế
+
+Giả sử bạn muốn quản lý thông tin sách:
+
+```python
+class Sach:
+    def __init__(self, ten, tac_gia, gia):
+        self.ten = ten
+        self.tac_gia = tac_gia
+        self.gia = gia
+
+    def hien_thi(self):
+        print(f"{self.ten} - {self.tac_gia} - {self.gia} đồng")
+
+s1 = Sach("Python Cơ Bản", "DevStart", 99000)
+s1.hien_thi()
+```
+
+Ví dụ này cho thấy class không phải khái niệm trừu tượng xa vời. Nó chỉ là cách gom dữ liệu và hành vi của một kiểu đối tượng cụ thể.
+
 ## Bài tập thực hành
 
 Tạo class `SinhVien` với:
 
 - Thuộc tính `ten`
 - Thuộc tính `diem`
-- Phương thức `xep_loai()` để in ra "Đậu" nếu điểm >= 5, ngược lại là "Rớt"
+- Phương thức `xep_loai()` để in ra `Đậu` nếu điểm lớn hơn hoặc bằng 5, ngược lại là `Rớt`
 
 Gợi ý:
 
@@ -96,6 +194,8 @@ class SinhVien:
         self.ten = ten
         self.diem = diem
 ```
+
+Sau khi làm xong, hãy tạo ít nhất 2 object khác nhau và gọi `xep_loai()` cho từng object để thấy mỗi đối tượng có dữ liệu riêng.
 
 ## Câu hỏi thường gặp về OOP trong Python
 
@@ -107,6 +207,14 @@ class SinhVien:
 
 Dictionary phù hợp khi dữ liệu còn đơn giản. Khi dữ liệu đi kèm nhiều hành vi hoặc cần tái sử dụng thành nhiều object giống nhau, class sẽ phù hợp hơn.
 
+### `__init__` có bắt buộc không?
+
+Không bắt buộc trong mọi class, nhưng rất thường dùng. Nó giúp bạn khởi tạo dữ liệu ban đầu ngay khi tạo object, nên gần như là phần nhập môn quan trọng nhất của OOP.
+
+### OOP có khó với người mới không?
+
+Ban đầu có thể hơi lạ vì bạn phải nghĩ theo đối tượng thay vì biến rời rạc. Nhưng nếu bám vào ví dụ thực tế như học viên, sản phẩm, sách hoặc đơn hàng, bạn sẽ hiểu nhanh hơn nhiều.
+
 ## Tóm tắt
 
-Bạn đã làm quen với lập trình hướng đối tượng trong Python, hiểu class, object, thuộc tính, phương thức, và `self`. Ở bài tiếp theo, chúng ta sẽ học **JSON trong Python** để đọc ghi dữ liệu có cấu trúc rất phổ biến trong ứng dụng thực tế.
+Bạn đã làm quen với lập trình hướng đối tượng trong Python, hiểu class, object, thuộc tính, phương thức, `__init__` và `self`. Đây là nền tảng đủ tốt để bạn đọc các project Python thực tế mà không còn thấy class là khái niệm quá mơ hồ. Ở bài tiếp theo, chúng ta sẽ học **JSON trong Python** để đọc ghi dữ liệu có cấu trúc rất phổ biến trong ứng dụng thực tế.

@@ -10,9 +10,15 @@ keywords: ["biến python", "kiểu dữ liệu python", "int float string pytho
 publishedAt: "2024-01-16"
 ---
 
-## Biến là gì?
+## Biến và kiểu dữ liệu trong Python là gì?
 
-Biến giống như một chiếc hộp để chứa dữ liệu. Trong Python, bạn không cần khai báo kiểu — Python tự nhận biết.
+Biến và kiểu dữ liệu trong Python là nền tảng giúp chương trình lưu trữ và hiểu giá trị mà bạn đang làm việc. Nói ngắn gọn, biến là tên dùng để giữ dữ liệu, còn kiểu dữ liệu cho Python biết giá trị đó là số, chuỗi, đúng sai hay một cấu trúc khác.
+
+Nếu chưa nắm chắc phần này, bạn sẽ rất khó hiểu các bài sau như điều kiện, vòng lặp hay hàm. Gần như mọi chương trình đều bắt đầu từ việc nhận dữ liệu, lưu dữ liệu vào biến rồi xử lý dữ liệu đó.
+
+## Biến Python là gì?
+
+Hãy tưởng tượng biến như một chiếc nhãn dán lên một giá trị. Thay vì viết đi viết lại giá trị đó nhiều lần, bạn đặt tên cho nó rồi dùng lại khi cần.
 
 ```python
 ten = "Minh"
@@ -21,56 +27,227 @@ diem = 8.5
 da_tot_nghiep = False
 ```
 
-## Các kiểu dữ liệu cơ bản
+Trong ví dụ trên:
+
+- `ten` lưu một chuỗi
+- `tuoi` lưu một số nguyên
+- `diem` lưu một số thực
+- `da_tot_nghiep` lưu giá trị đúng sai
+
+Python không yêu cầu bạn phải khai báo kiểu trước như một số ngôn ngữ khác. Bạn chỉ cần gán giá trị, Python sẽ tự suy ra kiểu dữ liệu phù hợp.
+
+## Cách khai báo biến trong Python
+
+Khai báo biến trong Python thực chất là gán giá trị cho tên biến bằng dấu `=`.
+
+```python
+ten_sinh_vien = "Lan"
+nam_sinh = 2005
+diem_trung_binh = 7.8
+```
+
+Điều quan trọng cần nhớ là dấu `=` trong trường hợp này có nghĩa là gán giá trị, không phải so sánh. So sánh bằng nhau sẽ dùng `==` ở các bài sau.
+
+Bạn cũng có thể thay đổi giá trị của biến trong lúc chương trình chạy:
+
+```python
+so_luong = 1
+print(so_luong)
+
+so_luong = 3
+print(so_luong)
+```
+
+
+
+## Kiểu dữ liệu Python cơ bản
+
+Khi học `kiểu dữ liệu python cơ bản`, bạn nên nắm chắc bốn kiểu đầu tiên này.
 
 | Kiểu | Ví dụ | Mô tả |
 |------|-------|-------|
 | `int` | `42` | Số nguyên |
 | `float` | `3.14` | Số thực |
 | `str` | `"Hello"` | Chuỗi ký tự |
-| `bool` | `True` / `False` | Đúng / Sai |
+| `bool` | `True` / `False` | Đúng hoặc sai |
 
-Kiểm tra kiểu dữ liệu:
+### `int` và `float`
+
+Hai kiểu này dùng cho số.
+
+```python
+so_hoc_sinh = 40
+nhiet_do = 36.5
+```
+
+`int` không có phần thập phân. `float` có thể có phần thập phân.
+
+### `str`
+
+Chuỗi dùng để lưu văn bản.
+
+```python
+ten = "DevStart"
+mon_hoc = 'Python'
+```
+
+Bạn có thể dùng nháy đơn hoặc nháy kép, miễn là mở và đóng đúng cặp.
+
+### `bool`
+
+Kiểu boolean chỉ có hai giá trị: `True` hoặc `False`.
+
+```python
+da_dang_nhap = True
+het_han = False
+```
+
+Kiểu này rất hay dùng trong điều kiện `if else`.
+
+## Dùng `type()` để kiểm tra kiểu dữ liệu
+
+Khi chưa chắc một giá trị thuộc kiểu nào, bạn có thể dùng `type()`.
 
 ```python
 x = 10
-print(type(x))  # <class 'int'>
-
 y = "Xin chào"
-print(type(y))  # <class 'str'>
+z = 8.5
+
+print(type(x))
+print(type(y))
+print(type(z))
 ```
 
-## Quy tắc đặt tên biến
+Việc kiểm tra kiểu dữ liệu đặc biệt hữu ích khi bạn nhận dữ liệu từ `input()`, vì `input()` luôn trả về chuỗi.
+
+```python
+tuoi = input("Nhap tuoi: ")
+print(type(tuoi))
+```
+
+Nhiều người mới tưởng rằng nhập `25` thì Python sẽ hiểu đó là số nguyên. Thực tế, kết quả vẫn là chuỗi `"25"` cho đến khi bạn ép kiểu.
+
+## Quy tắc đặt tên biến trong Python
+
+Đặt tên biến rõ nghĩa sẽ giúp code dễ đọc hơn nhiều. Đây là kỹ năng nhỏ nhưng ảnh hưởng lớn đến chất lượng code.
 
 - Bắt đầu bằng chữ cái hoặc dấu `_`
 - Không bắt đầu bằng số
-- Phân biệt chữ hoa / thường (`name` khác `Name`)
-- Không dùng từ khóa Python (`if`, `for`, `class`...)
+- Không chứa khoảng trắng
+- Phân biệt chữ hoa và chữ thường
+- Không dùng từ khóa của Python như `if`, `for`, `class`
+
+Ví dụ đúng:
 
 ```python
-# Đúng
-my_name = "An"
-_count = 0
-student1 = "Bình"
+ho_ten = "An"
+so_luong_hoc_vien = 30
+_diem_mac_dinh = 0
+```
+
+Ví dụ sai:
+
+```python
+# 1ten = "Binh"
+# class = "12A"
+```
+
+Bạn cũng nên đặt tên có ý nghĩa. `tuoi_hoc_vien` tốt hơn nhiều so với `x` nếu biến đó dùng để lưu tuổi.
+
+## Ép kiểu dữ liệu trong Python
+
+Ép kiểu dữ liệu Python là chuyển giá trị từ kiểu này sang kiểu khác khi cần.
+
+```python
+so = int("42")
+text = str(100)
+diem = float("8.5")
+
+print(so)
+print(text)
+print(diem)
+```
+
+Ví dụ thực tế:
+
+```python
+tuoi = input("Nhập tuổi của bạn: ")
+tuoi = int(tuoi)
+print(tuoi + 1)
+```
+
+Nếu không ép kiểu, Python sẽ hiểu dữ liệu vẫn là chuỗi và bạn không thể cộng số như mong muốn.
+
+Bạn cũng nên nhớ ba hàm ép kiểu hay gặp nhất là `int()`, `float()` và `str()`.
+
+## Những lỗi thường gặp với biến và kiểu dữ liệu trong Python
+
+- Dùng tên biến không rõ nghĩa
+- Viết sai chữ hoa chữ thường, ví dụ `Name` khác `name`
+- Cộng chuỗi với số mà chưa ép kiểu
+- Nhầm dấu `=` và `==`
+- Nghĩ rằng Python luôn tự chuyển kiểu trong mọi trường hợp
+
+Ví dụ dễ nhầm:
+
+```python
+tuoi = 20
 
 # Sai
-1student = "Bình"  # Bắt đầu bằng số
-class = "12A"      # Từ khóa Python
+# print("Tuổi của bạn là " + tuoi)
+
+# Đúng
+print("Tuổi của bạn là " + str(tuoi))
 ```
 
-## Ép kiểu dữ liệu
-
-Chuyển đổi giữa các kiểu:
+Một lỗi khác là ép kiểu khi dữ liệu không hợp lệ:
 
 ```python
-# String -> Int
-so = int("42")
-
-# Int -> String
-text = str(100)
-
-# String -> Float
-diem = float("8.5")
+# int("hai mươi")
 ```
 
-Ở bài tiếp theo, chúng ta sẽ học về **vòng lặp** — cách để máy tính lặp lại công việc thay bạn!
+Dòng trên sẽ lỗi vì chữ `hai mươi` không thể chuyển thành số nguyên.
+
+## Bài tập thực hành
+
+Hãy tạo bốn biến để lưu thông tin một học viên:
+
+- Họ tên
+- Tuổi
+- Điểm trung bình
+- Đã hoàn thành khóa học hay chưa
+
+Sau đó:
+
+- In từng biến ra màn hình
+- Dùng `type()` để kiểm tra kiểu dữ liệu
+- Tạo thêm một biến chuỗi chứa số tuổi rồi ép sang `int`
+
+Gợi ý:
+
+```python
+ho_ten = "Nguyen Van A"
+tuoi = 19
+diem_tb = 8.2
+da_hoan_thanh = False
+```
+
+
+
+## Câu hỏi thường gặp về biến và kiểu dữ liệu trong Python
+
+### Biến Python là gì?
+
+Biến Python là tên đại diện cho một giá trị trong chương trình. Bạn dùng biến để lưu và tái sử dụng dữ liệu thay vì viết trực tiếp giá trị ở nhiều nơi.
+
+### Python có cần khai báo kiểu dữ liệu trước không?
+
+Không. Python tự nhận biết kiểu dữ liệu dựa trên giá trị bạn gán. Tuy vậy, bạn vẫn cần hiểu kiểu dữ liệu để dùng đúng phép toán và tránh lỗi.
+
+### `type` trong Python dùng để làm gì?
+
+`type()` giúp bạn kiểm tra kiểu dữ liệu hiện tại của một giá trị hoặc một biến. Đây là công cụ rất hữu ích khi học phần cơ bản.
+
+## Tóm tắt
+
+Bạn đã hiểu biến và kiểu dữ liệu trong Python, biết cách khai báo biến, kiểm tra kiểu với `type()`, đặt tên biến đúng và ép kiểu khi cần. Ở bài tiếp theo, chúng ta sẽ học **toán tử trong Python** để bắt đầu tính toán và so sánh dữ liệu.
