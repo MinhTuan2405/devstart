@@ -63,9 +63,9 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     images: ['/twitter-image.png'],
   },
-  alternates: {
-    canonical: '/',
-  },
+  // alternates: {
+  //   canonical: '/',
+  // },
   robots: {
     index: true,
     follow: true,
