@@ -1,0 +1,186 @@
+---
+title: "Claude Code Rules của Anthropic là gì? Cách viết rules cho dự án"
+description: "Tìm hiểu Claude Code Rules của Anthropic, .claude/rules và cách viết instruction để Claude làm đúng quy ước."
+slug: "rules-trong-claude-code"
+course: "claude-code"
+order: 6
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["Claude Code Rules", "Anthropic Claude Code Rules", ".claude/rules", "viết rules cho Claude Code", "Claude Code coding standards", "project rules Claude Code", "user-scoped rules Claude Code", "Claude Code instructions", "quy ước dự án Claude Code"]
+publishedAt: "2026-04-27"
+---
+
+## Claude Code Rules là gì?
+
+Claude Code Rules là các file hướng dẫn bền vững, thường đặt trong `.claude/rules/`, để Claude tự động nắm quy ước của dự án. Rules giúp bạn mã hóa coding style, workflow, điều cấm, ngoại lệ và ví dụ đúng sai mà không phải nhắc lại mỗi phiên.
+
+Nếu `CLAUDE.md` là bản đồ tổng quan, rules là các biển báo chi tiết trên đường. Ví dụ: luôn dùng named exports, không sửa file generated, chạy test theo pattern nào, hoặc không commit `.env`. Rules càng cụ thể, Claude càng ít phải đoán.
+
+## Anthropic Claude Code Rules giải quyết vấn đề gì?
+
+Trong một dự án thật, Claude không chỉ cần biết code chạy thế nào mà còn cần biết team muốn làm việc ra sao. Anthropic Claude Code Rules giải quyết phần này bằng cách biến quy ước thành instruction có thể đọc lại mỗi phiên.
+
+Ví dụ, linter có thể bắt lỗi format, nhưng linter không biết team muốn "không tạo helper mới nếu logic chỉ dùng một lần" hoặc "không sửa migration cũ nếu chưa hỏi". Rules lấp khoảng trống đó. Khi bạn viết `project rules Claude Code` rõ ràng, Claude có khả năng tuân thủ phong cách dự án tốt hơn thay vì áp dụng thói quen chung chung.
+
+## Rules nên đặt ở đâu?
+
+Rules cấp dự án thường nằm trong `.claude/rules/`:
+
+```text
+your-project/
+└── .claude/
+    └── rules/
+        ├── coding-style.md
+        ├── git-workflow.md
+        ├── testing.md
+        └── architecture.md
+```
+
+Mỗi file nên phụ trách một chủ đề. Cách này dễ bảo trì hơn một file rule khổng lồ. Khi quy ước test thay đổi, bạn chỉ cần sửa `testing.md`. Khi workflow git thay đổi, bạn sửa `git-workflow.md`.
+
+Bạn cũng có thể có rules cấp người dùng trong thư mục home nếu muốn áp dụng cho mọi dự án. Tuy nhiên, rules cấp dự án thường quan trọng hơn vì chúng phản ánh thực tế codebase cụ thể.
+
+## Cấu trúc một rule file tốt
+
+Một rule file tốt có ba đặc điểm: cụ thể, có thể hành động và có phạm vi rõ ràng. Đây là template đơn giản:
+
+```markdown
+# Rule Title
+
+Mục đích một câu của rule này.
+
+## Context
+
+Vì sao rule này tồn tại và nó giải quyết vấn đề gì.
+
+## Rules
+
+- Luôn làm X trong trường hợp Y.
+- Không bao giờ làm Z nếu chưa hỏi người dùng.
+- Dùng A thay vì B vì dự án đã chuẩn hóa theo A.
+
+## Examples
+
+### Do this
+
+Ví dụ đúng.
+
+### Not this
+
+
+Ví dụ sai.
+
+## Exceptions
+
+Trường hợp ngoại lệ nếu có.
+```
+
+Bạn không cần viết dài, nhưng cần viết rõ. Claude hoạt động tốt hơn với câu mệnh lệnh cụ thể như "Always use npm" hoặc "Never edit generated files" so với câu mô tả mơ hồ như "Project uses npm".
+
+## Ví dụ rule cho workflow git
+
+Một rule git tốt không chỉ nói "commit cho sạch". Nó nêu rõ tiêu chuẩn và điều cấm.
+
+```markdown
+# Git Workflow
+
+Enforce safe and consistent git usage.
+
+## Rules
+
+- Never commit .env files, credentials, node_modules or build artifacts.
+- Keep commits atomic: one logical change per commit.
+- Use imperative commit messages, such as "Add course page".
+- Run npm run lint before creating a commit when code changed.
+- Do not use destructive commands like git reset --hard unless the user explicitly asks.
+
+## Examples
+
+Good: feat(course): add Claude Code lessons
+Bad: update stuff
+```
+
+Rule này có ích vì nó chuyển các kỳ vọng của team thành chỉ dẫn rõ ràng. Khi bạn yêu cầu Claude commit hoặc kiểm tra diff, nó có cơ sở để tránh hành vi nguy hiểm.
+
+## Ví dụ rule cho coding style
+
+Rules cũng phù hợp cho coding style mà linter không thể diễn đạt hết.
+
+```markdown
+# Coding Style
+
+Keep code changes small and aligned with the existing codebase.
+
+## Rules
+
+- Read existing patterns before adding new helpers.
+- Prefer small local changes over broad rewrites.
+- Do not add backward compatibility code unless there is a real external consumer.
+- Use TypeScript types from existing modules before creating new ones.
+- Add comments only when the code would otherwise be hard to understand.
+```
+
+Rule này giúp Claude tránh một lỗi phổ biến: tạo quá nhiều abstraction hoặc viết lại cả khu vực code khi chỉ cần sửa một lỗi nhỏ.
+
+## Cách viết rules hiệu quả cho người mới
+
+Khi viết rules, hãy ưu tiên những điều tooling không tự bắt được. Nếu ESLint đã bắt lỗi format, bạn không cần lặp lại quá nhiều. Rules nên tập trung vào kiến thức dự án, kiến trúc, workflow và rủi ro.
+
+Các nguyên tắc thực tế:
+
+- Viết bằng câu mệnh lệnh: "Always", "Never", "Use", "Do not".
+- Một file chỉ nên có một chủ đề.
+- Có ví dụ đúng và sai nếu rule dễ hiểu nhầm.
+- Ghi rõ ngoại lệ để Claude biết khi nào được phá rule.
+- Cập nhật rules khi dự án đổi quy ước.
+
+Đừng biến rules thành tài liệu dài 200 dòng không ai đọc. Nếu rule quá dài, hãy tách thành nhiều file nhỏ hoặc đưa chi tiết vào tài liệu tham chiếu.
+
+## Những lỗi thường gặp khi viết Claude Code Rules
+
+- Viết rules ở dạng mô tả thay vì chỉ dẫn hành động.
+- Nhồi quá nhiều chủ đề vào một file.
+- Không có ví dụ, khiến Claude hiểu rule theo nghĩa quá rộng.
+- Ghi rule mâu thuẫn với codebase hiện tại.
+- Quên xóa rule cũ sau khi dự án thay đổi stack hoặc workflow.
+
+## Bài tập thực hành
+
+Hãy viết một rule file tên `testing.md` cho dự án của bạn. Nội dung cần trả lời:
+
+- Khi nào phải viết test?
+- Test đặt ở thư mục nào?
+- Lệnh kiểm tra nhanh là gì?
+- Trường hợp nào được bỏ qua test?
+- Claude có cần hỏi trước khi snapshot lớn thay đổi không?
+
+Gợi ý khung:
+
+```markdown
+# Testing
+
+## Rules
+
+- Read existing tests before adding new tests.
+- Put tests next to the source file when possible.
+- Run npm test after changing test files.
+- If no test script exists, state that clearly instead of inventing one.
+```
+
+## Câu hỏi thường gặp về Claude Code Rules
+
+### Rules có thay thế CLAUDE.md không?
+
+Không. `CLAUDE.md` nên giữ tổng quan dự án. Rules nên tách các quy ước cụ thể thành file nhỏ để dễ đọc và dễ cập nhật.
+
+### Có nên viết rules bằng tiếng Việt không?
+
+Có thể. Hãy dùng ngôn ngữ mà team đọc dễ nhất. Điều quan trọng là rule phải rõ, cụ thể và nhất quán.
+
+### Rules có cần ví dụ code không?
+
+Nên có nếu rule dễ bị hiểu sai. Ví dụ giúp Claude pattern-match tốt hơn thay vì suy luận từ mô tả trừu tượng.
+
+## Tóm tắt
+
+Claude Code Rules giúp bạn đưa quy ước dự án vào context bền vững. Bạn đã biết rules nên đặt ở `.claude/rules/`, cấu trúc một rule file tốt, ví dụ cho git workflow và coding style. Ở bài tiếp theo, chúng ta sẽ học hooks để tự động chạy lệnh tại các thời điểm quan trọng trong vòng đời Claude Code.

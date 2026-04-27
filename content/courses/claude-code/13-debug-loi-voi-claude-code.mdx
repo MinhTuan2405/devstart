@@ -1,0 +1,141 @@
+---
+title: "Debug lỗi với Claude Code: Từ stack trace đến root cause"
+description: "Học cách dùng Claude Code để phân tích stack trace, tái hiện lỗi, tìm root cause và sửa bug có kiểm chứng."
+slug: "debug-loi-voi-claude-code"
+course: "claude-code"
+order: 13
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["debug lỗi với Claude Code", "Claude Code stack trace", "Claude Code root cause", "Claude Code sửa bug", "Claude Code phân tích log", "tái hiện lỗi với Claude Code"]
+publishedAt: "2026-04-27"
+---
+
+## Debug lỗi với Claude Code là gì?
+
+Debug lỗi với Claude Code là dùng Claude để đọc mô tả lỗi, stack trace, log, file liên quan và test nhằm tìm nguyên nhân gốc trước khi sửa. Mục tiêu không chỉ là làm lỗi biến mất, mà là hiểu vì sao lỗi xảy ra và chứng minh fix đúng.
+
+Khi debug, đừng bắt đầu bằng "sửa lỗi này" nếu bạn chưa biết nguyên nhân. Hãy yêu cầu Claude điều tra, tái hiện nếu có thể, rồi mới đề xuất fix.
+
+## Cung cấp lỗi đầy đủ cho Claude
+
+Một bug report tốt nên có:
+
+- Hành vi mong muốn.
+- Hành vi thực tế.
+- Bước tái hiện.
+- Log hoặc stack trace.
+- Môi trường xảy ra lỗi.
+- Thay đổi gần đây nếu có.
+
+Prompt mẫu:
+
+```text
+Tôi gặp lỗi sau. Hãy phân tích nguyên nhân có khả năng nhất trước, chưa sửa file.
+
+Expected:
+Trang dashboard load danh sách user.
+
+Actual:
+Trang trắng và console báo TypeError.
+
+Steps:
+1. Đăng nhập bằng tài khoản admin.
+2. Mở /dashboard/users.
+
+Error:
+[dán stack trace ở đây]
+```
+
+Nếu bạn chỉ dán một dòng lỗi, Claude vẫn có thể giúp, nhưng độ chính xác thấp hơn.
+
+## Yêu cầu tìm root cause trước khi fix
+
+Root cause là nguyên nhân gốc. Nếu không tìm root cause, bạn dễ có fix tạm như thêm optional chaining khắp nơi nhưng không xử lý dữ liệu sai từ API.
+
+Prompt tốt:
+
+```text
+Hãy tìm root cause trước khi sửa.
+Với mỗi giả thuyết, nêu file cần kiểm tra và bằng chứng cần tìm.
+Sau khi có bằng chứng, mới đề xuất fix nhỏ nhất.
+```
+
+Quy trình này giúp Claude không nhảy ngay vào thay đổi code. Nó phải liên kết lỗi với file, dữ liệu và luồng chạy.
+
+## Tái hiện lỗi và tạo kiểm tra
+
+Nếu dự án có test, hãy yêu cầu Claude tạo hoặc chạy test tái hiện lỗi. Test failing trước khi fix là cách tốt để biết bạn đang sửa đúng vấn đề.
+
+Prompt mẫu:
+
+```text
+Nếu có test framework, hãy tìm test liên quan.
+Đề xuất một test tái hiện bug trước khi sửa.
+Không thêm test quá rộng hoặc snapshot lớn.
+```
+
+Nếu chưa có test framework, bạn có thể dùng bước tái hiện thủ công:
+
+```text
+Hãy đưa ra checklist tái hiện bug bằng tay sau khi sửa.
+Checklist cần đủ rõ để tôi chạy lại trên trình duyệt.
+```
+
+Không phải bug nào cũng cần test tự động ngay, nhưng bug quan trọng nên có cách kiểm chứng rõ.
+
+## Phân tích log mà không bị nhiễu
+
+Log dài dễ làm context nhiễu. Khi dán log cho Claude, hãy đưa phần quan trọng nhất: stack trace, error message, timestamp gần lỗi và request liên quan. Nếu log quá dài, hãy yêu cầu Claude đọc theo mục tiêu cụ thể.
+
+Ví dụ:
+
+```text
+Đây là log build. Hãy chỉ tìm lỗi đầu tiên làm build fail.
+Không phân tích warning chưa liên quan.
+[dán log]
+```
+
+Trong nhiều trường hợp, lỗi đầu tiên quan trọng hơn hàng chục lỗi sau. Claude có thể giúp bạn lọc nhiễu nếu prompt nói rõ tiêu chí.
+
+## Những lỗi thường gặp khi debug với Claude
+
+- Yêu cầu sửa ngay mà không tìm nguyên nhân.
+- Dán log quá dài nhưng không nói cần tìm gì.
+- Chấp nhận fix che lỗi thay vì fix root cause.
+- Không tái hiện bug sau khi sửa.
+- Không kiểm tra regression ở luồng liên quan.
+
+## Bài tập thực hành
+
+Lấy một stack trace cũ hoặc tạo một lỗi đơn giản trong dự án test. Yêu cầu Claude debug theo thứ tự:
+
+- Tóm tắt lỗi bằng ngôn ngữ đơn giản.
+- Nêu 2 đến 3 giả thuyết root cause.
+- Chỉ ra file cần đọc để kiểm chứng.
+- Đề xuất fix nhỏ nhất.
+- Đề xuất cách kiểm tra sau fix.
+
+Prompt gợi ý:
+
+```text
+Hãy debug lỗi này theo hướng root cause analysis.
+Không sửa file cho đến khi có bằng chứng từ code.
+```
+
+## Câu hỏi thường gặp về debug với Claude Code
+
+### Claude có thể tự tìm lỗi từ stack trace không?
+
+Có thể hỗ trợ rất tốt, nhất là khi stack trace có file path rõ. Nhưng bạn vẫn nên yêu cầu Claude đọc file liên quan để kiểm chứng.
+
+### Nếu không có bước tái hiện thì sao?
+
+Hãy yêu cầu Claude giúp tạo giả thuyết và checklist tái hiện. Không có bước tái hiện thì fix dễ thiếu chắc chắn.
+
+### Có nên dán toàn bộ log không?
+
+Chỉ nên dán phần liên quan trước. Nếu cần log đầy đủ, hãy nói rõ Claude chỉ tập trung vào lỗi đầu tiên hoặc request cụ thể.
+
+## Tóm tắt
+
+Debug với Claude Code nên bắt đầu từ bug report rõ ràng, phân tích root cause, tái hiện lỗi và kiểm chứng fix. Bạn đã học cách dùng stack trace, log và test để tránh sửa mò. Bài tiếp theo sẽ đi sâu vào viết test và kiểm thử với Claude Code.

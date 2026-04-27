@@ -3,12 +3,14 @@ const DEFAULT_SITE_URL = 'https://hoclaptrinhuit.netlify.app'
 export const SITE_NAME = 'DevStart'
 export const DEFAULT_TITLE = 'DevStart - Học lập trình miễn phí cho người mới bắt đầu'
 export const DEFAULT_DESCRIPTION =
-  'Nền tảng học lập trình miễn phí. Khóa học Python, C++, HTML/CSS từ cơ bản đến nâng cao. Phù hợp người chưa có kinh nghiệm.'
+  'Nền tảng học lập trình miễn phí. Khóa học Python, C++, HTML/CSS, Machine Learning và Claude Code cho người mới.'
 export const DEFAULT_KEYWORDS = [
   'học lập trình',
   'học python',
   'học c++',
   'học html css',
+  'học machine learning',
+  'học claude code',
   'lập trình cho người mới',
   'học code miễn phí',
 ]

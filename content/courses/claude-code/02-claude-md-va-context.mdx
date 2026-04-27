@@ -1,0 +1,168 @@
+---
+title: "CLAUDE.md là gì? Thêm context cho Claude Code của Anthropic"
+description: "Hiểu CLAUDE.md, /init, @file và memory để Claude Code của Anthropic đọc đúng context dự án."
+slug: "claude-md-va-context"
+course: "claude-code"
+order: 2
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["CLAUDE.md là gì", "thêm context cho Claude Code", "Anthropic Claude Code context", "Claude Code /init", "Claude Code context", "Claude.local.md", "Claude Code memory", "tham chiếu file trong Claude Code", "hướng dẫn Claude Code Anthropic"]
+publishedAt: "2026-04-27"
+---
+
+## CLAUDE.md là gì?
+
+`CLAUDE.md` là file hướng dẫn trung tâm mà Claude Code tự đọc khi bắt đầu làm việc trong dự án. File này giúp Claude hiểu dự án làm gì, dùng stack nào, lệnh nào cần chạy, quy ước code ra sao và những điều tuyệt đối không nên làm khi hỗ trợ bạn.
+
+Nếu không có context, Claude phải tự suy luận từ các file rời rạc trong codebase. Điều đó có thể đúng ở dự án nhỏ, nhưng dễ sai ở dự án lớn. `CLAUDE.md` giúp biến kiến thức quan trọng của team thành hướng dẫn rõ ràng, có thể dùng lại trong nhiều phiên.
+
+## Context trong Claude Code của Anthropic nên gồm gì?
+
+Context tốt cho Claude Code của Anthropic nên trả lời ba nhóm câu hỏi: dự án là gì, chạy bằng cách nào và Claude phải tuân thủ giới hạn nào. Đây là những từ khóa quan trọng khi bạn học Anthropic Claude Code vì chất lượng context quyết định chất lượng kết quả.
+
+Một file context không cần dài, nhưng nên có thông tin cụ thể:
+
+- Mục tiêu sản phẩm hoặc module đang làm.
+- Tech stack chính như Next.js, Python, Node.js hoặc C++.
+- Lệnh dev, lint, test, build đang được team dùng.
+- Thư mục quan trọng như `app/`, `src/`, `lib/`, `content/` hoặc `tests/`.
+- Quy tắc an toàn như không sửa `.env`, không chạy lệnh phá hủy, không tự commit nếu chưa được yêu cầu.
+
+Khi người mới hỏi "Claude Code context là gì", câu trả lời ngắn gọn là: đó là phần kiến thức nền giúp Claude hiểu đúng codebase trước khi đọc file, viết code hoặc chạy lệnh.
+
+## Tạo CLAUDE.md bằng lệnh /init
+
+Cách nhanh nhất để bắt đầu là chạy `/init` trong Claude Code. Lệnh này yêu cầu Claude đọc dự án, tóm tắt cấu trúc và tạo file `CLAUDE.md` ban đầu.
+
+```text
+/init
+```
+
+Sau khi chạy, bạn nên đọc lại nội dung được tạo. Không nên xem `CLAUDE.md` là file tự động đúng hoàn toàn. Hãy chỉnh lại các phần quan trọng như lệnh kiểm tra, quy ước thư mục, file không được đụng tới hoặc hành vi mong muốn khi làm việc với git.
+
+Một file `CLAUDE.md` tối thiểu có thể trông như sau:
+
+```markdown
+# Project: My App
+
+## What this project does
+Ứng dụng web học lập trình bằng Next.js.
+
+## Tech stack
+- Runtime: Node.js
+- Framework: Next.js App Router
+- Language: TypeScript
+
+## Commands
+- Dev server: npm run dev
+- Quick check: npm run lint
+- Full check: npm run build
+
+## Important paths
+- App routes: app/
+- Shared components: components/
+- Content: content/
+
+## Rules
+- Do not edit .env files.
+- Read related files before changing code.
+- Run npm run lint after meaningful code changes.
+```
+
+Điểm quan trọng không phải là viết thật dài. Điểm quan trọng là viết đúng những thông tin Claude thường cần để tránh đoán mò.
+
+## Phân biệt CLAUDE.md và CLAUDE.local.md
+
+Trong thực tế, bạn có thể dùng nhiều tầng context khác nhau:
+
+- `CLAUDE.md`: context chung cho team, nên commit vào source control.
+- `CLAUDE.local.md`: context riêng của bạn, không nên chia sẻ với team.
+- `~/.claude/CLAUDE.md`: hướng dẫn cá nhân áp dụng cho mọi dự án trên máy.
+
+Ví dụ `CLAUDE.local.md` phù hợp cho thông tin chỉ đúng với máy của bạn:
+
+```markdown
+# Local notes
+
+- Database local chạy ở cổng 5433.
+- Tôi muốn Claude báo cáo kế hoạch trước khi sửa nhiều file.
+- Không chạy build đầy đủ trừ khi tôi yêu cầu, vì máy local build chậm.
+```
+
+Không đưa secret, token, mật khẩu hoặc khóa API vào các file này nếu chúng có thể bị commit nhầm. Context giúp Claude làm việc tốt hơn, nhưng không phải nơi lưu thông tin nhạy cảm.
+
+## Tham chiếu file và thư mục bằng @
+
+Khi cần Claude đọc một file hoặc thư mục cụ thể, bạn có thể dùng cú pháp `@`. Đây là cách giao tiếp chính xác hơn so với mô tả chung chung.
+
+```text
+Hãy đọc @app/khoa-hoc/page.tsx và @lib/mdx.ts rồi giải thích cách danh sách khóa học được tạo.
+Chưa sửa file nào.
+```
+
+Bạn cũng có thể ghi tham chiếu trong `CLAUDE.md` để Claude biết nơi cần đọc thêm:
+
+```markdown
+## More rules
+@.claude/rules/code-style.md
+@.claude/rules/testing.md
+@docs/deployment.md
+```
+
+Cách này giúp `CLAUDE.md` không bị quá dài. File chính chỉ giữ phần tổng quan, còn chi tiết được tách ra thành các file chuyên biệt.
+
+## Thêm custom instructions bằng memory
+
+Trong Claude Code, bạn có thể dùng shortcut `#` để thêm memory hoặc chỉ dẫn dài hạn. Cách này hữu ích khi Claude lặp lại một lỗi và bạn muốn ghi lại cách làm đúng cho các lần sau.
+
+Ví dụ memory tốt:
+
+```text
+# Trong dự án này, luôn dùng npm vì package-lock.json là lockfile chính. Không dùng yarn hoặc pnpm trừ khi tôi yêu cầu.
+```
+
+Memory nên ngắn, cụ thể và có tính hành động. Tránh ghi những điều mơ hồ như "hãy code tốt hơn". Claude sẽ dùng memory tốt hơn khi nó nói rõ hành vi cần làm hoặc cần tránh.
+
+## Những lỗi thường gặp khi viết context cho Claude Code
+
+- Viết `CLAUDE.md` quá chung chung, chỉ nói tên dự án mà không có lệnh chạy và quy ước file.
+- Đưa quá nhiều chi tiết tạm thời vào file chung của team, khiến context nhanh lỗi thời.
+- Không cập nhật context sau khi dự án đổi cấu trúc hoặc đổi command.
+- Trộn thông tin cá nhân vào `CLAUDE.md` thay vì để trong `CLAUDE.local.md`.
+- Quên yêu cầu Claude đọc file liên quan trước khi sửa code.
+
+## Bài tập thực hành
+
+Hãy tạo hoặc rà soát `CLAUDE.md` cho một dự án bạn đang làm. Nội dung tối thiểu nên trả lời các câu hỏi sau:
+
+- Dự án này làm gì?
+- Stack chính là gì?
+- Lệnh dev, lint, test hoặc build là gì?
+- File hoặc thư mục nào là entrypoint quan trọng?
+- Có điều gì Claude không được làm không?
+
+Bạn có thể bắt đầu bằng prompt:
+
+```text
+/init
+
+Sau khi tạo CLAUDE.md, hãy chỉ ra phần nào cần tôi xác nhận lại trước khi dùng lâu dài.
+```
+
+## Câu hỏi thường gặp về CLAUDE.md
+
+### Có cần commit CLAUDE.md không?
+
+Thông thường là có. `CLAUDE.md` chứa context chung của dự án và giúp mọi thành viên dùng Claude Code nhất quán hơn. Những ghi chú cá nhân nên để trong `CLAUDE.local.md`.
+
+### CLAUDE.md nên dài bao nhiêu?
+
+Nên đủ ngắn để dễ đọc và đủ cụ thể để hữu ích. Nếu file bắt đầu quá dài, hãy tách chi tiết vào `.claude/rules/`, tài liệu riêng hoặc các file được tham chiếu bằng `@`.
+
+### /init có thay thế việc đọc lại context không?
+
+Không. `/init` chỉ tạo bản nháp ban đầu. Bạn vẫn cần đọc, chỉnh và cập nhật để context phản ánh đúng cách dự án thật sự vận hành.
+
+## Tóm tắt
+
+`CLAUDE.md` là nền tảng context quan trọng nhất khi học Claude Code. Bạn đã biết cách dùng `/init`, phân biệt `CLAUDE.md` với `CLAUDE.local.md`, tham chiếu file bằng `@` và thêm memory bằng `#`. Ở bài tiếp theo, chúng ta sẽ học cách quản lý context trong một phiên làm việc dài bằng Escape, `/compact` và `/clear`.

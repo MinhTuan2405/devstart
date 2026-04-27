@@ -29,6 +29,7 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   const courses = getAllCourseSummaries()
+  const totalLessons = courses.reduce((total, course) => total + course.totalLessons, 0)
   const recentPosts = getAllBlogPosts().slice(0, 3)
   const homeUrl = toAbsoluteUrl('/')
   const blogUrl = toAbsoluteUrl('/blog')
@@ -107,7 +108,7 @@ export default function HomePage() {
             cho người mới bắt đầu
           </h1>
           <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-500 md:text-xl">
-            Khóa học Python, C++ và HTML/CSS bằng tiếng Việt.
+            Khóa học Python, C++, HTML/CSS, Machine Learning và Claude Code bằng tiếng Việt.
             Giải thích đơn giản, ví dụ thực tế, lộ trình rõ ràng.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -129,8 +130,8 @@ export default function HomePage() {
           {/* Stats */}
           <div className="mt-16 grid grid-cols-3 gap-8 border-t border-slate-200/60 pt-8">
             {[
-              { value: '3', label: 'Khóa học' },
-              { value: '7+', label: 'Bài học' },
+              { value: String(courses.length), label: 'Khóa học' },
+              { value: String(totalLessons), label: 'Bài học' },
               { value: '100%', label: 'Miễn phí' },
             ].map((stat) => (
               <div key={stat.label}>
@@ -151,7 +152,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-slate-900">Chọn lộ trình của bạn</h2>
           <p className="mt-3 text-slate-500">Mỗi khóa học được thiết kế cho người mới, đi từ cơ bản đến nâng cao</p>
         </div>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
             <CourseCard
               key={course.slug}

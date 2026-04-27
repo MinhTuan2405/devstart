@@ -1,0 +1,168 @@
+---
+title: "Cấu trúc thư mục .claude cho Anthropic Claude Code"
+description: "Tìm hiểu cấu trúc .claude gồm settings, commands, rules, skills và agents để tổ chức Anthropic Claude Code cho team."
+slug: "cau-truc-thu-muc-claude"
+course: "claude-code"
+order: 4
+duration: "22 phút"
+difficulty: "Dễ"
+keywords: ["cấu trúc thư mục .claude", ".claude folder", "Anthropic Claude Code project structure", "Claude Code settings", "Claude Code commands rules skills agents", "CLAUDE.local.md", ".claude/settings.json", "tổ chức dự án với Claude Code", "Claude Code team workflow"]
+publishedAt: "2026-04-27"
+---
+
+## Cấu trúc thư mục .claude là gì?
+
+Thư mục `.claude` là nơi tổ chức cấu hình và quy trình làm việc cho Claude Code trong một dự án. Nó có thể chứa settings, custom commands, rules, skills và agents. Nhờ đó, thay vì nhắc lại cùng một hướng dẫn mỗi phiên, bạn biến chúng thành file có cấu trúc.
+
+Bạn có thể xem `.claude` như trung tâm điều khiển của Claude trong repo. `CLAUDE.md` mô tả bối cảnh chung, còn `.claude/` chứa các phần chuyên sâu hơn: lệnh tùy chỉnh, quy tắc, tự động hóa và workflow có thể tái sử dụng.
+
+## Vì sao Anthropic Claude Code cần thư mục .claude?
+
+Anthropic Claude Code có thể làm việc chỉ với prompt trực tiếp, nhưng dự án thật thường cần quy trình ổn định hơn. Thư mục `.claude` giúp team đưa kiến thức vận hành vào repo: command nào dùng để review, rule nào phải tuân thủ, hook nào chặn thao tác nguy hiểm và skill nào xử lý workflow phức tạp.
+
+Khi bạn tìm "Claude Code project structure" hoặc "tổ chức dự án với Claude Code", trọng tâm không chỉ là đặt file ở đâu. Trọng tâm là biến cách làm việc với AI thành một phần có thể review, version control và chia sẻ giữa các thành viên.
+
+## Cấu trúc .claude tiêu chuẩn
+
+Một dự án dùng Claude Code tốt có thể bắt đầu với cấu trúc sau:
+
+```text
+your-project/
+├── CLAUDE.md
+├── CLAUDE.local.md
+└── .claude/
+    ├── settings.json
+    ├── settings.local.json
+    ├── commands/
+    │   ├── review.md
+    │   ├── fix-issue.md
+    │   └── deploy.md
+    ├── rules/
+    │   ├── code-style.md
+    │   ├── testing.md
+    │   └── api-conventions.md
+    ├── skills/
+    │   ├── security-review/
+    │   │   └── SKILL.md
+    │   └── deploy/
+    │       └── SKILL.md
+    └── agents/
+        ├── code-reviewer.md
+        └── security-auditor.md
+```
+
+Bạn không cần tạo tất cả ngay từ đầu. Với người mới, hãy bắt đầu bằng `CLAUDE.md`, sau đó thêm `commands/` hoặc `rules/` khi bạn thấy mình lặp lại cùng một việc nhiều lần.
+
+## Vai trò của từng file và thư mục
+
+`CLAUDE.md` là hướng dẫn chung của team. File này nên được commit để mọi người dùng Claude Code cùng một nền tảng context.
+
+`CLAUDE.local.md` là ghi chú cá nhân. File này không nên commit, vì nó có thể chứa thông tin máy local hoặc thói quen riêng.
+
+`.claude/settings.json` chứa cấu hình dùng chung như hooks, MCP servers hoặc permissions của dự án. Nếu cấu hình ảnh hưởng đến cả team, nó nên được quản lý bằng git.
+
+`.claude/settings.local.json` dành cho cấu hình cá nhân. Ví dụ permission riêng, server local hoặc đường dẫn chỉ tồn tại trên máy bạn.
+
+`.claude/commands/` chứa custom slash commands. Mỗi file markdown thường trở thành một lệnh có thể gọi bằng `/`.
+
+`.claude/rules/` chứa các quy tắc dài hạn như coding style, workflow git hoặc quy ước test.
+
+`.claude/skills/` chứa workflow nhiều bước, có thể đi kèm scripts, references hoặc assets.
+
+`.claude/agents/` chứa mô tả cho subagent chuyên trách như reviewer, security auditor hoặc documentation writer.
+
+## Cấu hình settings.json cơ bản
+
+`settings.json` thường dùng khi bạn muốn cấu hình hành vi ở cấp dự án. Ví dụ dưới đây minh họa một cấu hình hooks đơn giản.
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Trong thực tế, bạn nên cân nhắc kỹ trước khi chạy lệnh nặng sau mọi edit. Với dự án lớn, chạy build liên tục có thể làm chậm workflow. Hook nên phục vụ quy trình, không biến terminal thành nơi luôn bị nghẽn.
+
+## File nào nên commit và file nào không?
+
+Một quy tắc dễ nhớ là: file phục vụ cả team thì commit, file phục vụ riêng máy bạn thì không commit.
+
+Nên commit:
+
+- `CLAUDE.md`
+- `.claude/settings.json`
+- `.claude/commands/`
+- `.claude/rules/`
+- `.claude/skills/`
+- `.claude/agents/`
+
+Không nên commit:
+
+- `CLAUDE.local.md`
+- `.claude/settings.local.json`
+
+Bạn có thể thêm vào `.gitignore`:
+
+```gitignore
+CLAUDE.local.md
+.claude/settings.local.json
+```
+
+Cách phân chia này giúp team chia sẻ quy trình chung mà không làm lộ cấu hình cá nhân hoặc thông tin local.
+
+## Những lỗi thường gặp khi tổ chức .claude
+
+- Tạo quá nhiều file ngay từ đầu dù chưa có nhu cầu thật.
+- Đưa secret hoặc thông tin cá nhân vào file được commit.
+- Viết mọi thứ vào một `CLAUDE.md` quá dài thay vì tách thành rules hoặc commands.
+- Không đặt tên file rõ ràng, khiến Claude và con người khó hiểu mục đích.
+- Tạo hook chạy lệnh quá nặng sau mỗi thao tác nhỏ.
+
+## Bài tập thực hành
+
+Hãy thiết kế cấu trúc `.claude` tối thiểu cho một dự án bạn đang học. Chưa cần viết đủ nội dung, chỉ cần tạo danh sách file nên có.
+
+Gợi ý bắt đầu:
+
+```text
+.claude/
+├── commands/
+│   └── review.md
+├── rules/
+│   └── code-style.md
+└── skills/
+    └── write-docs/
+        └── SKILL.md
+```
+
+Sau đó trả lời: phần nào cần dùng chung cho team, phần nào chỉ là ghi chú cá nhân?
+
+## Câu hỏi thường gặp về .claude folder
+
+### Có bắt buộc phải có thư mục .claude không?
+
+Không bắt buộc. Bạn có thể dùng Claude Code chỉ với `CLAUDE.md`. Tuy nhiên, khi workflow phức tạp hơn, `.claude/` giúp tổ chức hướng dẫn rõ ràng và dễ bảo trì.
+
+### Nên bắt đầu với commands, rules hay skills?
+
+Hãy bắt đầu với rules nếu bạn muốn Claude luôn tuân thủ quy ước. Dùng commands khi có thao tác lặp lại theo yêu cầu. Dùng skills khi quy trình có nhiều bước và cần tài nguyên đi kèm.
+
+### settings.local.json khác gì settings.json?
+
+`settings.json` là cấu hình chung của dự án. `settings.local.json` là cấu hình riêng của máy bạn và không nên commit vào repo.
+
+## Tóm tắt
+
+Cấu trúc thư mục `.claude` giúp bạn biến cách làm việc với Claude Code thành một hệ thống rõ ràng. Bạn đã biết vai trò của settings, commands, rules, skills và agents, cũng như file nào nên commit. Ở bài tiếp theo, chúng ta sẽ học chi tiết cách tạo custom commands để tự động hóa các yêu cầu lặp lại.

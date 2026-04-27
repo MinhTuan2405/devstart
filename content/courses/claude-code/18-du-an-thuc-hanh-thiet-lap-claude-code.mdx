@@ -1,0 +1,225 @@
+---
+title: "Dự án thực hành Claude Code: Thiết lập .claude hoàn chỉnh"
+description: "Thực hành cuối khóa: thiết lập CLAUDE.md, rules, commands, hooks, skills và checklist an toàn cho một dự án thật."
+slug: "du-an-thuc-hanh-thiet-lap-claude-code"
+course: "claude-code"
+order: 18
+duration: "30 phút"
+difficulty: "Trung bình"
+keywords: ["dự án thực hành Claude Code", "thiết lập Claude Code", "Claude Code capstone", "CLAUDE.md project", ".claude hoàn chỉnh", "workflow Claude Code"]
+publishedAt: "2026-04-27"
+---
+
+## Dự án thực hành Claude Code là gì?
+
+Dự án thực hành Claude Code là bài cuối giúp bạn áp dụng toàn bộ khóa học vào một repo thật. Bạn sẽ thiết lập `CLAUDE.md`, `.claude/settings.json`, commands, rules, hooks, skills và checklist bảo mật để Claude Code có thể hỗ trợ dự án một cách có tổ chức.
+
+Mục tiêu không phải tạo nhiều file cho đủ. Mục tiêu là có một bộ cấu hình nhỏ nhưng dùng được: Claude hiểu dự án, biết giới hạn, có command lặp lại, có rule an toàn và có cách kiểm tra sau thay đổi.
+
+## Kết quả cần đạt
+
+Sau bài này, dự án của bạn nên có cấu trúc tối thiểu:
+
+```text
+your-project/
+├── CLAUDE.md
+├── CLAUDE.local.md
+└── .claude/
+    ├── settings.json
+    ├── commands/
+    │   ├── explain-file.md
+    │   └── fix-bug.md
+    ├── rules/
+    │   ├── coding-style.md
+    │   └── security.md
+    ├── hooks/
+    │   └── check-bash.js
+    └── skills/
+        └── code-review/
+            └── SKILL.md
+```
+
+Bạn có thể đổi tên file theo dự án, nhưng nên giữ nguyên tư duy: context chung, command lặp lại, rule bền vững, hook bảo vệ và skill cho workflow nhiều bước.
+
+## Bước 1: Tạo CLAUDE.md
+
+Nội dung `CLAUDE.md` nên ngắn và cụ thể:
+
+```markdown
+# Project Context
+
+## What this project does
+[Mô tả dự án trong 2-3 câu]
+
+## Tech stack
+- [Framework]
+- [Language]
+- [Database nếu có]
+
+## Commands
+- Dev: [command]
+- Lint: [command]
+- Test: [command hoặc "chưa có"]
+- Build: [command]
+
+## Important paths
+- [entrypoint]
+- [shared logic]
+- [tests]
+
+## Do not
+- Do not edit .env files.
+- Do not run destructive git commands without explicit approval.
+```
+
+Nếu không chắc command nào đúng, hãy yêu cầu Claude đọc package hoặc tài liệu trước, không đoán.
+
+## Bước 2: Tạo rules quan trọng
+
+Bắt đầu với hai rule: coding style và security.
+
+```markdown
+# Coding Style
+
+- Read existing patterns before adding new helpers.
+- Prefer minimal changes over broad rewrites.
+- Do not add dependencies without asking.
+- Keep changes scoped to the requested task.
+```
+
+Security rule:
+
+```markdown
+# Security
+
+- Never commit .env, credentials or private keys.
+- Never print secrets in terminal output.
+- Ask before running commands that delete files or mutate databases.
+- Redact production logs before analysis.
+```
+
+Rules càng cụ thể thì càng hữu ích. Nếu rule chỉ nói "code tốt", nó không giúp Claude hành động rõ hơn.
+
+## Bước 3: Tạo commands dùng hằng ngày
+
+Hai command dễ dùng nhất là `explain-file` và `fix-bug`.
+
+```markdown
+# explain-file
+
+> Giải thích một file cho người mới.
+
+## Task
+
+Đọc file trong $ARGUMENTS và giải thích mục đích, hàm chính, luồng dữ liệu.
+
+## Constraints
+
+- Không sửa file.
+- Nếu file không tồn tại, báo rõ và dừng.
+```
+
+Command `fix-bug`:
+
+```markdown
+# fix-bug
+
+> Phân tích và sửa bug theo phạm vi nhỏ.
+
+## Task
+
+$ARGUMENTS
+
+## Steps
+
+- Tìm root cause trước.
+- Đề xuất fix nhỏ nhất.
+- Sửa đúng phạm vi.
+- Chạy kiểm tra phù hợp.
+```
+
+## Bước 4: Thêm hook bảo vệ lệnh nguy hiểm
+
+Bạn có thể tạo hook kiểm tra Bash command trước khi chạy.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/check-bash.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Script `check-bash.js` có thể bắt đầu đơn giản: chặn `rm -rf`, `git reset --hard` và thao tác với `.env`. Khi dự án trưởng thành hơn, bạn có thể bổ sung rule.
+
+## Bước 5: Tạo skill code review
+
+Skill đầu tiên nên là workflow bạn dùng nhiều. Ví dụ code review:
+
+```markdown
+---
+name: code-review
+description: Use this skill when reviewing code changes, pull requests, or risky diffs.
+---
+
+# Code Review Skill
+
+## Steps
+
+- Read changed files.
+- Check correctness, edge cases, security and missing tests.
+- Report findings first, ordered by severity.
+- Do not modify files unless explicitly asked.
+```
+
+Skill này giúp review nhất quán hơn so với prompt tự do.
+
+## Checklist hoàn thành dự án
+
+Bạn hoàn thành bài thực hành khi:
+
+- `CLAUDE.md` có context thật của dự án.
+- Có ít nhất 2 rules hữu ích.
+- Có ít nhất 2 commands dùng được.
+- Có hook hoặc checklist bảo mật cho lệnh nguy hiểm.
+- Có một skill cho workflow lặp lại.
+- `CLAUDE.local.md` và `settings.local.json` được gitignore.
+- Bạn đã thử một task nhỏ bằng Claude Code và chạy kiểm tra sau thay đổi.
+
+## Bài tập thực hành
+
+Áp dụng toàn bộ checklist vào một repo học tập. Sau đó yêu cầu Claude tự review cấu hình:
+
+```text
+Hãy review cấu hình Claude Code trong dự án này.
+Kiểm tra CLAUDE.md, .claude/commands, .claude/rules, hooks và skills.
+Chỉ báo cáo thiếu sót, chưa sửa file.
+```
+
+## Câu hỏi thường gặp về dự án thực hành Claude Code
+
+### Có cần tạo đủ mọi thư mục ngay không?
+
+Không. Nhưng bài thực hành giúp bạn thấy toàn bộ hệ thống hoạt động cùng nhau. Sau đó bạn có thể giữ lại phần thật sự dùng.
+
+### Dự án cá nhân có cần rules và hooks không?
+
+Có nếu bạn muốn tránh lỗi lặp lại hoặc thao tác nguy hiểm. Dự án cá nhân vẫn có thể mất dữ liệu nếu workflow thiếu guardrail.
+
+### Khi nào nên cập nhật cấu hình Claude Code?
+
+Khi stack, command, quy ước hoặc workflow thay đổi. Cấu hình lỗi thời có thể làm Claude hiểu sai dự án.
+
+## Tóm tắt
+
+Bạn đã hoàn thành khóa Claude Code bằng một dự án thực hành: thiết lập context, rules, commands, hooks, skills và guardrails. Từ đây, bạn có thể dùng Claude Code như một hệ thống hỗ trợ lập trình có quy trình, thay vì chỉ là một chatbot trong terminal.

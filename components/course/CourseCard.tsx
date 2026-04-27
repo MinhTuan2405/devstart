@@ -35,6 +35,12 @@ const courseColors: Record<string, { bg: string; border: string; iconBg: string;
     iconBg: 'bg-violet-100',
     btn: 'bg-violet-600 hover:bg-violet-700 shadow-violet-600/25',
   },
+  'claude-code': {
+    bg: 'from-fuchsia-50 to-white',
+    border: 'border-fuchsia-100 hover:border-fuchsia-300',
+    iconBg: 'bg-fuchsia-100',
+    btn: 'bg-fuchsia-600 hover:bg-fuchsia-700 shadow-fuchsia-600/25',
+  },
 }
 
 export default function CourseCard({

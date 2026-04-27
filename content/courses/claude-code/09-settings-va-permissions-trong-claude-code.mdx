@@ -1,0 +1,151 @@
+---
+title: "Settings và permissions trong Claude Code: Cấu hình an toàn"
+description: "Học cách dùng settings.json, settings.local.json và tư duy phân quyền để Claude Code làm việc an toàn trong dự án."
+slug: "settings-va-permissions-trong-claude-code"
+course: "claude-code"
+order: 9
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["settings Claude Code", "permissions Claude Code", ".claude/settings.json", ".claude/settings.local.json", "Claude Code cấu hình", "Claude Code an toàn", "Claude Code project settings"]
+publishedAt: "2026-04-27"
+---
+
+## Settings và permissions trong Claude Code là gì?
+
+Settings và permissions trong Claude Code là lớp cấu hình quyết định Claude được phép làm gì, hook nào được chạy và cấu hình nào áp dụng cho cả team hoặc chỉ riêng máy bạn. Nếu `CLAUDE.md` giúp Claude hiểu dự án, settings giúp bạn kiểm soát môi trường làm việc của Claude.
+
+Người mới thường chỉ quan tâm Claude có sửa được code không. Khi dùng trong dự án thật, câu hỏi quan trọng hơn là: Claude được chạy lệnh nào, có được ghi file nào, cấu hình nào nên commit và cấu hình nào phải giữ riêng? Bài này giúp bạn trả lời các câu hỏi đó.
+
+## Các loại settings thường gặp
+
+Bạn sẽ gặp hai nhóm file chính:
+
+- `.claude/settings.json`: cấu hình cấp dự án, có thể commit nếu dùng chung cho team.
+- `.claude/settings.local.json`: cấu hình riêng của máy bạn, không nên commit.
+
+Ngoài ra, một số cấu hình global có thể nằm ở thư mục home của người dùng. Với người mới, hãy ưu tiên hiểu cấu hình cấp dự án trước, vì đây là phần dễ ảnh hưởng đến cả team.
+
+Ví dụ cấu trúc:
+
+```text
+your-project/
+└── .claude/
+    ├── settings.json
+    └── settings.local.json
+```
+
+Nếu một rule áp dụng cho mọi người, đặt trong `settings.json`. Nếu chỉ đúng với máy bạn, đặt trong `settings.local.json`.
+
+## Ví dụ settings.json cơ bản
+
+Một file settings có thể chứa hooks, MCP servers hoặc các cấu hình khác. Ví dụ đơn giản:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/check-bash.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Ví dụ này không tự động làm Claude thông minh hơn. Nó thêm một lớp kiểm tra trước khi Claude chạy lệnh Bash. Đây là tư duy quan trọng: settings không thay thế instruction, nhưng giúp enforcement tốt hơn.
+
+## Khi nào dùng settings.local.json?
+
+`settings.local.json` phù hợp cho cấu hình chỉ đúng với máy cá nhân:
+
+- Đường dẫn local chỉ có trên máy bạn.
+- MCP server thử nghiệm chưa muốn chia sẻ với team.
+- Permission tạm thời trong lúc debug.
+- Cấu hình notification cá nhân.
+
+Ví dụ:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node C:/Users/me/scripts/notify-done.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Không nên commit ví dụ trên vì đường dẫn chỉ tồn tại trên một máy. Nếu team khác pull về, hook có thể lỗi hoặc gây nhiễu workflow.
+
+## Tư duy phân quyền khi dùng Claude Code
+
+Claude Code có thể hỗ trợ mạnh, nhưng bạn không nên mở mọi quyền một cách vô điều kiện. Hãy dùng nguyên tắc quyền tối thiểu: chỉ cho Claude làm những việc cần thiết cho nhiệm vụ hiện tại.
+
+Một số câu hỏi cần tự hỏi:
+
+- Claude có cần chạy lệnh ghi dữ liệu không, hay chỉ cần đọc?
+- Lệnh này có thể xóa file, reset git hoặc thay đổi database không?
+- Nếu hook chạy sau mọi edit, nó có làm chậm dự án không?
+- Cấu hình này có chứa secret, token hoặc đường dẫn cá nhân không?
+
+Prompt cũng nên thể hiện giới hạn quyền. Ví dụ:
+
+```text
+Hãy đọc cấu hình hiện tại và đề xuất thay đổi trước.
+Không sửa file, không chạy lệnh destructive, không động vào .env.
+```
+
+## Những lỗi thường gặp với settings và permissions
+
+- Commit `settings.local.json` chứa đường dẫn hoặc cấu hình cá nhân.
+- Cấu hình hook chạy lệnh nặng sau mọi thao tác nhỏ.
+- Để Claude chạy lệnh nguy hiểm mà không có guardrail.
+- Không ghi rõ file nào được phép sửa trong prompt.
+- Trộn settings, rules và commands vào cùng một nơi khiến dự án khó bảo trì.
+
+## Bài tập thực hành
+
+Hãy thiết kế settings tối thiểu cho một dự án học tập:
+
+- Tạo `.claude/settings.json` dùng chung cho team.
+- Thêm một hook `PreToolUse` cho `Bash` để gọi script kiểm tra lệnh.
+- Tạo `.claude/settings.local.json` giả lập notification cá nhân.
+- Ghi vào `.gitignore` để không commit settings local.
+
+Gợi ý `.gitignore`:
+
+```gitignore
+.claude/settings.local.json
+CLAUDE.local.md
+```
+
+## Câu hỏi thường gặp về settings Claude Code
+
+### Settings có thay thế CLAUDE.md không?
+
+Không. `CLAUDE.md` mô tả context và quy ước. Settings cấu hình cách Claude Code tương tác với tool, hook và môi trường.
+
+### Có nên commit settings.json không?
+
+Có, nếu đó là cấu hình dùng chung cho team và không chứa secret. Không commit cấu hình cá nhân hoặc đường dẫn local.
+
+### Người mới có cần cấu hình permissions ngay không?
+
+Nên hiểu tư duy phân quyền ngay từ đầu. Bạn có thể bắt đầu đơn giản, nhưng đừng để Claude chạy lệnh nguy hiểm mà không kiểm soát.
+
+## Tóm tắt
+
+Settings và permissions giúp Claude Code làm việc an toàn hơn trong dự án thật. Bạn đã biết khi nào dùng `settings.json`, khi nào dùng `settings.local.json`, cách nghĩ về quyền tối thiểu và các lỗi cần tránh. Bài tiếp theo sẽ tập trung vào cách dùng Claude Code để đọc và hiểu một codebase mới.

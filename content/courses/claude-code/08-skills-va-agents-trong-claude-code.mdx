@@ -1,0 +1,210 @@
+---
+title: "Skills và Agents trong Anthropic Claude Code là gì?"
+description: "Hiểu skills và agents trong Anthropic Claude Code, cách viết SKILL.md, dùng resources và tạo subagent chuyên trách."
+slug: "skills-va-agents-trong-claude-code"
+course: "claude-code"
+order: 8
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["skills Claude Code", "agents Claude Code", "Anthropic Claude Code skills", "Anthropic Claude Code agents", "SKILL.md Claude Code", "subagent Claude Code", ".claude/skills", ".claude/agents", "workflow nâng cao Claude Code", "progressive disclosure skills"]
+publishedAt: "2026-04-27"
+---
+
+## Skills và Agents trong Claude Code là gì?
+
+Skills và Agents trong Claude Code là cách đóng gói năng lực chuyên biệt. Skill mô tả một workflow có thể tái sử dụng, thường kèm hướng dẫn và tài nguyên. Agent mô tả một vai trò chuyên trách chạy tách biệt, ví dụ code reviewer, security auditor hoặc documentation writer.
+
+Nếu commands phù hợp cho lệnh ngắn, skills phù hợp cho quy trình nhiều bước. Nếu bạn muốn Claude nhập vai một chuyên gia để xử lý một phần việc độc lập, agents là lựa chọn tự nhiên hơn. Hai khái niệm này giúp dự án lớn giữ workflow rõ ràng thay vì nhồi mọi thứ vào prompt.
+
+## Vì sao Anthropic Claude Code cần skills và agents?
+
+Anthropic Claude Code có thể xử lý nhiều nhiệm vụ chỉ bằng prompt, nhưng prompt thủ công dễ thiếu bước khi workflow dài. Skills và agents giúp biến kinh nghiệm lặp lại thành quy trình có tên, có trigger và có giới hạn rõ ràng.
+
+Ví dụ, nếu team thường xuyên review bảo mật, bạn có thể tạo skill `security-review` với checklist cụ thể. Nếu team cần một vai trò tách biệt chỉ báo lỗi mà không sửa file, bạn có thể định nghĩa agent `security-auditor`. Khi học `Anthropic Claude Code skills` hoặc `Anthropic Claude Code agents`, trọng tâm là đóng gói chuyên môn để Claude làm việc ổn định hơn trong nhiều phiên.
+
+## Cấu trúc một skill
+
+Một skill thường là một thư mục có file `SKILL.md`. Ngoài ra, nó có thể có tài nguyên đi kèm như scripts, references hoặc assets.
+
+```text
+skill-name/
+├── SKILL.md
+└── references/
+    └── checklist.md
+```
+
+Với workflow phức tạp hơn:
+
+```text
+security-review/
+├── SKILL.md
+├── scripts/
+│   └── scan-deps.js
+├── references/
+│   └── security-checklist.md
+└── assets/
+    └── report-template.md
+```
+
+`SKILL.md` là phần bắt buộc. Các thư mục còn lại chỉ nên thêm khi có nhu cầu thật. Đừng tạo scripts hoặc assets chỉ để trông chuyên nghiệp nếu workflow chưa cần.
+
+## Progressive disclosure trong skills
+
+Skills dùng ý tưởng progressive disclosure: chỉ đưa vào context những gì cần thiết đúng lúc. Một skill thường có ba lớp:
+
+- Metadata: tên và mô tả ngắn, luôn đủ để Claude biết khi nào nên dùng skill.
+- Nội dung `SKILL.md`: hướng dẫn chính được tải khi skill phù hợp.
+- Bundled resources: tài liệu, script hoặc asset được đọc khi cần.
+
+Cách tổ chức này giúp context gọn. Thay vì nhét toàn bộ checklist dài vào prompt, bạn để checklist trong `references/` và chỉ đọc khi workflow cần đến.
+
+## Ví dụ SKILL.md đơn giản
+
+Một `SKILL.md` nên có frontmatter mô tả khi nào dùng skill, sau đó là workflow cụ thể.
+
+```markdown
+---
+name: code-review
+description: Use this skill when the user asks for a code review, PR review, or risk assessment.
+---
+
+# Code Review Skill
+
+## Goal
+
+Find correctness issues, regressions, missing tests and security risks.
+
+## Steps
+
+- Read the changed files first.
+- Check upstream usages and related tests.
+- Report findings by severity.
+- Do not modify files unless the user explicitly asks.
+
+## Output Format
+
+- Findings first, ordered by severity.
+- Include file and line reference when possible.
+- Mention testing gaps and residual risks.
+```
+
+Skill tốt phải nói rõ mục tiêu, thứ tự làm việc, giới hạn và output. Nếu skill chỉ là một đoạn mô tả chung, Claude vẫn phải tự đoán quy trình.
+
+## Khi nào nên tạo skill?
+
+Bạn nên tạo skill khi workflow có các dấu hiệu sau:
+
+- Lặp lại nhiều lần trong dự án hoặc team.
+- Có nhiều bước cần làm theo đúng thứ tự.
+- Cần tài liệu tham chiếu, checklist hoặc template riêng.
+- Cần dùng script để xử lý phần deterministic.
+- Nếu làm bằng prompt thường thì dễ thiếu bước.
+
+Ví dụ skill phù hợp:
+
+- Security review cho API route.
+- Viết bài học theo template nội dung của dự án.
+- Chuẩn bị release checklist.
+- Sinh báo cáo audit accessibility.
+- Tạo tài liệu từ transcript hoặc notes.
+
+Nếu việc chỉ là "giải thích file này" hoặc "sửa typo", custom command hoặc prompt trực tiếp có thể đủ.
+
+## Agents trong Claude Code là gì?
+
+Agents là các mô tả vai trò chuyên trách, thường đặt trong `.claude/agents/`. Một agent có thể được dùng để xử lý nhiệm vụ độc lập với context riêng, ví dụ review bảo mật hoặc phân tích kiến trúc.
+
+Ví dụ agent reviewer:
+
+```markdown
+# Code Reviewer Agent
+
+You are a senior engineer doing a thorough code review.
+
+Your job:
+- Review for correctness, not style.
+- Flag logic errors, missing edge cases and security issues.
+- Include file path and line number when possible.
+- Suggest a fix for each finding.
+
+You are not allowed to modify files. Report only.
+```
+
+Agent tốt có phạm vi hẹp. Nếu bạn tạo một agent "do everything", nó không khác gì prompt chung. Agent nên có vai trò, tiêu chí đánh giá và giới hạn rõ ràng.
+
+## Khác nhau giữa commands, rules, skills và agents
+
+Người mới thường nhầm bốn khái niệm này. Bạn có thể phân biệt đơn giản như sau:
+
+- Commands: gọi nhanh một yêu cầu lặp lại bằng `/`.
+- Rules: hướng dẫn bền vững mà Claude nên luôn tuân thủ.
+- Skills: workflow nhiều bước có thể tái sử dụng, có thể kèm tài nguyên.
+- Agents: vai trò chuyên trách để xử lý một nhiệm vụ độc lập.
+
+Ví dụ cùng là "review code":
+
+- Rule nói: luôn ưu tiên correctness hơn style khi review.
+- Command `/review-pr` gọi quy trình review cho một PR.
+- Skill `code-review` chứa checklist review chi tiết.
+- Agent `code-reviewer` nhập vai reviewer để báo findings.
+
+## Những lỗi thường gặp khi dùng skills và agents
+
+- Tạo skill quá rộng, chứa quá nhiều loại nhiệm vụ không liên quan.
+- Không mô tả trigger rõ trong description, khiến skill khó được dùng đúng lúc.
+- Nhét tài liệu dài vào `SKILL.md` thay vì tách vào `references/`.
+- Tạo agent không có giới hạn, dẫn đến agent sửa file dù chỉ cần báo cáo.
+- Dùng agents cho việc quá đơn giản khiến workflow nặng hơn cần thiết.
+
+## Bài tập thực hành
+
+Hãy thiết kế một skill tên `write-release-notes` cho dự án của bạn.
+
+Yêu cầu skill:
+
+- Trigger khi người dùng yêu cầu release notes hoặc changelog.
+- Đọc git diff hoặc danh sách commit.
+- Nhóm thay đổi thành features, fixes, docs và chores.
+- Viết output ngắn, dễ hiểu cho người dùng cuối.
+- Không tự tạo commit hoặc tag.
+
+Gợi ý khung `SKILL.md`:
+
+```markdown
+---
+name: write-release-notes
+description: Use this skill when the user asks for release notes, changelog, or a summary of shipped changes.
+---
+
+# Release Notes Skill
+
+## Steps
+
+- Inspect the relevant commits or diff.
+- Group changes by user impact.
+- Avoid internal implementation details unless important.
+- Produce markdown output.
+
+## Constraints
+
+- Do not create git tags.
+- Do not commit files.
+```
+
+## Câu hỏi thường gặp về skills và agents
+
+### Skill có thay thế custom command không?
+
+Không hoàn toàn. Command phù hợp để gọi nhanh. Skill phù hợp khi quy trình có nhiều bước, nhiều điều kiện hoặc tài nguyên đi kèm. Hai thứ có thể bổ sung cho nhau.
+
+### Khi nào nên dùng agent thay vì skill?
+
+Dùng agent khi bạn cần một vai trò chuyên trách xử lý độc lập, ví dụ reviewer hoặc auditor. Dùng skill khi trọng tâm là workflow từng bước, checklist hoặc tài nguyên hỗ trợ.
+
+### Có nên tạo nhiều agents cho một dự án nhỏ không?
+
+Không cần. Dự án nhỏ thường chỉ cần `CLAUDE.md`, một vài rules và một số commands. Agents trở nên hữu ích hơn khi team có nhiều loại nhiệm vụ chuyên biệt.
+
+## Tóm tắt
+
+Skills và Agents giúp Claude Code xử lý workflow nâng cao một cách có tổ chức. Bạn đã biết cấu trúc `SKILL.md`, progressive disclosure, khi nào nên tạo skill, cách định nghĩa agent và cách phân biệt commands, rules, skills, agents. Đến đây, bạn đã có nền tảng để biến Claude Code thành một hệ thống hỗ trợ lập trình có context, quy tắc và tự động hóa rõ ràng.

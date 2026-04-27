@@ -1,0 +1,137 @@
+---
+title: "Claude Code của Anthropic là gì? Cài đặt cho người mới"
+description: "Tìm hiểu Claude Code của Anthropic là gì, cách cài đặt trên macOS, Linux, Windows và chạy Claude trong dự án."
+slug: "claude-code-la-gi-cai-dat"
+course: "claude-code"
+order: 1
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["Claude Code của Anthropic là gì", "Anthropic Claude Code", "cài đặt Claude Code", "Claude Code cho người mới", "học Claude Code của Anthropic", "Claude AI coding assistant", "Claude Code Windows", "Claude Code macOS", "Anthropic Claude"]
+publishedAt: "2026-04-27"
+---
+
+## Claude Code là gì?
+
+Claude Code là công cụ dòng lệnh của Anthropic giúp bạn làm việc với code ngay trong terminal. Thay vì chỉ hỏi đáp trong trình duyệt, bạn có thể để Claude đọc dự án, sửa file, chạy lệnh, phân tích lỗi và hỗ trợ quy trình phát triển phần mềm trực tiếp trong thư mục làm việc.
+
+Với người mới, cách hiểu đơn giản nhất là: Claude Code là một trợ lý lập trình chạy trong terminal. Bạn vẫn là người quyết định mục tiêu, kiểm tra kết quả và chịu trách nhiệm với thay đổi. Claude giúp giảm thời gian đọc code, tìm lỗi, viết tài liệu, tạo test hoặc thực hiện các thao tác lặp lại.
+
+## Anthropic liên quan gì đến Claude Code?
+
+Anthropic là công ty phát triển Claude, còn Claude Code là một cách đưa Claude vào quy trình lập trình hằng ngày. Khi bạn tìm kiếm các cụm như `Anthropic Claude Code`, `Claude AI coding assistant` hoặc `học Claude Code của Anthropic`, bạn đang nói đến cùng một nhóm công cụ: dùng Claude để hiểu codebase, thao tác với file và hỗ trợ kỹ thuật ngay trong terminal.
+
+Điểm cần nhớ là Claude Code không phải một ngôn ngữ lập trình mới. Nó là lớp trợ lý AI nằm trên dự án hiện có của bạn. Bạn vẫn dùng Git, npm, Python, TypeScript hoặc công cụ quen thuộc; Claude Code chỉ giúp đọc ngữ cảnh, đề xuất thay đổi và thực hiện một số thao tác theo quyền bạn cho phép.
+
+## Khi nào nên dùng Claude Code?
+
+Claude Code phù hợp khi bạn đang làm việc với một codebase thật, không chỉ một đoạn code rời rạc. Công cụ này hữu ích trong các tình huống như:
+
+- Bạn mới vào dự án và cần hiểu cấu trúc thư mục.
+- Bạn muốn sửa bug nhưng chưa biết file liên quan nằm ở đâu.
+- Bạn cần viết test, refactor hoặc cập nhật tài liệu.
+- Bạn muốn biến một quy trình lặp lại thành command, rule, hook hoặc skill.
+- Bạn cần một trợ lý có thể đọc nhiều file và đề xuất thay đổi có ngữ cảnh.
+
+Nếu bạn chỉ cần hỏi một khái niệm lập trình đơn giản, giao diện chat thông thường có thể đủ. Nếu bạn cần thao tác trên dự án thật, Claude Code sẽ phù hợp hơn.
+
+## Cài đặt Claude Code trên máy tính
+
+Trước khi cài đặt Claude Code, bạn nên có terminal cơ bản và quyền chạy lệnh trên máy. Tùy hệ điều hành, bạn có thể dùng một trong các cách sau.
+
+Trên macOS với Homebrew:
+
+```bash
+brew install --cask claude-code
+```
+
+Trên macOS, Linux hoặc WSL:
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+Trên Windows CMD:
+
+```bash
+curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+```
+
+Sau khi cài, hãy làm theo hướng dẫn hiển thị trong terminal để thêm Claude Code vào biến môi trường `PATH` nếu được yêu cầu. Đây là bước quan trọng vì terminal cần biết lệnh `claude` nằm ở đâu.
+
+## Kiểm tra Claude Code đã cài đúng chưa
+
+Sau khi cài đặt Claude Code, mở terminal mới và chạy:
+
+```bash
+claude --version
+```
+
+Nếu terminal trả về phiên bản, nghĩa là lệnh đã hoạt động. Nếu máy báo không tìm thấy `claude`, nguyên nhân thường là bạn chưa mở lại terminal, chưa thêm đường dẫn vào `PATH`, hoặc quá trình cài đặt chưa hoàn tất.
+
+Bạn có thể thử mở một thư mục dự án rồi chạy:
+
+```bash
+cd my-project
+claude
+```
+
+Lúc này Claude Code sẽ bắt đầu phiên làm việc trong thư mục hiện tại. Hãy nhớ rằng Claude chỉ hiểu rõ dự án sau khi được cung cấp context phù hợp. Bài sau sẽ giải thích cách dùng `CLAUDE.md` và `/init` để làm việc này.
+
+## Quy trình đầu tiên với Claude Code
+
+Một phiên làm việc đơn giản thường đi theo thứ tự sau:
+
+- Mở terminal tại thư mục dự án.
+- Chạy `claude` để bắt đầu phiên.
+- Mô tả rõ nhiệm vụ, ví dụ: "đọc cấu trúc dự án và cho tôi biết app chạy như thế nào".
+- Kiểm tra những gì Claude đề xuất trước khi đồng ý sửa file.
+- Chạy lệnh kiểm tra như lint, test hoặc build sau khi có thay đổi.
+
+Ví dụ prompt đầu tiên:
+
+```text
+Hãy đọc cấu trúc dự án này, cho tôi biết entrypoint chính, nơi chứa component dùng chung và lệnh kiểm tra nhanh.
+Chưa sửa file nào, chỉ báo cáo trước.
+```
+
+Prompt này tốt vì nó giới hạn phạm vi. Bạn chưa yêu cầu Claude thay đổi code ngay, mà yêu cầu đọc và tóm tắt trước. Khi mới học Claude Code, cách làm này giúp bạn tránh để công cụ sửa nhầm file.
+
+## Những lỗi thường gặp khi mới dùng Claude Code
+
+- Chạy Claude Code ở sai thư mục. Hãy kiểm tra bạn đang đứng ở thư mục gốc dự án, không phải thư mục con ngẫu nhiên.
+- Bỏ qua bước thêm `PATH`. Nếu terminal không nhận lệnh `claude`, hãy mở terminal mới hoặc làm lại bước cấu hình môi trường.
+- Giao nhiệm vụ quá mơ hồ. Thay vì nói "sửa app", hãy nói rõ lỗi, file, hành vi mong muốn và cách kiểm tra.
+- Không chạy kiểm tra sau khi sửa. Claude có thể hỗ trợ mạnh, nhưng bạn vẫn cần lint, test hoặc build để xác nhận.
+
+## Bài tập thực hành
+
+Hãy cài Claude Code và thử một phiên đọc dự án không sửa file.
+
+```text
+Mục tiêu: để Claude đọc dự án hiện tại và tóm tắt cấu trúc.
+Yêu cầu: không sửa file, không chạy lệnh nguy hiểm, chỉ báo cáo những gì đã hiểu.
+```
+
+Sau khi Claude trả lời, hãy tự kiểm tra 3 điều:
+
+- Claude có nhận ra đúng framework hoặc ngôn ngữ chính không?
+- Claude có nêu đúng lệnh chạy dev, lint hoặc build không?
+- Có thông tin nào cần ghi lại vào file context cho các phiên sau không?
+
+## Câu hỏi thường gặp về Claude Code
+
+### Claude Code có thay thế lập trình viên không?
+
+Không. Claude Code là trợ lý giúp đọc, sửa và kiểm tra code nhanh hơn, nhưng người dùng vẫn phải đặt yêu cầu, xem diff, chạy kiểm tra và chịu trách nhiệm với thay đổi cuối cùng.
+
+### Claude Code khác gì Claude trong trình duyệt?
+
+Claude trong trình duyệt phù hợp để hỏi đáp chung. Claude Code chạy trong terminal và có thể làm việc trực tiếp với file, thư mục, lệnh và cấu trúc dự án của bạn.
+
+### Người mới có nên học Claude Code không?
+
+Có, nếu bạn đã biết terminal cơ bản và đang làm việc với dự án thật. Người mới nên bắt đầu bằng các nhiệm vụ đọc hiểu, viết tài liệu và giải thích code trước khi để Claude sửa nhiều file.
+
+## Tóm tắt
+
+Claude Code là công cụ dòng lệnh của Anthropic dành cho lập trình viên muốn làm việc với AI ngay trong dự án. Bạn đã biết Claude Code là gì, cách cài đặt Claude Code trên các hệ điều hành phổ biến và cách bắt đầu phiên đầu tiên. Ở bài tiếp theo, chúng ta sẽ học cách thêm context bằng `CLAUDE.md` để Claude hiểu dự án tốt hơn.

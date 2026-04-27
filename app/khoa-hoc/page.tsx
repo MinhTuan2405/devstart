@@ -5,12 +5,12 @@ import { getAllCourseSummaries } from '@/lib/courses'
 export const metadata: Metadata = {
   title: 'Khóa học lập trình miễn phí',
   description:
-    'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning. Phù hợp cho người mới bắt đầu, không cần kinh nghiệm.',
-  keywords: ['khóa học lập trình', 'học python miễn phí', 'học c++ miễn phí', 'học html css', 'học machine learning'],
+    'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning và Claude Code cho người mới bắt đầu.',
+  keywords: ['khóa học lập trình', 'học python miễn phí', 'học c++ miễn phí', 'học html css', 'học machine learning', 'học claude code'],
   openGraph: {
     title: 'Khóa học lập trình miễn phí | DevStart',
     description:
-      'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning. Phù hợp cho người mới bắt đầu.',
+      'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning và Claude Code cho người mới bắt đầu.',
     url: '/khoa-hoc',
     siteName: 'DevStart',
     locale: 'vi_VN',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Khóa học lập trình miễn phí | DevStart',
     description:
-      'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning. Phù hợp cho người mới bắt đầu.',
+      'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning và Claude Code cho người mới bắt đầu.',
   },
   alternates: {
     canonical: '/khoa-hoc',
@@ -43,7 +43,7 @@ export default function CoursesPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
             <CourseCard
               key={course.slug}

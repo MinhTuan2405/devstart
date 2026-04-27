@@ -1,0 +1,220 @@
+---
+title: "Custom commands trong Anthropic Claude Code: Cách tạo slash command"
+description: "Học cách tạo custom commands trong Anthropic Claude Code bằng markdown, $ARGUMENTS và slash command."
+slug: "custom-commands-claude-code"
+course: "claude-code"
+order: 5
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["custom commands Claude Code", "Anthropic Claude Code commands", "slash command Claude Code", "tạo command trong Claude Code", ".claude/commands", "$ARGUMENTS Claude Code", "Claude Code command template", "lệnh tùy chỉnh Claude Code", "project commands Claude Code"]
+publishedAt: "2026-04-27"
+---
+
+## Custom commands trong Claude Code là gì?
+
+Custom commands trong Claude Code là các slash command do bạn tự định nghĩa bằng file markdown. Thay vì gõ lại một prompt dài mỗi lần, bạn tạo một file trong `.claude/commands/`, mô tả context, task, steps và output. Sau đó bạn gọi nhanh bằng `/command-name`.
+
+Custom commands rất hữu ích khi một việc có cấu trúc lặp lại: review PR, viết test, tạo changelog, audit SEO, refactor component hoặc chuẩn bị release. Command giúp Claude nhận yêu cầu nhất quán hơn và giúp team dùng chung một quy trình.
+
+## Command trong Claude Code của Anthropic dùng để làm gì?
+
+Trong Anthropic Claude Code, command là cách chuẩn hóa prompt thành một thao tác có tên. Thay vì mỗi người trong team tự viết prompt review khác nhau, bạn có thể tạo một command chung như `/review-pr`, `/fix-bug`, `/write-test` hoặc `/document-file`.
+
+Command đặc biệt hữu ích khi yêu cầu có nhiều điều kiện nhỏ: phải đọc file trước, không sửa ngoài phạm vi, báo output theo format cụ thể, hoặc chỉ chạy lệnh kiểm tra sau khi thay đổi. Đây là nhóm keyword thường gặp khi học Claude Code commands: `slash command Claude Code`, `.claude/commands`, `$ARGUMENTS Claude Code` và `project commands Claude Code`.
+
+## Tạo custom command đầu tiên
+
+Để tạo custom command, bạn cần tạo thư mục `.claude/commands/` trong dự án, sau đó thêm file markdown. Tên file sẽ trở thành tên command.
+
+Ví dụ file:
+
+```text
+.claude/
+└── commands/
+    └── audit.md
+```
+
+File `audit.md` sẽ tạo command `/audit`. Nếu file là `review-pr.md`, command sẽ là `/review-pr` hoặc biến thể tương ứng trong giao diện Claude Code.
+
+Một command tối thiểu có thể như sau:
+
+```markdown
+# audit
+
+> Kiểm tra nhanh một file hoặc một phần code và báo rủi ro chính.
+
+## Task
+
+Đọc nội dung người dùng đưa vào trong $ARGUMENTS.
+Tìm lỗi logic, rủi ro bảo mật và thiếu kiểm tra quan trọng.
+
+## Output Format
+
+- Findings theo mức độ nghiêm trọng
+- File hoặc khu vực liên quan nếu có
+- Gợi ý sửa ngắn gọn
+```
+
+Sau khi tạo file, bạn có thể gọi:
+
+```text
+/audit app/api/users/route.ts
+```
+
+Claude sẽ đọc nội dung command, thay `$ARGUMENTS` bằng phần bạn nhập sau tên lệnh và thực hiện theo hướng dẫn.
+
+## Cấu trúc chuẩn cho custom command
+
+Một custom command tốt nên có các phần rõ ràng. Bạn không bắt buộc dùng đúng mọi heading, nhưng nên giữ logic tương tự.
+
+```markdown
+# verb-noun
+
+> Mô tả một dòng về command.
+
+## Context
+
+- Stack / framework: TypeScript, React, Vitest
+- Conventions: functional components, named exports
+- Related paths: tests trong __tests__/
+
+## Task
+
+Hướng dẫn chính Claude cần làm với $ARGUMENTS.
+
+## Steps
+
+- Đọc file liên quan trước.
+- Kiểm tra usage hoặc test hiện có.
+- Thực hiện nhiệm vụ chính.
+- Chạy bước xác minh phù hợp.
+
+## Output Format
+
+- Nêu rõ file cần tạo hoặc chỉnh.
+- Nêu rõ báo cáo cần trả về.
+
+## Constraints
+
+- Không sửa file ngoài phạm vi.
+- Không chạy lệnh phá hủy dữ liệu.
+- Ưu tiên thay đổi nhỏ nhất đúng yêu cầu.
+```
+
+Điểm quan trọng là command phải cụ thể. Nếu bạn chỉ viết "hãy review code", Claude vẫn phải đoán tiêu chí review. Nếu bạn viết rõ thứ tự đọc file, tiêu chí tìm lỗi và định dạng output, kết quả sẽ ổn định hơn.
+
+## Dùng $ARGUMENTS trong command
+
+`$ARGUMENTS` là phần nội dung người dùng nhập sau tên command. Đây là cách làm command linh hoạt mà không cần tạo một file mới cho từng trường hợp.
+
+Ví dụ command `fix-bug.md`:
+
+```markdown
+# fix-bug
+
+> Phân tích và sửa một bug được mô tả bởi người dùng.
+
+## Task
+
+Bug cần xử lý:
+
+$ARGUMENTS
+
+## Steps
+
+- Tái hiện hoặc đọc lỗi nếu có thể.
+- Tìm file liên quan trước khi sửa.
+- Ưu tiên thay đổi nhỏ nhất.
+- Chạy kiểm tra phù hợp sau khi sửa.
+```
+
+Khi gọi:
+
+```text
+/fix-bug Người dùng không đăng xuất được trên Safari sau khi bấm Logout
+```
+
+Claude sẽ nhận phần mô tả bug trong `$ARGUMENTS` và xử lý theo workflow đã định nghĩa.
+
+## Ba cách gọi custom command
+
+Bạn có thể dùng custom command theo nhiều cách.
+
+Không có argument:
+
+```text
+/standup
+/changelog
+```
+
+Có argument dạng mô tả:
+
+```text
+/review-pr sửa lỗi login trong auth.ts
+/write-test UserCard component
+```
+
+Có argument là file path:
+
+```text
+/document src/utils/formatter.ts
+/refactor src/components/Header.tsx
+```
+
+Khi command nhận file path, hãy viết rõ trong command rằng Claude cần đọc file đó trước. Đừng giả định Claude sẽ tự hiểu bạn muốn đọc hay chỉnh file.
+
+## Những lỗi thường gặp khi viết custom commands
+
+- Tên command quá chung chung như `do.md` hoặc `task.md`, khó nhớ và khó dùng lại.
+- Không có phần constraints nên Claude sửa quá rộng.
+- Không nói rõ output format, khiến mỗi lần trả kết quả khác nhau.
+- Không dùng `$ARGUMENTS`, làm command cứng và kém linh hoạt.
+- Trộn nhiều mục tiêu vào một command, ví dụ vừa review, vừa refactor, vừa viết test, vừa deploy.
+
+## Bài tập thực hành
+
+Hãy tạo một command tên `explain-file.md` để Claude giải thích một file cho người mới.
+
+Yêu cầu command:
+
+- Nhận file path từ `$ARGUMENTS`.
+- Đọc file trước khi trả lời.
+- Giải thích mục đích file, các hàm chính và luồng dữ liệu.
+- Không sửa file.
+- Kết thúc bằng 3 câu hỏi tự kiểm tra.
+
+Gợi ý nội dung bắt đầu:
+
+```markdown
+# explain-file
+
+> Giải thích một file trong dự án cho người mới.
+
+## Task
+
+Đọc file trong $ARGUMENTS và giải thích bằng tiếng Việt dễ hiểu.
+
+## Constraints
+
+- Không sửa file.
+- Không chạy lệnh nếu không cần.
+- Nếu file không tồn tại, báo rõ và dừng.
+```
+
+## Câu hỏi thường gặp về custom commands
+
+### Custom command có giống prompt mẫu không?
+
+Gần giống, nhưng mạnh hơn vì nó nằm trong dự án và có thể dùng chung cho team. Command cũng có thể chuẩn hóa context, steps, constraints và output format tốt hơn một prompt rời rạc.
+
+### Nên tạo command cho mọi việc không?
+
+Không. Chỉ nên tạo command cho việc lặp lại nhiều lần hoặc cần quy trình nhất quán. Nếu một việc chỉ làm một lần, prompt trực tiếp thường đủ.
+
+### Custom commands có chạy code tự động không?
+
+Command là hướng dẫn cho Claude. Claude có thể đề xuất hoặc chạy công cụ tùy môi trường và quyền bạn cho phép, nhưng bạn vẫn nên kiểm tra thao tác trước khi chấp nhận thay đổi quan trọng.
+
+## Tóm tắt
+
+Custom commands trong Claude Code giúp bạn biến prompt dài thành slash command có cấu trúc. Bạn đã biết cách tạo file trong `.claude/commands/`, dùng `$ARGUMENTS`, gọi lệnh bằng `/` và tránh các lỗi thường gặp. Ở bài tiếp theo, chúng ta sẽ học cách viết rules để Claude luôn tuân thủ quy ước dự án.

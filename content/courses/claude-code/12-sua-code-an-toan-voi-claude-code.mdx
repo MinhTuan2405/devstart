@@ -1,0 +1,134 @@
+---
+title: "Sửa code an toàn với Claude Code: Quy trình read edit verify"
+description: "Học quy trình sửa code an toàn bằng Claude Code: đọc trước, thay đổi nhỏ, xem diff, chạy kiểm tra và tránh refactor quá rộng."
+slug: "sua-code-an-toan-voi-claude-code"
+course: "claude-code"
+order: 12
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["sửa code an toàn với Claude Code", "Claude Code read edit verify", "Claude Code diff", "Claude Code refactor", "Claude Code verification", "Claude Code thay đổi nhỏ"]
+publishedAt: "2026-04-27"
+---
+
+## Sửa code an toàn với Claude Code là gì?
+
+Sửa code an toàn với Claude Code là quy trình để Claude thay đổi code theo phạm vi nhỏ, có hiểu ngữ cảnh, có diff rõ ràng và có bước kiểm tra sau cùng. Mục tiêu không phải để Claude sửa thật nhiều, mà là sửa đúng chỗ và dễ review.
+
+Một nguyên tắc thực tế: Claude nên đọc trước khi sửa. Nếu Claude chưa hiểu file, test và usage liên quan, thay đổi có thể phá hành vi cũ dù code vẫn compile.
+
+## Quy trình read edit verify
+
+Bạn có thể dùng vòng lặp 5 bước:
+
+- Read: đọc file liên quan và usage.
+- Plan: nêu thay đổi nhỏ nhất.
+- Edit: sửa đúng phạm vi.
+- Diff: xem lại thay đổi.
+- Verify: chạy lint, test hoặc build phù hợp.
+
+Prompt mẫu:
+
+```text
+Hãy xử lý task này theo quy trình:
+1. Đọc file liên quan trước.
+2. Nêu kế hoạch sửa nhỏ nhất.
+3. Sửa đúng phạm vi.
+4. Tóm tắt diff.
+5. Chạy npm run lint.
+```
+
+Quy trình này nghe chậm hơn, nhưng trong dự án thật nó tiết kiệm thời gian vì giảm lỗi lan rộng.
+
+## Yêu cầu thay đổi nhỏ nhất
+
+Claude đôi khi có xu hướng refactor hoặc tạo helper mới dù task chỉ cần sửa một dòng. Bạn nên nói rõ mức độ thay đổi mong muốn.
+
+Ví dụ:
+
+```text
+Ưu tiên thay đổi nhỏ nhất để sửa bug.
+Không refactor component, không đổi tên hàm, không thêm dependency.
+Nếu cần thay đổi rộng hơn, hãy dừng và giải thích lý do trước.
+```
+
+Câu "nếu cần thay đổi rộng hơn, hãy dừng" rất hữu ích. Nó cho Claude đường thoát khi task thật sự phức tạp, nhưng vẫn giữ quyền quyết định ở bạn.
+
+## Xem diff trước khi tin kết quả
+
+Sau khi Claude sửa file, hãy xem diff. Bạn không cần đọc từng ký tự nếu thay đổi nhỏ, nhưng cần kiểm tra các điểm sau:
+
+- Có file ngoài phạm vi bị sửa không?
+- Có xóa logic cũ quan trọng không?
+- Có thêm dependency hoặc import lạ không?
+- Có thay đổi text, route hoặc API không được yêu cầu không?
+- Có test hoặc kiểm tra phù hợp không?
+
+Prompt yêu cầu Claude tự tóm tắt diff:
+
+```text
+Hãy tóm tắt diff theo từng file.
+Với mỗi file, nêu lý do sửa và rủi ro hành vi nếu có.
+```
+
+Tóm tắt của Claude không thay thế việc bạn xem diff, nhưng giúp bạn review nhanh hơn.
+
+## Chạy kiểm tra đúng mức
+
+Không phải thay đổi nào cũng cần build đầy đủ. Hãy chọn kiểm tra phù hợp:
+
+- Sửa text hoặc markdown: kiểm tra render hoặc build nếu content ảnh hưởng route tĩnh.
+- Sửa TypeScript: chạy lint hoặc typecheck nếu có.
+- Sửa logic quan trọng: chạy test liên quan trước, sau đó test rộng hơn.
+- Sửa cấu hình build: chạy build đầy đủ.
+
+Prompt mẫu:
+
+```text
+Sau khi sửa, hãy chạy kiểm tra phù hợp nhất.
+Nếu có nhiều lựa chọn, ưu tiên test liên quan trước rồi mới build đầy đủ nếu cần.
+```
+
+## Những lỗi thường gặp khi để Claude sửa code
+
+- Cho sửa trực tiếp khi chưa đọc usage liên quan.
+- Không giới hạn phạm vi file.
+- Chấp nhận refactor rộng cho bug nhỏ.
+- Không xem diff trước khi commit.
+- Không chạy kiểm tra hoặc chạy sai command.
+
+## Bài tập thực hành
+
+Chọn một bug nhỏ trong dự án, ví dụ text sai hoặc validate thiếu. Giao task cho Claude theo quy trình read edit verify.
+
+Yêu cầu output:
+
+- File đã đọc.
+- Kế hoạch sửa.
+- File đã sửa.
+- Diff summary.
+- Lệnh kiểm tra đã chạy.
+
+Prompt gợi ý:
+
+```text
+Hãy sửa bug này bằng thay đổi nhỏ nhất.
+Đọc file liên quan trước, không refactor rộng, chạy kiểm tra sau khi sửa.
+```
+
+## Câu hỏi thường gặp về sửa code với Claude Code
+
+### Có nên để Claude tự sửa nhiều file không?
+
+Có thể, nếu task thật sự cần nhiều file và bạn có kế hoạch rõ. Với người mới, hãy bắt đầu bằng phạm vi nhỏ.
+
+### Claude nói đã sửa xong thì có cần kiểm tra không?
+
+Có. Luôn xem diff và chạy kiểm tra phù hợp. Claude là trợ lý, không phải hệ thống đảm bảo correctness tuyệt đối.
+
+### Khi nào nên dừng Claude?
+
+Khi nó sửa ngoài phạm vi, refactor quá rộng hoặc dựa trên giả định sai. Dừng sớm tốt hơn sửa hậu quả sau.
+
+## Tóm tắt
+
+Sửa code an toàn với Claude Code cần quy trình read, plan, edit, diff và verify. Bạn đã học cách yêu cầu thay đổi nhỏ nhất, xem diff và chọn kiểm tra đúng mức. Bài tiếp theo sẽ tập trung vào debug lỗi với Claude Code.
