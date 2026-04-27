@@ -76,7 +76,7 @@ export function getLessonBySlug(courseName: string, slug: string): Lesson | null
 }
 
 export function getAllLessons(): Lesson[] {
-  const courseNames = ['python', 'cpp', 'html-css', 'machine-learning', 'claude-code']
+  const courseNames = ['python', 'cpp', 'html-css', 'machine-learning', 'claude-code', 'sql']
   return courseNames.flatMap((name) => getLessonsByCourseName(name))
 }
 
@@ -152,5 +152,11 @@ export const courseInfo: Record<string, { name: string; description: string; ico
     description: 'Học Claude Code từ cài đặt, context, workflow sửa code, testing, git, MCP, bảo mật đến thiết lập .claude hoàn chỉnh.',
     icon: '🧠',
     slug: 'claude-code',
+  },
+  sql: {
+    name: 'SQL',
+    description: 'Học SQL với BikeStores: SELECT, WHERE, JOIN, GROUP BY, subquery, function và window functions từ cơ bản đến thực hành báo cáo.',
+    icon: '🗄️',
+    slug: 'sql',
   },
 }

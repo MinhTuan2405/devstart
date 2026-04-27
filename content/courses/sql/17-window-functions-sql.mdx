@@ -1,0 +1,147 @@
+---
+title: "Window functions trong SQL: OVER, PARTITION BY và ORDER BY"
+description: "Học window functions trong SQL Server để tính tổng, tỷ lệ và số liệu theo nhóm mà không làm mất từng dòng dữ liệu."
+slug: "window-functions-sql"
+course: "sql"
+order: 17
+duration: "26 phút"
+difficulty: "Trung bình"
+keywords: ["window functions sql", "over trong sql", "partition by sql", "order by window function", "aggregate vs window function", "sql server window functions"]
+publishedAt: "2026-04-28"
+---
+
+## Window functions trong SQL là gì?
+
+Window functions trong SQL tính toán trên một nhóm dòng liên quan đến dòng hiện tại nhưng không gộp các dòng lại thành một dòng như `GROUP BY`. Nói ngắn gọn, bạn vẫn giữ từng dòng kết quả, đồng thời có thêm tổng, thứ hạng, tỷ lệ hoặc giá trị trước sau.
+
+Nếu `GROUP BY` dùng để tạo báo cáo tổng hợp, window functions giúp tạo báo cáo chi tiết có thêm ngữ cảnh. Ví dụ mỗi dòng doanh thu theo tháng vẫn còn đó, nhưng bạn có thêm tổng doanh thu của cửa hàng để tính tỷ trọng.
+
+## OVER là phần bắt buộc của window function
+
+Một window function thường có dạng:
+
+```sql
+<function>() OVER (
+  PARTITION BY <cot_chia_nhom>
+  ORDER BY <cot_sap_xep>
+)
+```
+
+`OVER` xác định cửa sổ dữ liệu mà hàm sẽ nhìn vào. Bên trong `OVER`, `PARTITION BY` chia dữ liệu thành nhóm, còn `ORDER BY` xác định thứ tự trong mỗi nhóm.
+
+## Aggregate function và window function khác nhau thế nào?
+
+Ví dụ `GROUP BY` doanh thu theo cửa hàng:
+
+```sql
+SELECT
+  st.store_name,
+  SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue
+FROM sales.orders AS o
+JOIN sales.order_items AS oi
+  ON o.order_id = oi.order_id
+JOIN sales.stores AS st
+  ON o.store_id = st.store_id
+GROUP BY st.store_name;
+```
+
+Kết quả mỗi cửa hàng chỉ còn một dòng. Nếu bạn muốn giữ doanh thu theo tháng nhưng vẫn biết tổng doanh thu của cửa hàng, dùng window function trên kết quả đã tổng hợp theo tháng.
+
+```sql
+WITH monthly_sales AS (
+  SELECT
+    st.store_name,
+    YEAR(o.order_date) AS order_year,
+    MONTH(o.order_date) AS order_month,
+    SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue
+  FROM sales.orders AS o
+  JOIN sales.order_items AS oi
+    ON o.order_id = oi.order_id
+  JOIN sales.stores AS st
+    ON o.store_id = st.store_id
+  GROUP BY st.store_name, YEAR(o.order_date), MONTH(o.order_date)
+)
+SELECT
+  store_name,
+  order_year,
+  order_month,
+  revenue,
+  SUM(revenue) OVER (PARTITION BY store_name) AS store_total_revenue,
+  SUM(revenue) OVER () AS all_store_revenue
+FROM monthly_sales
+ORDER BY store_name, order_year, order_month;
+```
+
+`SUM(revenue) OVER (PARTITION BY store_name)` không làm mất dòng tháng. Nó chỉ thêm tổng của từng cửa hàng vào mỗi dòng thuộc cửa hàng đó.
+
+## PARTITION BY dùng để chia cửa sổ
+
+Không có `PARTITION BY`, toàn bộ kết quả là một partition. Có `PARTITION BY store_name`, mỗi cửa hàng là một partition riêng.
+
+```sql
+WITH product_prices AS (
+  SELECT
+    c.category_name,
+    p.product_name,
+    p.list_price
+  FROM production.products AS p
+  JOIN production.categories AS c
+    ON p.category_id = c.category_id
+)
+SELECT
+  category_name,
+  product_name,
+  list_price,
+  AVG(list_price) OVER (PARTITION BY category_name) AS avg_price_in_category
+FROM product_prices;
+```
+
+Mỗi sản phẩm vẫn là một dòng, nhưng có thêm giá trung bình của danh mục tương ứng.
+
+## Thứ tự xử lý logic cần nhớ
+
+Window functions chạy sau `WHERE`, `GROUP BY`, aggregate và `HAVING`, nhưng trước `ORDER BY` cuối cùng. Vì vậy, bạn không thể dùng window function trực tiếp trong `WHERE` cùng cấp.
+
+Nếu muốn lọc theo kết quả window function, hãy dùng CTE hoặc subquery.
+
+## Những lỗi thường gặp với window functions
+
+- Nghĩ window function giống `GROUP BY` và mong nó gộp dòng. Thực tế nó giữ dòng.
+- Dùng window function trong `WHERE`, `GROUP BY` hoặc `HAVING` cùng cấp, gây lỗi.
+- Quên `PARTITION BY`, khiến hàm tính trên toàn bộ kết quả thay vì từng nhóm.
+- Dùng `ORDER BY` trong `OVER` nhưng không hiểu window frame mặc định, đặc biệt với running total.
+- Tính window function trên dữ liệu chưa aggregate đúng mức, dẫn đến số liệu lặp hoặc sai.
+
+## Bài tập thực hành
+
+Hãy viết query tính doanh thu theo tháng của từng cửa hàng và thêm:
+
+- Tổng doanh thu của cửa hàng.
+- Tổng doanh thu toàn hệ thống.
+- Tỷ trọng doanh thu tháng trên tổng cửa hàng.
+
+Gợi ý công thức tỷ trọng:
+
+```sql
+revenue / NULLIF(SUM(revenue) OVER (PARTITION BY store_name), 0) AS share_in_store
+```
+
+Sau khi chạy, hãy thử bỏ `PARTITION BY store_name` để xem tổng được tính trên toàn bộ kết quả.
+
+## Câu hỏi thường gặp về window functions
+
+### Window function có thay thế GROUP BY không?
+
+Không hoàn toàn. `GROUP BY` dùng để gộp dòng. Window function dùng để thêm số liệu theo cửa sổ nhưng vẫn giữ từng dòng.
+
+### Có bắt buộc dùng PARTITION BY không?
+
+Không. Nếu bỏ `PARTITION BY`, toàn bộ kết quả là một partition. Điều này phù hợp khi bạn muốn tổng hoặc xếp hạng toàn bộ dữ liệu.
+
+### Vì sao không dùng được window function trong WHERE?
+
+Vì `WHERE` chạy trước window functions trong thứ tự xử lý logic. Hãy tính window function trong CTE hoặc subquery, rồi lọc ở query ngoài.
+
+## Tóm tắt
+
+Bạn đã học window functions, `OVER`, `PARTITION BY`, `ORDER BY` và sự khác nhau giữa aggregate function với window function. Ở bài tiếp theo, chúng ta sẽ học các hàm xếp hạng: `ROW_NUMBER`, `RANK`, `DENSE_RANK` và `NTILE`.

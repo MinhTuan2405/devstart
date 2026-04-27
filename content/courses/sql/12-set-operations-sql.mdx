@@ -1,0 +1,153 @@
+---
+title: "Set operations trong SQL: UNION, INTERSECT và EXCEPT"
+description: "Học UNION, UNION ALL, INTERSECT và EXCEPT trong SQL Server để kết hợp nhiều tập kết quả đúng cách."
+slug: "set-operations-sql"
+course: "sql"
+order: 12
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["union trong sql", "union all trong sql", "intersect trong sql", "except trong sql", "set operations sql", "kết hợp kết quả query sql"]
+publishedAt: "2026-04-28"
+---
+
+## Set operations trong SQL là gì?
+
+Set operations trong SQL dùng để kết hợp kết quả của hai hoặc nhiều truy vấn thành một tập kết quả. Các phép chính gồm `UNION`, `UNION ALL`, `INTERSECT` và `EXCEPT`. Chúng làm việc theo dòng kết quả, không giống JOIN ghép cột giữa nhiều bảng.
+
+Bạn dùng set operations khi có hai danh sách cùng cấu trúc và muốn gộp, tìm phần giao hoặc tìm phần chỉ có ở danh sách thứ nhất.
+
+## Quy tắc bắt buộc khi dùng set operations
+
+Các query được kết hợp phải thỏa điều kiện:
+
+- Có cùng số lượng cột.
+- Các cột tương ứng có kiểu dữ liệu tương thích.
+- `ORDER BY` nếu có thường đặt ở cuối toàn bộ phép kết hợp.
+- Tên cột kết quả thường lấy theo query đầu tiên.
+
+Ví dụ sai: query đầu chọn 2 cột, query sau chọn 1 cột. SQL Server sẽ báo lỗi.
+
+## UNION và UNION ALL trong SQL
+
+`UNION` gộp kết quả và loại dòng trùng. `UNION ALL` gộp kết quả nhưng giữ trùng.
+
+Ví dụ tạo danh sách customer id có đơn trong năm 2017 hoặc 2018:
+
+```sql
+SELECT customer_id
+FROM sales.orders
+WHERE order_date >= '2017-01-01'
+  AND order_date < '2018-01-01'
+UNION
+SELECT customer_id
+FROM sales.orders
+WHERE order_date >= '2018-01-01'
+  AND order_date < '2019-01-01';
+```
+
+Nếu một khách hàng có đơn ở cả hai năm, `UNION` chỉ giữ một dòng. Nếu bạn muốn giữ mọi dòng để đếm số lần xuất hiện, dùng `UNION ALL`.
+
+```sql
+SELECT customer_id, '2017' AS order_year
+FROM sales.orders
+WHERE order_date >= '2017-01-01'
+  AND order_date < '2018-01-01'
+UNION ALL
+SELECT customer_id, '2018' AS order_year
+FROM sales.orders
+WHERE order_date >= '2018-01-01'
+  AND order_date < '2019-01-01';
+```
+
+`UNION ALL` thường nhanh hơn vì không phải loại trùng.
+
+## INTERSECT trong SQL
+
+`INTERSECT` trả về các dòng xuất hiện trong cả hai kết quả.
+
+Ví dụ tìm khách hàng có đơn trong cả năm 2017 và 2018:
+
+```sql
+SELECT customer_id
+FROM sales.orders
+WHERE order_date >= '2017-01-01'
+  AND order_date < '2018-01-01'
+INTERSECT
+SELECT customer_id
+FROM sales.orders
+WHERE order_date >= '2018-01-01'
+  AND order_date < '2019-01-01';
+```
+
+Đây là cách ngắn gọn để tìm phần giao giữa hai tập khách hàng.
+
+## EXCEPT trong SQL
+
+`EXCEPT` trả về các dòng có trong query đầu nhưng không có trong query sau.
+
+Ví dụ tìm khách hàng có đơn trong năm 2017 nhưng không có đơn trong năm 2018:
+
+```sql
+SELECT customer_id
+FROM sales.orders
+WHERE order_date >= '2017-01-01'
+  AND order_date < '2018-01-01'
+EXCEPT
+SELECT customer_id
+FROM sales.orders
+WHERE order_date >= '2018-01-01'
+  AND order_date < '2019-01-01';
+```
+
+Trong SQL Server, cú pháp là `EXCEPT`. Một số hệ quản trị khác dùng `MINUS`, nhưng SQL Server không dùng `MINUS`.
+
+## Những lỗi thường gặp với set operations
+
+- Nhầm set operations với JOIN. Set operations xếp kết quả theo chiều dọc, JOIN ghép cột theo chiều ngang.
+- Hai query không cùng số cột hoặc kiểu dữ liệu không tương thích.
+- Dùng `UNION` khi cần giữ trùng để phân tích số lần xuất hiện. Khi cần giữ trùng, hãy dùng `UNION ALL`.
+- Đặt `ORDER BY` ở từng query con không đúng vị trí. Hãy đặt `ORDER BY` ở cuối kết quả tổng.
+- Quên rằng `EXCEPT` có hướng. Query A `EXCEPT` query B khác query B `EXCEPT` query A.
+
+## Bài tập thực hành
+
+Hãy viết các query sau:
+
+- Danh sách khách hàng có đơn trong năm 2017 hoặc 2018.
+- Danh sách khách hàng có đơn trong cả hai năm.
+- Danh sách khách hàng có đơn năm 2017 nhưng không có đơn năm 2018.
+
+Gợi ý thêm tên khách hàng bằng cách dùng kết quả set operation làm subquery:
+
+```sql
+SELECT
+  c.customer_id,
+  c.first_name,
+  c.last_name
+FROM sales.customers AS c
+WHERE c.customer_id IN (
+  SELECT customer_id FROM sales.orders WHERE order_date >= '2017-01-01' AND order_date < '2018-01-01'
+  INTERSECT
+  SELECT customer_id FROM sales.orders WHERE order_date >= '2018-01-01' AND order_date < '2019-01-01'
+);
+```
+
+Sau khi chạy, hãy thử đổi `INTERSECT` thành `EXCEPT` và đọc lại ý nghĩa.
+
+## Câu hỏi thường gặp về UNION và EXCEPT
+
+### UNION khác UNION ALL thế nào?
+
+`UNION` loại dòng trùng, còn `UNION ALL` giữ nguyên tất cả dòng. Nếu không cần loại trùng, `UNION ALL` thường phù hợp hơn.
+
+### INTERSECT có giống INNER JOIN không?
+
+Không. `INTERSECT` so sánh toàn bộ dòng của hai kết quả cùng cấu trúc. INNER JOIN ghép cột từ các bảng dựa trên điều kiện JOIN.
+
+### EXCEPT có giữ trùng không?
+
+Trong SQL Server, `EXCEPT` trả về các dòng phân biệt từ query đầu không xuất hiện trong query sau. Nếu cần xử lý trùng chi tiết, bạn phải thiết kế query khác.
+
+## Tóm tắt
+
+Bạn đã học `UNION`, `UNION ALL`, `INTERSECT` và `EXCEPT`. Set operations rất hữu ích khi so sánh hoặc kết hợp nhiều danh sách cùng cấu trúc. Ở bài tiếp theo, chúng ta sẽ học các hàm xử lý chuỗi trong SQL Server.

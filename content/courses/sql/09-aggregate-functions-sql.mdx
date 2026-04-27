@@ -1,0 +1,128 @@
+---
+title: "Aggregate functions trong SQL: COUNT, SUM, AVG, MIN, MAX"
+description: "Học các hàm tổng hợp COUNT, SUM, AVG, MIN, MAX trong SQL Server để tính số lượng, doanh thu và giá trị trung bình."
+slug: "aggregate-functions-sql"
+course: "sql"
+order: 9
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["aggregate functions sql", "count trong sql", "sum trong sql", "avg trong sql", "min max sql", "hàm tổng hợp trong sql"]
+publishedAt: "2026-04-28"
+---
+
+## Aggregate functions trong SQL là gì?
+
+Aggregate functions trong SQL là các hàm tính toán trên nhiều dòng và trả về một giá trị tổng hợp, ví dụ đếm số đơn hàng, tính tổng doanh thu, giá trung bình, giá thấp nhất hoặc cao nhất. Các hàm quan trọng nhất là `COUNT`, `SUM`, `AVG`, `MIN` và `MAX`.
+
+Trong BikeStores, aggregate functions giúp bạn trả lời các câu hỏi báo cáo: có bao nhiêu sản phẩm, tổng số lượng bán ra là bao nhiêu, giá trung bình theo danh mục là gì, đơn hàng lớn nhất có giá trị bao nhiêu.
+
+## COUNT trong SQL dùng để đếm
+
+`COUNT(*)` đếm số dòng. `COUNT(column)` đếm số giá trị không phải `NULL` trong cột đó.
+
+```sql
+SELECT COUNT(*) AS total_products
+FROM production.products;
+```
+
+Đếm số đơn hàng đã có ngày giao:
+
+```sql
+SELECT
+  COUNT(*) AS total_orders,
+  COUNT(shipped_date) AS shipped_orders
+FROM sales.orders;
+```
+
+Nếu `shipped_date` là `NULL`, dòng đó vẫn được tính trong `COUNT(*)` nhưng không được tính trong `COUNT(shipped_date)`.
+
+## SUM và AVG dùng để tính tổng và trung bình
+
+Với bảng `sales.order_items`, doanh thu từng dòng thường được tính bằng số lượng nhân giá bán nhân phần còn lại sau giảm giá.
+
+```sql
+SELECT
+  SUM(quantity * list_price * (1 - discount)) AS total_revenue,
+  AVG(quantity * list_price * (1 - discount)) AS avg_line_amount
+FROM sales.order_items;
+```
+
+`SUM` cộng toàn bộ giá trị. `AVG` lấy trung bình các giá trị không phải `NULL`. Khi làm tiền tệ, bạn nên chú ý kiểu dữ liệu `DECIMAL` để tránh sai số không cần thiết.
+
+## MIN và MAX dùng để tìm nhỏ nhất và lớn nhất
+
+```sql
+SELECT
+  MIN(list_price) AS cheapest_price,
+  MAX(list_price) AS highest_price,
+  AVG(list_price) AS average_price
+FROM production.products;
+```
+
+Các hàm này giúp bạn hiểu khoảng giá sản phẩm. Bạn có thể kết hợp với `WHERE` để tính trên một phạm vi nhất định.
+
+```sql
+SELECT
+  MIN(list_price) AS min_2018_price,
+  MAX(list_price) AS max_2018_price
+FROM production.products
+WHERE model_year = 2018;
+```
+
+## COUNT DISTINCT dùng để đếm giá trị không trùng
+
+Nếu muốn biết khách hàng đến từ bao nhiêu bang khác nhau:
+
+```sql
+SELECT COUNT(DISTINCT state) AS total_states
+FROM sales.customers;
+```
+
+`DISTINCT` trong aggregate chỉ xét giá trị khác nhau của biểu thức bên trong. Đây là cách phổ biến để đếm số nhóm độc lập trước khi học `GROUP BY`.
+
+## Những lỗi thường gặp với aggregate functions
+
+- Nhầm `COUNT(*)` và `COUNT(column)`. `COUNT(column)` bỏ qua `NULL`.
+- Tính doanh thu nhưng quên áp dụng `discount`, dẫn đến số liệu cao hơn thực tế.
+- Dùng `AVG` trên dữ liệu integer rồi ngạc nhiên về kiểu kết quả. SQL Server có quy tắc kiểu dữ liệu riêng; hãy cast khi cần độ chính xác rõ ràng.
+- Chọn thêm cột thường cùng aggregate mà không dùng `GROUP BY`, khiến SQL báo lỗi.
+- Quên đặt alias cho cột tính toán, làm kết quả khó đọc.
+
+## Bài tập thực hành
+
+Hãy viết query trả lời các câu hỏi sau:
+
+- BikeStores có bao nhiêu sản phẩm?
+- Giá sản phẩm thấp nhất, cao nhất và trung bình là bao nhiêu?
+- Tổng doanh thu theo công thức `quantity * list_price * (1 - discount)` là bao nhiêu?
+- Có bao nhiêu đơn hàng đã có `shipped_date`?
+
+Gợi ý:
+
+```sql
+SELECT
+  COUNT(*) AS total_order_lines,
+  SUM(quantity) AS total_quantity,
+  SUM(quantity * list_price * (1 - discount)) AS total_revenue
+FROM sales.order_items;
+```
+
+Sau khi chạy, hãy thử lọc thêm một năm đơn hàng bằng JOIN với `sales.orders`.
+
+## Câu hỏi thường gặp về aggregate functions trong SQL
+
+### COUNT(*) có đếm NULL không?
+
+`COUNT(*)` đếm dòng, nên có. `COUNT(column)` chỉ đếm các dòng mà cột đó không phải `NULL`.
+
+### SUM gặp NULL thì sao?
+
+Các aggregate như `SUM`, `AVG`, `MIN`, `MAX` thường bỏ qua `NULL`. Nếu tất cả giá trị là `NULL`, kết quả có thể là `NULL`.
+
+### Vì sao cần alias cho aggregate?
+
+Alias giúp kết quả dễ đọc, nhất là khi biểu thức dài như doanh thu sau giảm giá. Báo cáo tốt nên có tên cột rõ nghĩa.
+
+## Tóm tắt
+
+Bạn đã học `COUNT`, `SUM`, `AVG`, `MIN`, `MAX` và cách tính doanh thu trong BikeStores. Aggregate functions trả về số liệu tổng hợp cho toàn bộ tập kết quả. Ở bài tiếp theo, chúng ta sẽ dùng `GROUP BY` để tính số liệu theo từng nhóm.

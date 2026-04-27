@@ -1,0 +1,154 @@
+---
+title: "Subquery trong SQL: Truy vấn con cho người mới"
+description: "Học subquery trong SQL Server: subquery một giá trị, nhiều giá trị, EXISTS và correlated subquery với BikeStores."
+slug: "subquery-trong-sql"
+course: "sql"
+order: 11
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["subquery trong sql", "truy vấn con sql", "correlated subquery", "exists trong sql", "in subquery sql", "sql server subquery"]
+publishedAt: "2026-04-28"
+---
+
+## Subquery trong SQL là gì?
+
+Subquery trong SQL là một truy vấn nằm bên trong truy vấn khác. Bạn dùng subquery khi cần lấy một kết quả trung gian, rồi dùng kết quả đó để lọc, so sánh hoặc kiểm tra tồn tại. Đây là cách viết rất phổ biến trước khi chuyển sang CTE hoặc window functions.
+
+Trong BikeStores, subquery giúp trả lời các câu như: sản phẩm nào đắt hơn giá trung bình, khách hàng nào từng đặt hàng, danh mục nào có sản phẩm, hoặc đơn hàng nào có giá trị lớn hơn mức trung bình.
+
+## Subquery trả về một giá trị
+
+Subquery đơn giản nhất trả về đúng một cột và một dòng. Bạn có thể dùng nó với `=`, `>`, `<`, `>=`, `<=`.
+
+Ví dụ tìm sản phẩm có giá cao hơn giá trung bình toàn bộ sản phẩm:
+
+```sql
+SELECT
+  product_name,
+  list_price
+FROM production.products
+WHERE list_price > (
+  SELECT AVG(list_price)
+  FROM production.products
+)
+ORDER BY list_price DESC;
+```
+
+Subquery bên trong tính `AVG(list_price)`. Query bên ngoài dùng kết quả đó để lọc sản phẩm.
+
+Edge case quan trọng: nếu subquery được dùng với `=` nhưng trả về nhiều dòng, SQL Server sẽ báo lỗi. Khi không chắc chỉ có một dòng, hãy dùng `IN`, `EXISTS` hoặc viết điều kiện cụ thể hơn.
+
+## Subquery trả về nhiều giá trị với IN
+
+`IN` phù hợp khi subquery trả về một cột nhưng nhiều dòng.
+
+Ví dụ tìm sản phẩm thuộc các danh mục có chữ `Bikes` trong tên:
+
+```sql
+SELECT
+  product_name,
+  category_id,
+  list_price
+FROM production.products
+WHERE category_id IN (
+  SELECT category_id
+  FROM production.categories
+  WHERE category_name LIKE '%Bikes%'
+);
+```
+
+Subquery trả về danh sách `category_id`, query bên ngoài lấy sản phẩm có `category_id` nằm trong danh sách đó.
+
+## EXISTS trong SQL dùng để kiểm tra tồn tại
+
+`EXISTS` không quan tâm subquery trả về giá trị gì, chỉ quan tâm có ít nhất một dòng hay không.
+
+Ví dụ tìm khách hàng đã từng đặt hàng:
+
+```sql
+SELECT
+  c.customer_id,
+  c.first_name,
+  c.last_name
+FROM sales.customers AS c
+WHERE EXISTS (
+  SELECT 1
+  FROM sales.orders AS o
+  WHERE o.customer_id = c.customer_id
+);
+```
+
+Đây là correlated subquery vì subquery bên trong tham chiếu `c.customer_id` từ query bên ngoài.
+
+## Correlated subquery là gì?
+
+Correlated subquery phụ thuộc vào từng dòng của query bên ngoài. Nó thường chạy theo ý nghĩa: với mỗi dòng bên ngoài, kiểm tra hoặc tính toán một tập dữ liệu liên quan.
+
+Ví dụ tìm sản phẩm đắt hơn giá trung bình trong chính danh mục của nó:
+
+```sql
+SELECT
+  p.product_name,
+  p.category_id,
+  p.list_price
+FROM production.products AS p
+WHERE p.list_price > (
+  SELECT AVG(p2.list_price)
+  FROM production.products AS p2
+  WHERE p2.category_id = p.category_id
+)
+ORDER BY p.category_id, p.list_price DESC;
+```
+
+Subquery cần `p.category_id` từ dòng sản phẩm hiện tại. Vì vậy, nó không thể chạy độc lập nếu không có query bên ngoài.
+
+## Những lỗi thường gặp với subquery
+
+- Dùng `=` với subquery trả nhiều dòng, gây lỗi.
+- Dùng `NOT IN` với subquery có `NULL`, dẫn đến kết quả rỗng bất ngờ.
+- Viết correlated subquery nhưng alias không rõ, gây nhầm cột bên trong và bên ngoài.
+- Lạm dụng subquery khiến query khó đọc. Khi query quá dài, có thể tách thành CTE ở giai đoạn sau.
+- Nghĩ subquery luôn chậm. Thực tế còn tùy optimizer, index và cách viết query.
+
+## Bài tập thực hành
+
+Hãy viết query trả lời các câu hỏi sau:
+
+- Sản phẩm nào đắt hơn giá trung bình toàn bộ sản phẩm?
+- Khách hàng nào đã từng đặt hàng?
+- Sản phẩm nào đắt hơn giá trung bình trong danh mục của chính nó?
+
+Gợi ý cho câu khách hàng chưa từng đặt hàng:
+
+```sql
+SELECT
+  c.customer_id,
+  c.first_name,
+  c.last_name
+FROM sales.customers AS c
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM sales.orders AS o
+  WHERE o.customer_id = c.customer_id
+);
+```
+
+Sau khi chạy, hãy so sánh `EXISTS` với cách dùng `LEFT JOIN ... WHERE o.order_id IS NULL`.
+
+## Câu hỏi thường gặp về subquery trong SQL
+
+### Subquery khác JOIN thế nào?
+
+JOIN kết hợp cột từ nhiều bảng vào cùng kết quả. Subquery thường dùng để lọc hoặc tính giá trị trung gian. Nhiều bài toán có thể viết bằng cả hai cách.
+
+### Khi nào dùng EXISTS thay vì IN?
+
+`EXISTS` phù hợp khi bạn chỉ cần kiểm tra có dòng liên quan hay không, đặc biệt với correlated subquery. `IN` phù hợp khi so sánh với danh sách giá trị một cột.
+
+### Correlated subquery có khó không?
+
+Không nếu bạn đọc theo từng dòng bên ngoài. Hãy đặt alias rõ ràng như `p` và `p2` để phân biệt dòng hiện tại với tập dòng được so sánh.
+
+## Tóm tắt
+
+Bạn đã học subquery một giá trị, subquery nhiều giá trị, `EXISTS` và correlated subquery. Ở bài tiếp theo, chúng ta sẽ học set operations như `UNION`, `INTERSECT` và `EXCEPT` để kết hợp kết quả của nhiều query.

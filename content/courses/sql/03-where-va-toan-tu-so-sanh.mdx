@@ -1,0 +1,157 @@
+---
+title: "WHERE trong SQL: Lọc dữ liệu bằng toán tử so sánh"
+description: "Học WHERE trong SQL để lọc sản phẩm, khách hàng và đơn hàng bằng các toán tử so sánh trong BikeStores."
+slug: "where-va-toan-tu-so-sanh"
+course: "sql"
+order: 3
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["where trong sql", "lọc dữ liệu trong sql", "toán tử so sánh sql", "sql server where", "điều kiện trong sql", "học sql cơ bản"]
+publishedAt: "2026-04-28"
+---
+
+## WHERE trong SQL là gì?
+
+WHERE trong SQL dùng để lọc các dòng thỏa điều kiện. Nếu `SELECT` trả lời câu hỏi chọn cột nào, thì `WHERE` trả lời câu hỏi lấy dòng nào. Đây là kỹ năng bắt buộc khi bạn muốn phân tích sản phẩm, khách hàng hoặc đơn hàng trong BikeStores.
+
+Không có `WHERE`, query có thể trả về toàn bộ bảng. Với bảng nhỏ điều này chưa nghiêm trọng, nhưng trong hệ thống thật, lấy quá nhiều dòng sẽ chậm, khó đọc và dễ gây tải không cần thiết.
+
+## Cú pháp WHERE cơ bản
+
+Bạn đặt `WHERE` sau `FROM` và trước `ORDER BY`.
+
+```sql
+SELECT
+  product_name,
+  model_year,
+  list_price
+FROM production.products
+WHERE list_price > 1000
+ORDER BY list_price DESC;
+```
+
+Query này lấy các sản phẩm có giá lớn hơn 1000 và sắp xếp từ cao xuống thấp.
+
+Các toán tử so sánh thường dùng:
+
+- `=` bằng.
+- `<>` hoặc `!=` khác.
+- `>` lớn hơn.
+- `>=` lớn hơn hoặc bằng.
+- `<` nhỏ hơn.
+- `<=` nhỏ hơn hoặc bằng.
+
+## Lọc theo số trong BikeStores
+
+Ví dụ tìm sản phẩm model năm 2018 có giá từ 500 trở lên:
+
+```sql
+SELECT
+  product_name,
+  model_year,
+  list_price
+FROM production.products
+WHERE model_year = 2018
+  AND list_price >= 500
+ORDER BY list_price DESC;
+```
+
+`AND` yêu cầu cả hai điều kiện đều đúng. Nếu một sản phẩm model 2018 nhưng giá dưới 500, nó không xuất hiện trong kết quả.
+
+## Lọc theo ngày trong SQL Server
+
+Bảng `sales.orders` có các cột ngày như `order_date`, `required_date`, `shipped_date`. Bạn có thể lọc đơn hàng theo ngày:
+
+```sql
+SELECT
+  order_id,
+  customer_id,
+  order_status,
+  order_date
+FROM sales.orders
+WHERE order_date >= '2018-01-01'
+  AND order_date < '2019-01-01'
+ORDER BY order_date;
+```
+
+Cách dùng khoảng nửa mở `>= ngày bắt đầu` và `< ngày kết thúc` thường an toàn hơn `BETWEEN` khi cột có cả giờ phút giây. Trong BikeStores, `order_date` là kiểu `DATE`, nhưng thói quen này vẫn tốt khi làm với `DATETIME`.
+
+## AND và OR khác nhau thế nào?
+
+`AND` yêu cầu tất cả điều kiện đúng. `OR` chỉ cần một điều kiện đúng.
+
+Ví dụ lấy khách hàng ở New York hoặc California:
+
+```sql
+SELECT
+  first_name,
+  last_name,
+  city,
+  state
+FROM sales.customers
+WHERE state = 'NY'
+   OR state = 'CA'
+ORDER BY state, city;
+```
+
+Khi kết hợp `AND` và `OR`, hãy dùng ngoặc để tránh hiểu nhầm:
+
+```sql
+SELECT
+  product_name,
+  model_year,
+  list_price
+FROM production.products
+WHERE model_year = 2018
+  AND (list_price < 300 OR list_price > 3000);
+```
+
+Không có ngoặc, SQL có thứ tự ưu tiên riêng và kết quả có thể khác điều bạn nghĩ.
+
+## Những lỗi thường gặp với WHERE
+
+- Dùng một dấu `=` là đúng trong SQL, không phải `==` như nhiều ngôn ngữ lập trình.
+- Quên đặt chuỗi và ngày trong dấu nháy đơn, ví dụ `state = 'NY'`.
+- Kết hợp `AND` và `OR` nhưng không dùng ngoặc, làm điều kiện bị hiểu sai.
+- So sánh trực tiếp với `NULL` bằng `=` hoặc `<>`. Với `NULL`, phải dùng `IS NULL` hoặc `IS NOT NULL`, sẽ học kỹ ở bài sau.
+- Lọc ngày bằng chuỗi mơ hồ như `'01/02/2018'`. Nên dùng định dạng rõ `YYYY-MM-DD`.
+
+## Bài tập thực hành
+
+Hãy viết query trả lời các câu hỏi sau:
+
+- Sản phẩm nào có `list_price` lớn hơn 2000?
+- Đơn hàng nào được tạo trong năm 2017?
+- Khách hàng nào ở bang `NY` hoặc `TX`?
+
+Gợi ý cho câu thứ hai:
+
+```sql
+SELECT
+  order_id,
+  order_date,
+  order_status
+FROM sales.orders
+WHERE order_date >= '2017-01-01'
+  AND order_date < '2018-01-01';
+```
+
+Sau khi chạy, hãy thử thêm `ORDER BY order_date DESC` để xem đơn mới nhất trước.
+
+## Câu hỏi thường gặp về WHERE trong SQL
+
+### WHERE có chạy trước SELECT không?
+
+Về thứ tự xử lý logic, `WHERE` lọc dòng trước khi danh sách `SELECT` được trả về. Vì vậy, bạn thường không dùng alias trong `SELECT` ngay tại `WHERE` cùng cấp.
+
+### Nên dùng != hay <> trong SQL?
+
+Cả hai thường hoạt động trong SQL Server. `<>` là cú pháp chuẩn SQL hơn, còn `!=` quen thuộc với lập trình viên từ các ngôn ngữ khác.
+
+### Vì sao query WHERE của tôi không trả dòng nào?
+
+Nguyên nhân thường là sai giá trị, sai kiểu dữ liệu, sai chữ hoa thường tùy collation, hoặc điều kiện quá chặt. Hãy thử lọc từng điều kiện một để kiểm tra.
+
+## Tóm tắt
+
+Bạn đã biết dùng `WHERE` trong SQL để lọc dữ liệu bằng toán tử so sánh, `AND`, `OR` và ngoặc điều kiện. Ở bài tiếp theo, chúng ta sẽ học các toán tử lọc phổ biến hơn: `LIKE`, `BETWEEN`, `IN` và cách xử lý `NULL`.

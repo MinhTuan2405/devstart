@@ -1,0 +1,184 @@
+---
+title: "Window frame trong SQL và dự án báo cáo BikeStores"
+description: "Học window frame ROWS, RANGE trong SQL Server và thực hành xây báo cáo doanh thu BikeStores tổng hợp cuối khóa."
+slug: "window-frame-va-du-an-sql"
+course: "sql"
+order: 20
+duration: "30 phút"
+difficulty: "Trung bình"
+keywords: ["window frame sql", "rows between sql", "range trong sql", "running total sql", "moving average sql", "dự án sql bikestores"]
+publishedAt: "2026-04-28"
+---
+
+## Window frame trong SQL là gì?
+
+Window frame trong SQL là phạm vi dòng mà window function nhìn vào quanh dòng hiện tại. Nếu `PARTITION BY` chia dữ liệu thành nhóm và `ORDER BY` sắp xếp nhóm đó, thì frame quyết định hàm sẽ tính từ dòng nào đến dòng nào trong nhóm.
+
+Frame rất quan trọng khi tính running total, moving average hoặc dùng `LAST_VALUE`. Không hiểu frame mặc định có thể làm báo cáo đúng cú pháp nhưng sai ý nghĩa.
+
+## ROWS BETWEEN dùng để chỉ phạm vi theo số dòng
+
+Mẫu phổ biến nhất là running total: cộng dồn từ đầu partition đến dòng hiện tại.
+
+```sql
+WITH monthly_sales AS (
+  SELECT
+    YEAR(o.order_date) AS order_year,
+    MONTH(o.order_date) AS order_month,
+    SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue
+  FROM sales.orders AS o
+  JOIN sales.order_items AS oi
+    ON o.order_id = oi.order_id
+  GROUP BY YEAR(o.order_date), MONTH(o.order_date)
+)
+SELECT
+  order_year,
+  order_month,
+  revenue,
+  SUM(revenue) OVER (
+    ORDER BY order_year, order_month
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+  ) AS running_revenue
+FROM monthly_sales
+ORDER BY order_year, order_month;
+```
+
+`UNBOUNDED PRECEDING` nghĩa là từ đầu cửa sổ. `CURRENT ROW` nghĩa là đến dòng hiện tại.
+
+## Moving average với frame quanh dòng hiện tại
+
+Moving average giúp làm mượt chuỗi thời gian. Ví dụ tính trung bình doanh thu của tháng hiện tại và 2 tháng trước:
+
+```sql
+WITH monthly_sales AS (
+  SELECT
+    YEAR(o.order_date) AS order_year,
+    MONTH(o.order_date) AS order_month,
+    SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue
+  FROM sales.orders AS o
+  JOIN sales.order_items AS oi
+    ON o.order_id = oi.order_id
+  GROUP BY YEAR(o.order_date), MONTH(o.order_date)
+)
+SELECT
+  order_year,
+  order_month,
+  revenue,
+  AVG(revenue) OVER (
+    ORDER BY order_year, order_month
+    ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+  ) AS moving_avg_3_months
+FROM monthly_sales
+ORDER BY order_year, order_month;
+```
+
+Ở những dòng đầu tiên, frame không đủ 3 tháng thì SQL Server tính trên số dòng hiện có.
+
+## ROWS, RANGE và GROUPS cần hiểu thế nào?
+
+Trong cheat sheet, bạn có thể thấy `ROWS`, `RANGE` và `GROUPS`. Với SQL Server, bạn nên dùng `ROWS` cho hầu hết bài toán thực tế vì nó rõ ràng theo số dòng.
+
+`RANGE` làm việc theo giá trị trong `ORDER BY` và có hạn chế trong SQL Server. Nếu có nhiều dòng đồng giá trị sắp xếp, `RANGE` có thể gom peer rows theo cách khác `ROWS`.
+
+`GROUPS` không phải cú pháp phổ biến trong SQL Server truyền thống, nên khóa học này không dùng nó cho BikeStores.
+
+## Dự án cuối khóa: báo cáo doanh thu BikeStores
+
+Mục tiêu: tạo báo cáo doanh thu theo cửa hàng và tháng, có doanh thu tháng, cộng dồn, doanh thu tháng trước và tăng trưởng.
+
+```sql
+WITH monthly_store_sales AS (
+  SELECT
+    st.store_name,
+    YEAR(o.order_date) AS order_year,
+    MONTH(o.order_date) AS order_month,
+    SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue
+  FROM sales.orders AS o
+  JOIN sales.order_items AS oi
+    ON o.order_id = oi.order_id
+  JOIN sales.stores AS st
+    ON o.store_id = st.store_id
+  GROUP BY st.store_name, YEAR(o.order_date), MONTH(o.order_date)
+), enriched AS (
+  SELECT
+    store_name,
+    order_year,
+    order_month,
+    revenue,
+    SUM(revenue) OVER (
+      PARTITION BY store_name
+      ORDER BY order_year, order_month
+      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_store_revenue,
+    LAG(revenue) OVER (
+      PARTITION BY store_name
+      ORDER BY order_year, order_month
+    ) AS previous_month_revenue
+  FROM monthly_store_sales
+)
+SELECT
+  store_name,
+  order_year,
+  order_month,
+  revenue,
+  running_store_revenue,
+  previous_month_revenue,
+  (revenue - previous_month_revenue) / NULLIF(previous_month_revenue, 0) AS growth_rate
+FROM enriched
+ORDER BY store_name, order_year, order_month;
+```
+
+Query này gom nhiều kỹ năng đã học: JOIN, GROUP BY, SUM, CTE, window function, window frame, LAG và NULLIF.
+
+## Checklist tự kiểm tra báo cáo
+
+- Có tính doanh thu bằng `quantity * list_price * (1 - discount)` không?
+- Có group đúng theo cửa hàng, năm và tháng không?
+- Có dùng `PARTITION BY store_name` để cộng dồn riêng từng cửa hàng không?
+- Có dùng `ORDER BY order_year, order_month` trong window function không?
+- Có tránh chia cho 0 bằng `NULLIF` không?
+
+## Những lỗi thường gặp với window frame
+
+- Không ghi frame khi cần running total rõ ràng, khiến người đọc khó hiểu ý định.
+- Dùng `RANGE` trong khi thật sự muốn đếm số dòng bằng `ROWS`.
+- Quên `PARTITION BY`, làm cộng dồn xuyên qua nhiều cửa hàng.
+- Sắp xếp theo tháng mà không có năm, khiến tháng 1 của nhiều năm bị trộn thứ tự.
+- Tính tăng trưởng nhưng không xử lý tháng đầu tiên có giá trị trước đó là `NULL`.
+
+## Bài tập thực hành cuối khóa
+
+Hãy mở rộng báo cáo cuối khóa theo 3 hướng:
+
+- Thêm cột `rank_in_store` để xếp hạng tháng có doanh thu cao nhất trong từng cửa hàng.
+- Thêm cột `share_of_all_stores` để tính tỷ trọng doanh thu tháng trên tổng doanh thu toàn hệ thống.
+- Thêm điều kiện chỉ lấy các tháng trong năm 2018.
+
+Gợi ý:
+
+```sql
+RANK() OVER (
+  PARTITION BY store_name
+  ORDER BY revenue DESC
+) AS rank_in_store
+```
+
+Sau khi hoàn thành, hãy giải thích bằng lời: báo cáo này trả lời câu hỏi kinh doanh nào và có thể dùng để ra quyết định gì.
+
+## Câu hỏi thường gặp về window frame trong SQL
+
+### Khi nào cần ghi ROWS BETWEEN?
+
+Hãy ghi rõ khi bạn tính running total, moving average hoặc cần kiểm soát phạm vi dòng. Việc ghi rõ giúp query dễ đọc và tránh hiểu nhầm frame mặc định.
+
+### RANGE có tốt hơn ROWS không?
+
+Không hẳn. `RANGE` làm việc theo giá trị sắp xếp và có thể xử lý peer rows khác `ROWS`. Với người mới và nhiều báo cáo thực tế, `ROWS` dễ kiểm soát hơn.
+
+### Window functions có dùng được trong mọi database không?
+
+Hầu hết database hiện đại hỗ trợ window functions, nhưng chi tiết cú pháp có thể khác nhau. Khóa học này dùng cách viết phù hợp với SQL Server và BikeStores.
+
+## Tóm tắt
+
+Bạn đã hoàn thành khóa học SQL với BikeStores: SELECT, WHERE, JOIN, GROUP BY, subquery, set operations, functions, NULL, CASE, date time và window functions. Bước tiếp theo là tự viết báo cáo nhỏ từ một câu hỏi kinh doanh thật, kiểm tra kết quả từng bước và tối ưu query khi dữ liệu lớn hơn.

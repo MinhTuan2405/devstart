@@ -1,0 +1,162 @@
+---
+title: "LEFT JOIN, RIGHT JOIN, FULL JOIN và CROSS JOIN trong SQL"
+description: "Học các loại JOIN ngoài INNER JOIN: LEFT, RIGHT, FULL, CROSS và lưu ý NATURAL JOIN khi dùng SQL Server."
+slug: "outer-join-cross-join"
+course: "sql"
+order: 7
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["left join trong sql", "right join trong sql", "full join trong sql", "cross join trong sql", "outer join sql", "natural join sql server"]
+publishedAt: "2026-04-28"
+---
+
+## OUTER JOIN trong SQL dùng để làm gì?
+
+OUTER JOIN trong SQL dùng khi bạn muốn giữ lại dòng dù không có bản ghi khớp ở bảng còn lại. `LEFT JOIN`, `RIGHT JOIN` và `FULL JOIN` rất quan trọng trong báo cáo vì dữ liệu thực tế thường thiếu, chưa phát sinh hoặc không khớp hoàn toàn.
+
+Trong BikeStores, ví dụ phổ biến là cửa hàng có thể chưa có tồn kho cho một sản phẩm, đơn hàng có thể chưa có ngày giao, hoặc khách hàng có thể chưa có đơn trong phạm vi phân tích.
+
+## LEFT JOIN giữ toàn bộ bảng bên trái
+
+`LEFT JOIN` trả về tất cả dòng từ bảng bên trái và ghép dữ liệu từ bảng bên phải nếu tìm thấy. Nếu không tìm thấy, các cột bên phải là `NULL`.
+
+Ví dụ xem tồn kho sản phẩm theo cửa hàng:
+
+```sql
+SELECT TOP (30)
+  p.product_name,
+  s.store_id,
+  s.quantity
+FROM production.products AS p
+LEFT JOIN production.stocks AS s
+  ON p.product_id = s.product_id
+ORDER BY p.product_name, s.store_id;
+```
+
+Query này giữ sản phẩm ngay cả khi chưa có dòng tồn kho tương ứng trong `production.stocks`. Đây là điểm khác với `INNER JOIN`.
+
+## Tìm dữ liệu thiếu bằng LEFT JOIN
+
+Một mẫu rất hay dùng là `LEFT JOIN` rồi lọc phần bên phải `IS NULL`.
+
+```sql
+SELECT
+  p.product_id,
+  p.product_name
+FROM production.products AS p
+LEFT JOIN production.stocks AS s
+  ON p.product_id = s.product_id
+WHERE s.product_id IS NULL;
+```
+
+Ý nghĩa: tìm sản phẩm không có dòng tồn kho nào. Trong database thật, mẫu này dùng để kiểm tra dữ liệu thiếu hoặc phát hiện bản ghi chưa được liên kết.
+
+## RIGHT JOIN và FULL JOIN
+
+`RIGHT JOIN` giữ toàn bộ bảng bên phải. Về mặt logic, bạn thường có thể đổi thứ tự bảng và dùng `LEFT JOIN` thay thế. Vì dễ đọc hơn, nhiều team hạn chế dùng `RIGHT JOIN`.
+
+```sql
+SELECT
+  s.store_name,
+  st.product_id,
+  st.quantity
+FROM production.stocks AS st
+RIGHT JOIN sales.stores AS s
+  ON st.store_id = s.store_id;
+```
+
+`FULL JOIN` giữ tất cả dòng từ cả hai phía. Nếu không khớp, phía còn lại là `NULL`.
+
+```sql
+SELECT
+  p.product_id,
+  p.product_name,
+  st.store_id,
+  st.quantity
+FROM production.products AS p
+FULL JOIN production.stocks AS st
+  ON p.product_id = st.product_id;
+```
+
+`FULL JOIN` hữu ích khi đối soát dữ liệu giữa hai nguồn, nhưng trong báo cáo hằng ngày thường ít dùng hơn `LEFT JOIN`.
+
+## CROSS JOIN tạo mọi tổ hợp có thể
+
+`CROSS JOIN` trả về mọi kết hợp giữa các dòng của hai bảng. Nếu bảng A có 10 dòng và bảng B có 3 dòng, kết quả có 30 dòng.
+
+Ví dụ tạo danh sách mọi cặp cửa hàng và sản phẩm:
+
+```sql
+SELECT TOP (50)
+  st.store_name,
+  p.product_name
+FROM sales.stores AS st
+CROSS JOIN production.products AS p
+ORDER BY st.store_name, p.product_name;
+```
+
+Mẫu này có thể dùng để tạo khung báo cáo: mọi cửa hàng phải có mọi sản phẩm, sau đó `LEFT JOIN` tồn kho thực tế vào để thấy sản phẩm nào chưa có dữ liệu.
+
+## NATURAL JOIN có dùng trong SQL Server không?
+
+Cheat sheet SQL thường nhắc `NATURAL JOIN`, nhưng SQL Server không hỗ trợ `NATURAL JOIN`. Ngay cả ở database có hỗ trợ, `NATURAL JOIN` cũng hiếm dùng trong thực tế vì nó tự nối theo các cột cùng tên, dễ tạo kết quả sai khi schema thay đổi.
+
+Trong dự án thật, hãy viết điều kiện JOIN rõ ràng bằng `ON`:
+
+```sql
+SELECT
+  p.product_name,
+  b.brand_name
+FROM production.products AS p
+JOIN production.brands AS b
+  ON p.brand_id = b.brand_id;
+```
+
+Rõ ràng luôn tốt hơn tự động đoán.
+
+## Những lỗi thường gặp với OUTER JOIN
+
+- Dùng `WHERE` trên cột bảng phải sau `LEFT JOIN`, vô tình biến nó gần giống `INNER JOIN`.
+- Không kiểm soát số dòng khi dùng `CROSS JOIN`, làm kết quả phình rất lớn.
+- Dùng `RIGHT JOIN` trong query dài khiến người đọc khó theo dõi hướng dữ liệu.
+- Nghĩ `FULL JOIN` luôn tốt hơn `LEFT JOIN`. Thực tế hãy chọn JOIN theo câu hỏi dữ liệu.
+- Mong đợi `NATURAL JOIN` chạy trong SQL Server. SQL Server không hỗ trợ cú pháp này.
+
+## Bài tập thực hành
+
+Hãy viết query tạo danh sách mọi cửa hàng và sản phẩm, sau đó ghép tồn kho nếu có.
+
+Gợi ý:
+
+```sql
+SELECT
+  st.store_name,
+  p.product_name,
+  stock.quantity
+FROM sales.stores AS st
+CROSS JOIN production.products AS p
+LEFT JOIN production.stocks AS stock
+  ON stock.store_id = st.store_id
+ AND stock.product_id = p.product_id
+ORDER BY st.store_name, p.product_name;
+```
+
+Sau khi chạy, hãy tìm các dòng có `quantity IS NULL` và suy nghĩ xem chúng biểu thị điều gì.
+
+## Câu hỏi thường gặp về LEFT JOIN và CROSS JOIN
+
+### LEFT JOIN khác INNER JOIN thế nào?
+
+LEFT JOIN giữ toàn bộ dòng của bảng bên trái, kể cả khi không có bản ghi khớp bên phải. INNER JOIN chỉ giữ dòng khớp cả hai bên.
+
+### Khi nào dùng CROSS JOIN?
+
+CROSS JOIN dùng khi bạn thật sự cần mọi tổ hợp, ví dụ tạo khung cửa hàng x sản phẩm. Không nên dùng nếu chưa chắc vì số dòng có thể tăng rất nhanh.
+
+### Có nên dùng RIGHT JOIN không?
+
+Có thể dùng, nhưng nhiều trường hợp đổi thứ tự bảng và dùng LEFT JOIN sẽ dễ đọc hơn.
+
+## Tóm tắt
+
+Bạn đã học LEFT JOIN, RIGHT JOIN, FULL JOIN, CROSS JOIN và biết vì sao NATURAL JOIN không phù hợp với SQL Server. Ở bài tiếp theo, chúng ta sẽ đi sâu vào self join, multiple joins và điều kiện JOIN nhiều phần.

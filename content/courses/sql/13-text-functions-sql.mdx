@@ -1,0 +1,140 @@
+---
+title: "Text functions trong SQL Server: Xử lý chuỗi cơ bản"
+description: "Học các hàm xử lý chuỗi trong SQL Server như CONCAT, LEN, LOWER, UPPER, SUBSTRING, REPLACE và LIKE."
+slug: "text-functions-sql"
+course: "sql"
+order: 13
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["text functions sql", "hàm chuỗi sql server", "concat trong sql", "substring trong sql", "replace trong sql", "lower upper sql"]
+publishedAt: "2026-04-28"
+---
+
+## Text functions trong SQL Server là gì?
+
+Text functions trong SQL Server là các hàm dùng để nối chuỗi, đổi chữ hoa thường, lấy một phần chuỗi, thay thế ký tự và đo độ dài văn bản. Chúng rất hữu ích khi làm sạch tên khách hàng, chuẩn hóa email hoặc tạo cột hiển thị trong báo cáo.
+
+Trong BikeStores, bạn sẽ dùng hàm chuỗi để ghép họ tên khách hàng, chuẩn hóa email, tìm sản phẩm theo từ khóa và tạo nhãn dễ đọc.
+
+## CONCAT và toán tử cộng để nối chuỗi
+
+SQL Server hỗ trợ `CONCAT()` và toán tử `+` để nối chuỗi. Với người mới, `CONCAT()` an toàn hơn khi có `NULL`.
+
+```sql
+SELECT TOP (10)
+  first_name,
+  last_name,
+  CONCAT(first_name, ' ', last_name) AS full_name
+FROM sales.customers;
+```
+
+Nếu dùng toán tử `+`, hãy cẩn thận với `NULL`:
+
+```sql
+SELECT TOP (10)
+  first_name + ' ' + last_name AS full_name,
+  phone
+FROM sales.customers;
+```
+
+Trong SQL Server, chuỗi nối bằng `+` có thể trả về `NULL` nếu một phần là `NULL`, tùy thiết lập. `CONCAT()` thường biến `NULL` thành chuỗi rỗng nên ít gây bất ngờ hơn.
+
+## LEN, LOWER và UPPER
+
+`LEN()` đếm số ký tự, `LOWER()` chuyển về chữ thường, `UPPER()` chuyển về chữ hoa.
+
+```sql
+SELECT TOP (10)
+  email,
+  LEN(email) AS email_length,
+  LOWER(email) AS normalized_email,
+  UPPER(state) AS state_code
+FROM sales.customers;
+```
+
+Lưu ý: `LEN()` trong SQL Server không tính khoảng trắng ở cuối chuỗi. Nếu cần tính cả khoảng trắng cuối, bạn phải dùng kỹ thuật khác như `DATALENGTH()` tùy kiểu dữ liệu.
+
+## SUBSTRING và REPLACE
+
+`SUBSTRING()` lấy một phần chuỗi theo vị trí bắt đầu và độ dài. Vị trí trong SQL Server bắt đầu từ 1.
+
+```sql
+SELECT TOP (10)
+  product_name,
+  SUBSTRING(product_name, 1, 20) AS short_name
+FROM production.products;
+```
+
+`REPLACE()` thay một đoạn chuỗi bằng đoạn khác:
+
+```sql
+SELECT TOP (10)
+  product_name,
+  REPLACE(product_name, ' - ', ' ') AS cleaned_name
+FROM production.products;
+```
+
+Hãy nhớ rằng `REPLACE()` thay tất cả lần xuất hiện của chuỗi tìm thấy, không chỉ lần đầu tiên.
+
+## LIKE vẫn là công cụ tìm mẫu quan trọng
+
+Mặc dù `LIKE` là toán tử lọc, nó thường đi cùng xử lý chuỗi.
+
+```sql
+SELECT
+  product_name,
+  list_price
+FROM production.products
+WHERE product_name LIKE '%Cruiser%'
+ORDER BY product_name;
+```
+
+Nếu cần tìm ký tự `%` hoặc `_` thật trong dữ liệu, bạn phải escape ký tự đặc biệt. Đây là edge case ít gặp khi học, nhưng quan trọng trong dữ liệu người dùng nhập.
+
+## Những lỗi thường gặp với text functions
+
+- Dùng `LENGTH()` trong SQL Server. Hàm tương ứng là `LEN()`.
+- Dùng `||` để nối chuỗi như SQL chuẩn hoặc PostgreSQL. SQL Server thường dùng `+` hoặc `CONCAT()`.
+- Quên rằng `SUBSTRING()` bắt đầu từ vị trí 1, không phải 0.
+- Dùng `LIKE '%keyword%'` trên bảng lớn và kỳ vọng luôn nhanh.
+- Không xử lý `NULL` khi nối chuỗi bằng toán tử `+`.
+
+## Bài tập thực hành
+
+Hãy viết query thực hiện các yêu cầu sau:
+
+- Tạo cột `full_name` từ `first_name` và `last_name` trong `sales.customers`.
+- Chuyển email khách hàng về chữ thường.
+- Lấy 15 ký tự đầu của `product_name`.
+- Tìm sản phẩm có tên chứa `Electric`.
+
+Gợi ý:
+
+```sql
+SELECT TOP (20)
+  CONCAT(first_name, ' ', last_name) AS full_name,
+  LOWER(email) AS normalized_email,
+  state
+FROM sales.customers
+ORDER BY full_name;
+```
+
+Sau khi chạy, hãy thử thay `CONCAT()` bằng toán tử `+` và quan sát kết quả nếu dữ liệu có `NULL`.
+
+## Câu hỏi thường gặp về hàm chuỗi SQL Server
+
+### SQL Server có hàm INITCAP không?
+
+SQL Server không có `INITCAP()` mặc định như một số hệ quản trị khác. Nếu cần viết hoa chữ cái đầu, bạn thường phải kết hợp nhiều hàm hoặc xử lý ở tầng ứng dụng.
+
+### Nên dùng CONCAT hay dấu cộng?
+
+Với người mới, nên dùng `CONCAT()` vì dễ đọc và xử lý `NULL` ít bất ngờ hơn. Dấu `+` vẫn rất phổ biến trong SQL Server.
+
+### LEN có tính khoảng trắng cuối không?
+
+`LEN()` không tính khoảng trắng cuối chuỗi trong SQL Server. Đây là điểm dễ sai khi kiểm tra dữ liệu có padding.
+
+## Tóm tắt
+
+Bạn đã học các text functions quan trọng trong SQL Server: `CONCAT`, `LEN`, `LOWER`, `UPPER`, `SUBSTRING`, `REPLACE` và `LIKE`. Ở bài tiếp theo, chúng ta sẽ học các hàm số học và ép kiểu để tính toán chính xác hơn.

@@ -1,0 +1,122 @@
+---
+title: "SQL là gì? Học SQL với BikeStores cho người mới"
+description: "Giải thích SQL là gì, SQL dùng để làm gì và cách làm quen BikeStores để học truy vấn dữ liệu thực tế."
+slug: "sql-la-gi"
+course: "sql"
+order: 1
+duration: "16 phút"
+difficulty: "Dễ"
+keywords: ["sql là gì", "học sql", "học sql cho người mới bắt đầu", "sql server bikestores", "cơ sở dữ liệu quan hệ", "truy vấn dữ liệu bằng sql"]
+publishedAt: "2026-04-28"
+---
+
+## SQL là gì?
+
+SQL là ngôn ngữ dùng để làm việc với cơ sở dữ liệu quan hệ: lấy dữ liệu, lọc dữ liệu, kết hợp nhiều bảng và tạo báo cáo. Trong khóa học SQL này, bạn sẽ học bằng database BikeStores để mọi ví dụ gắn với sản phẩm, khách hàng, đơn hàng và doanh thu thật.
+
+Nếu bạn từng nhìn một file Excel có nhiều sheet liên quan nhau, SQL giúp bạn đặt câu hỏi trên dữ liệu đó. Ví dụ: sản phẩm nào bán nhiều nhất, cửa hàng nào có doanh thu cao nhất, đơn hàng nào giao trễ, nhân viên nào đang phụ trách nhiều đơn.
+
+Khóa học này dùng SQL Server vì BikeStores là sample database phổ biến của SQLServerTutorial. Bạn có thể xem mô tả schema gốc tại [SQL Server Sample Database](https://www.sqlservertutorial.net/getting-started/sql-server-sample-database/).
+
+## BikeStores gồm những bảng nào?
+
+BikeStores có hai nhóm bảng chính:
+
+- `production`: dữ liệu sản phẩm, thương hiệu, danh mục và tồn kho.
+- `sales`: dữ liệu cửa hàng, nhân viên, khách hàng, đơn hàng và chi tiết đơn hàng.
+
+Các bảng bạn sẽ dùng nhiều nhất:
+
+- `production.products`: thông tin xe đạp, năm model, giá niêm yết.
+- `production.brands`: thương hiệu sản phẩm.
+- `production.categories`: danh mục sản phẩm.
+- `production.stocks`: tồn kho theo từng cửa hàng.
+- `sales.customers`: thông tin khách hàng.
+- `sales.orders`: thông tin đơn hàng.
+- `sales.order_items`: từng dòng sản phẩm trong đơn hàng.
+- `sales.stores`: thông tin cửa hàng.
+- `sales.staffs`: nhân viên bán hàng và quản lý.
+
+## Câu lệnh SQL đầu tiên
+
+Câu lệnh quan trọng nhất khi mới học SQL là `SELECT`. Nó dùng để chọn dữ liệu từ một bảng.
+
+```sql
+SELECT TOP (5)
+  product_id,
+  product_name,
+  model_year,
+  list_price
+FROM production.products;
+```
+
+Câu lệnh trên lấy 5 sản phẩm đầu tiên trong bảng `production.products`. `TOP (5)` là cú pháp SQL Server để giới hạn số dòng trả về. Nếu bạn dùng MySQL hoặc PostgreSQL, bạn thường thấy `LIMIT 5`, nhưng trong khóa học này ta ưu tiên SQL Server.
+
+Ví dụ khác với đơn hàng:
+
+```sql
+SELECT TOP (5)
+  order_id,
+  customer_id,
+  order_status,
+  order_date
+FROM sales.orders;
+```
+
+Bạn chưa cần hiểu hết các cột ngay. Hãy tập đọc câu lệnh theo thứ tự đơn giản: chọn cột nào, từ bảng nào, lấy bao nhiêu dòng.
+
+## Vì sao phải ghi cả schema trong tên bảng?
+
+Trong BikeStores, tên bảng thường có dạng `schema.table`, ví dụ `sales.orders` hoặc `production.products`. Schema giống như thư mục giúp nhóm bảng theo nghiệp vụ.
+
+Nếu chỉ viết `orders`, SQL Server có thể không tìm thấy bảng hoặc tìm nhầm bảng nếu database có nhiều schema. Vì vậy, trong khóa học này bạn nên viết đầy đủ:
+
+```sql
+SELECT TOP (10) *
+FROM sales.orders;
+```
+
+Thói quen ghi đầy đủ schema giúp câu lệnh rõ ràng hơn, đặc biệt trong dự án thật có nhiều nhóm bảng.
+
+## Những lỗi thường gặp khi mới học SQL
+
+- Quên chọn đúng database trước khi chạy query. Nếu chạy trong database khác, SQL Server sẽ báo không tìm thấy bảng.
+- Gõ sai schema, ví dụ `sale.orders` thay vì `sales.orders`.
+- Nhầm `sales.orders` với `sales.order_items`. Bảng `orders` là thông tin đầu đơn, còn `order_items` là từng sản phẩm trong đơn.
+- Dùng cú pháp của hệ quản trị khác, ví dụ `LIMIT` trong SQL Server. Với SQL Server, hãy dùng `TOP` hoặc `OFFSET FETCH`.
+- Nghĩ SQL chỉ dùng để lấy dữ liệu. Thực tế SQL còn có thể thêm, sửa, xóa dữ liệu và tạo cấu trúc database, nhưng khóa học này tập trung trước vào truy vấn an toàn.
+
+## Bài tập thực hành
+
+Hãy mở BikeStores trong SQL Server Management Studio hoặc Azure Data Studio và chạy 3 truy vấn sau:
+
+```sql
+SELECT TOP (10) *
+FROM production.brands;
+
+SELECT TOP (10) *
+FROM production.categories;
+
+SELECT TOP (10) *
+FROM sales.customers;
+```
+
+Sau đó ghi lại mỗi bảng dùng để lưu thông tin gì. Mục tiêu không phải nhớ hết cột, mà là nhận ra dữ liệu BikeStores mô phỏng một cửa hàng xe đạp có sản phẩm, khách hàng, đơn hàng và nhân viên.
+
+## Câu hỏi thường gặp về SQL
+
+### SQL có phải là ngôn ngữ lập trình không?
+
+SQL là ngôn ngữ truy vấn dữ liệu. Nó không giống Python hay C++ vì bạn chủ yếu mô tả dữ liệu muốn lấy, không viết từng bước xử lý chi tiết.
+
+### Học SQL có cần biết lập trình trước không?
+
+Không bắt buộc. Người mới có thể bắt đầu bằng `SELECT`, `WHERE`, `ORDER BY`, sau đó học `JOIN` và `GROUP BY` để tạo báo cáo.
+
+### BikeStores có phù hợp cho người mới học SQL không?
+
+Có. BikeStores đủ nhỏ để hiểu nhanh nhưng đủ thật để thực hành các bài toán như doanh thu, tồn kho, khách hàng, đơn hàng và hiệu suất bán hàng.
+
+## Tóm tắt
+
+SQL là công cụ để đặt câu hỏi với dữ liệu. Bạn đã biết SQL là gì, BikeStores gồm những bảng chính nào và cách chạy câu lệnh `SELECT` đầu tiên. Ở bài tiếp theo, chúng ta sẽ học cách chọn cột, giới hạn dòng và sắp xếp dữ liệu trong một bảng.

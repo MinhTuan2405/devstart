@@ -1,0 +1,140 @@
+---
+title: "SELECT trong SQL: Cách truy vấn dữ liệu một bảng"
+description: "Học SELECT trong SQL Server để chọn cột, lấy TOP dòng, sắp xếp và loại trùng dữ liệu trong BikeStores."
+slug: "select-trong-sql"
+course: "sql"
+order: 2
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["select trong sql", "truy vấn dữ liệu một bảng", "select top sql server", "order by trong sql", "distinct trong sql", "học sql cơ bản"]
+publishedAt: "2026-04-28"
+---
+
+## SELECT trong SQL là gì?
+
+SELECT trong SQL là câu lệnh dùng để lấy dữ liệu từ bảng. Với người mới, bạn có thể hiểu `SELECT` là cách nói với database: hãy cho tôi những cột này, từ bảng này, theo thứ tự này. Đây là nền tảng của hầu hết truy vấn SQL.
+
+Trong BikeStores, bạn sẽ dùng `SELECT` để xem danh sách sản phẩm, khách hàng, đơn hàng, cửa hàng và tồn kho. Khi chưa chắc bảng có dữ liệu gì, hãy bắt đầu bằng vài dòng đầu tiên thay vì lấy toàn bộ bảng.
+
+## Cú pháp cơ bản của SELECT
+
+Cấu trúc tối thiểu gồm danh sách cột và tên bảng:
+
+```sql
+SELECT
+  product_id,
+  product_name,
+  list_price
+FROM production.products;
+```
+
+Bạn có thể đọc câu lệnh này như sau: lấy cột `product_id`, `product_name`, `list_price` từ bảng `production.products`.
+
+Nếu muốn xem nhanh toàn bộ cột, bạn có thể dùng `*`:
+
+```sql
+SELECT TOP (5) *
+FROM production.products;
+```
+
+`*` rất tiện khi khám phá dữ liệu, nhưng không nên lạm dụng trong báo cáo thật. Chọn rõ cột giúp query dễ đọc, giảm dữ liệu thừa và tránh lỗi khi bảng thay đổi cấu trúc.
+
+## Dùng TOP để giới hạn số dòng
+
+Trong SQL Server, `TOP` giúp lấy một số dòng nhất định. Đây là cách an toàn khi bảng lớn.
+
+```sql
+SELECT TOP (10)
+  customer_id,
+  first_name,
+  last_name,
+  city,
+  state
+FROM sales.customers;
+```
+
+Nếu không có `ORDER BY`, SQL Server không đảm bảo 10 dòng này luôn giống nhau trong mọi lần chạy. Với dữ liệu nhỏ bạn có thể thấy kết quả ổn định, nhưng đó không phải cam kết logic.
+
+## ORDER BY trong SQL dùng để làm gì?
+
+`ORDER BY` sắp xếp kết quả theo một hoặc nhiều cột. Mặc định là tăng dần (`ASC`). Muốn giảm dần thì dùng `DESC`.
+
+```sql
+SELECT TOP (10)
+  product_name,
+  model_year,
+  list_price
+FROM production.products
+ORDER BY list_price DESC;
+```
+
+Query trên lấy 10 sản phẩm có giá niêm yết cao nhất. Nếu muốn sản phẩm rẻ nhất, đổi `DESC` thành `ASC` hoặc bỏ hẳn vì tăng dần là mặc định.
+
+Bạn cũng có thể sắp xếp theo nhiều cột:
+
+```sql
+SELECT TOP (20)
+  product_name,
+  model_year,
+  list_price
+FROM production.products
+ORDER BY model_year DESC, list_price DESC;
+```
+
+SQL Server sẽ sắp xếp theo `model_year` trước. Nếu nhiều dòng có cùng năm model, nó tiếp tục sắp xếp theo `list_price`.
+
+## DISTINCT trong SQL dùng khi nào?
+
+`DISTINCT` loại bỏ giá trị trùng trong kết quả. Ví dụ, để xem khách hàng đang nằm ở những bang nào:
+
+```sql
+SELECT DISTINCT state
+FROM sales.customers
+ORDER BY state;
+```
+
+Nếu bạn chọn nhiều cột, `DISTINCT` xét cả tổ hợp cột chứ không xét riêng từng cột. Ví dụ `DISTINCT city, state` sẽ trả về các cặp thành phố và bang không trùng nhau.
+
+## Những lỗi thường gặp với SELECT
+
+- Dùng `SELECT *` trong mọi query. Điều này làm kết quả rối và dễ kéo dữ liệu thừa.
+- Dùng `TOP` nhưng không có `ORDER BY`, rồi tưởng rằng kết quả luôn ổn định.
+- Quên dấu phẩy giữa các cột trong danh sách `SELECT`.
+- Sắp xếp bằng cột chứa `NULL` mà không kiểm tra vị trí của `NULL` trong kết quả.
+- Nhầm `DISTINCT` là loại trùng theo từng cột riêng lẻ. Thực tế nó loại trùng theo toàn bộ dòng được chọn.
+
+## Bài tập thực hành
+
+Hãy viết 3 truy vấn trên BikeStores:
+
+- Lấy 10 sản phẩm gồm tên sản phẩm, năm model và giá.
+- Lấy 5 khách hàng đầu tiên gồm họ, tên, email và bang.
+- Lấy danh sách các thành phố không trùng trong bảng `sales.customers`.
+
+Gợi ý:
+
+```sql
+SELECT DISTINCT city
+FROM sales.customers
+ORDER BY city;
+```
+
+Sau khi chạy, hãy thử thêm `state` vào `SELECT DISTINCT` và quan sát số dòng có thay đổi không.
+
+## Câu hỏi thường gặp về SELECT trong SQL
+
+### SELECT TOP khác gì SELECT LIMIT?
+
+`TOP` là cú pháp phổ biến trong SQL Server. `LIMIT` thường dùng trong MySQL, PostgreSQL hoặc SQLite. Vì BikeStores dùng SQL Server, khóa học này dùng `TOP`.
+
+### Có nên dùng SELECT * không?
+
+Bạn có thể dùng `SELECT *` để xem nhanh cấu trúc dữ liệu khi học. Trong báo cáo thật, nên chọn rõ cột cần dùng để query dễ bảo trì hơn.
+
+### ORDER BY có bắt buộc không?
+
+Không bắt buộc, nhưng nếu bạn cần kết quả theo thứ tự rõ ràng, hãy luôn dùng `ORDER BY`. Không nên dựa vào thứ tự tự nhiên của bảng.
+
+## Tóm tắt
+
+Bạn đã học `SELECT` trong SQL, cách chọn cột, dùng `TOP`, `ORDER BY` và `DISTINCT`. Đây là kỹ năng nền tảng để đọc dữ liệu một bảng. Ở bài tiếp theo, chúng ta sẽ thêm `WHERE` để lọc đúng những dòng cần phân tích.

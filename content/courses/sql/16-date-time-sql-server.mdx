@@ -1,0 +1,173 @@
+---
+title: "Date and time trong SQL Server: Làm việc với ngày giờ"
+description: "Học date, time, datetime, DATEADD, DATEDIFF, DATEPART và AT TIME ZONE trong SQL Server qua đơn hàng BikeStores."
+slug: "date-time-sql-server"
+course: "sql"
+order: 16
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["date time sql server", "ngày giờ trong sql", "dateadd sql server", "datediff sql server", "datepart sql", "at time zone sql server"]
+publishedAt: "2026-04-28"
+---
+
+## Date and time trong SQL Server là gì?
+
+Date and time trong SQL Server là nhóm kiểu dữ liệu và hàm dùng để lưu, lọc, tính toán thời gian. Với dữ liệu bán hàng, bạn cần ngày đặt hàng, ngày yêu cầu giao, ngày giao thực tế, số ngày xử lý và báo cáo theo tháng hoặc năm.
+
+Trong BikeStores, bảng `sales.orders` có các cột `order_date`, `required_date` và `shipped_date`. Đây là nơi tốt nhất để luyện ngày giờ.
+
+## Các kiểu ngày giờ thường gặp
+
+SQL Server có nhiều kiểu dữ liệu thời gian, nhưng người mới nên nắm các kiểu phổ biến:
+
+- `DATE`: chỉ lưu ngày, không lưu giờ.
+- `TIME`: chỉ lưu giờ.
+- `DATETIME2`: lưu ngày và giờ với độ chính xác tốt.
+- `DATETIMEOFFSET`: lưu ngày giờ kèm offset múi giờ.
+
+Trong BikeStores, các cột ngày đơn hàng dùng kiểu `DATE`, nên bạn không phải xử lý giờ phút giây trong các truy vấn cơ bản.
+
+## Lọc dữ liệu theo ngày
+
+Nên dùng định dạng rõ `YYYY-MM-DD` khi viết literal ngày.
+
+```sql
+SELECT
+  order_id,
+  order_date,
+  required_date,
+  shipped_date
+FROM sales.orders
+WHERE order_date >= '2018-01-01'
+  AND order_date < '2019-01-01'
+ORDER BY order_date;
+```
+
+Khoảng nửa mở như trên rất an toàn. Nếu sau này cột chuyển sang `DATETIME2`, bạn vẫn không bỏ sót dữ liệu trong ngày cuối.
+
+## GETDATE, SYSDATETIME và CAST
+
+`GETDATE()` trả về ngày giờ hiện tại theo kiểu `datetime`. `SYSDATETIME()` trả về độ chính xác cao hơn. Bạn có thể `CAST` về `DATE` nếu chỉ cần ngày.
+
+```sql
+SELECT
+  GETDATE() AS current_datetime,
+  SYSDATETIME() AS precise_datetime,
+  CAST(GETDATE() AS DATE) AS today_date;
+```
+
+Bạn cũng có thể tạo giá trị ngày từ chuỗi:
+
+```sql
+SELECT
+  CAST('2018-12-31' AS DATE) AS sample_date,
+  CAST('2018-12-31 15:30:00' AS DATETIME2) AS sample_datetime;
+```
+
+## DATEADD và DATEDIFF thay cho INTERVAL
+
+Cheat sheet SQL chuẩn thường nhắc `INTERVAL`, nhưng SQL Server không dùng cú pháp `INTERVAL '1' DAY`. Thay vào đó, bạn dùng `DATEADD()` và `DATEDIFF()`.
+
+Tính số ngày giao trễ hoặc sớm:
+
+```sql
+SELECT TOP (30)
+  order_id,
+  required_date,
+  shipped_date,
+  DATEDIFF(DAY, required_date, shipped_date) AS days_late
+FROM sales.orders
+WHERE shipped_date IS NOT NULL
+ORDER BY days_late DESC;
+```
+
+Lấy đơn hàng trong 30 ngày kể từ một ngày mốc:
+
+```sql
+SELECT
+  order_id,
+  order_date
+FROM sales.orders
+WHERE order_date >= '2018-01-01'
+  AND order_date < DATEADD(DAY, 30, '2018-01-01');
+```
+
+`DATEDIFF(DAY, start, end)` trả số ranh giới ngày giữa hai mốc, không phải lúc nào cũng tương đương số giờ chia 24 nếu có giờ phút hoặc daylight saving time.
+
+## DATEPART, YEAR và MONTH
+
+Bạn có thể lấy phần năm, tháng, ngày bằng `DATEPART()` hoặc các hàm tiện ích như `YEAR()` và `MONTH()`.
+
+```sql
+SELECT
+  YEAR(order_date) AS order_year,
+  MONTH(order_date) AS order_month,
+  COUNT(*) AS total_orders
+FROM sales.orders
+GROUP BY YEAR(order_date), MONTH(order_date)
+ORDER BY order_year, order_month;
+```
+
+Khi lọc dữ liệu, tránh viết `WHERE YEAR(order_date) = 2018` trên bảng lớn nếu muốn tận dụng index tốt hơn. Hãy dùng khoảng ngày như `order_date >= '2018-01-01' AND order_date < '2019-01-01'`.
+
+## AT TIME ZONE trong SQL Server
+
+SQL Server hỗ trợ `AT TIME ZONE` để làm việc với múi giờ trên `datetime` hoặc `datetimeoffset`.
+
+```sql
+SELECT
+  CAST('2018-01-01 09:00:00' AS DATETIME2) AT TIME ZONE 'SE Asia Standard Time' AS vietnam_time,
+  CAST('2018-01-01 09:00:00' AS DATETIME2) AT TIME ZONE 'UTC' AS utc_time;
+```
+
+Tên múi giờ trong SQL Server theo Windows time zone, ví dụ `SE Asia Standard Time`, không phải luôn giống tên IANA như `Asia/Ho_Chi_Minh`.
+
+## Những lỗi thường gặp với ngày giờ
+
+- Dùng định dạng ngày mơ hồ như `01/02/2018`. Hãy dùng `YYYY-MM-DD`.
+- Dùng `BETWEEN` cho `DATETIME` và bỏ sót dữ liệu cuối ngày.
+- Dùng `INTERVAL` trong SQL Server. Hãy dùng `DATEADD` và `DATEDIFF`.
+- Lọc bằng `YEAR(order_date)` trên bảng lớn, có thể làm query khó tận dụng index.
+- Không xử lý `shipped_date IS NULL` trước khi tính số ngày giao hàng.
+
+## Bài tập thực hành
+
+Hãy viết query trả lời các câu hỏi sau:
+
+- Có bao nhiêu đơn hàng theo từng tháng?
+- Đơn hàng nào giao sau `required_date`?
+- Có bao nhiêu ngày từ `order_date` đến `shipped_date`?
+- Lấy các đơn trong 60 ngày đầu năm 2018.
+
+Gợi ý:
+
+```sql
+SELECT
+  order_id,
+  order_date,
+  required_date,
+  shipped_date,
+  DATEDIFF(DAY, order_date, shipped_date) AS days_to_ship
+FROM sales.orders
+WHERE shipped_date IS NOT NULL;
+```
+
+Sau khi chạy, hãy thêm điều kiện `shipped_date > required_date` để tìm đơn giao trễ.
+
+## Câu hỏi thường gặp về date time SQL Server
+
+### SQL Server có CURRENT_DATE không?
+
+SQL Server không có `CURRENT_DATE` như một số database khác. Bạn thường dùng `CAST(GETDATE() AS DATE)` để lấy ngày hiện tại.
+
+### DATEADD khác DATEDIFF thế nào?
+
+`DATEADD` cộng hoặc trừ một khoảng thời gian vào ngày. `DATEDIFF` tính số đơn vị thời gian giữa hai ngày.
+
+### Có nên lưu giờ theo múi giờ địa phương không?
+
+Trong hệ thống thật, thường nên lưu thời điểm chuẩn như UTC hoặc dùng `datetimeoffset` nếu cần offset. Khi hiển thị, mới chuyển sang múi giờ người dùng.
+
+## Tóm tắt
+
+Bạn đã học kiểu ngày giờ, lọc ngày, `GETDATE`, `CAST`, `DATEADD`, `DATEDIFF`, `DATEPART` và `AT TIME ZONE` trong SQL Server. Ở bài tiếp theo, chúng ta sẽ bắt đầu nhóm nâng cao: window functions.

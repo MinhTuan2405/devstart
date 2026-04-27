@@ -1,0 +1,140 @@
+---
+title: "INNER JOIN trong SQL: Kết hợp dữ liệu nhiều bảng"
+description: "Học INNER JOIN trong SQL để nối đơn hàng, khách hàng và sản phẩm bằng khóa chính, khóa ngoại trong BikeStores."
+slug: "inner-join-trong-sql"
+course: "sql"
+order: 6
+duration: "22 phút"
+difficulty: "Dễ"
+keywords: ["inner join trong sql", "join trong sql", "khóa chính khóa ngoại sql", "nối bảng trong sql", "sql server join", "bike stores join"]
+publishedAt: "2026-04-28"
+---
+
+## INNER JOIN trong SQL là gì?
+
+INNER JOIN trong SQL dùng để kết hợp các dòng có liên quan giữa hai hoặc nhiều bảng. Nó chỉ trả về những dòng khớp điều kiện JOIN ở cả hai phía. Trong BikeStores, JOIN giúp nối đơn hàng với khách hàng, sản phẩm với thương hiệu, hoặc chi tiết đơn hàng với sản phẩm.
+
+Database quan hệ thường chia dữ liệu thành nhiều bảng để tránh trùng lặp. Vì vậy, muốn trả lời câu hỏi thực tế, bạn gần như luôn cần JOIN.
+
+## Khóa chính và khóa ngoại là nền tảng của JOIN
+
+Một bảng thường có khóa chính để định danh duy nhất từng dòng. Ví dụ `sales.customers.customer_id` là khóa chính của khách hàng.
+
+Bảng khác có thể lưu khóa ngoại để tham chiếu đến khóa chính đó. Ví dụ `sales.orders.customer_id` cho biết đơn hàng thuộc về khách hàng nào.
+
+```sql
+SELECT TOP (10)
+  o.order_id,
+  o.order_date,
+  o.customer_id
+FROM sales.orders AS o;
+```
+
+Query trên chỉ cho bạn mã khách hàng. Muốn biết tên khách hàng, bạn phải JOIN sang `sales.customers`.
+
+## Cú pháp INNER JOIN cơ bản
+
+```sql
+SELECT TOP (10)
+  o.order_id,
+  o.order_date,
+  c.first_name,
+  c.last_name,
+  c.email
+FROM sales.orders AS o
+INNER JOIN sales.customers AS c
+  ON o.customer_id = c.customer_id
+ORDER BY o.order_date DESC;
+```
+
+Điều kiện `ON o.customer_id = c.customer_id` là cầu nối giữa đơn hàng và khách hàng. SQL Server lấy mỗi dòng trong `orders`, tìm khách hàng có cùng `customer_id`, rồi ghép dữ liệu hai bảng vào một dòng kết quả.
+
+Bạn có thể viết `JOIN` thay cho `INNER JOIN`. Hai cách tương đương trong SQL Server, nhưng khi học nên viết rõ `INNER JOIN` để hiểu ý nghĩa.
+
+## INNER JOIN với sản phẩm và thương hiệu
+
+Sản phẩm trong `production.products` lưu `brand_id`, còn tên thương hiệu nằm trong `production.brands`.
+
+```sql
+SELECT TOP (20)
+  p.product_name,
+  b.brand_name,
+  p.model_year,
+  p.list_price
+FROM production.products AS p
+INNER JOIN production.brands AS b
+  ON p.brand_id = b.brand_id
+ORDER BY b.brand_name, p.product_name;
+```
+
+Nếu một sản phẩm có `brand_id` không tồn tại trong `brands`, `INNER JOIN` sẽ loại sản phẩm đó khỏi kết quả. Trong database có ràng buộc khóa ngoại tốt, trường hợp này thường không xảy ra, nhưng bạn vẫn cần hiểu hành vi này.
+
+## JOIN nhiều hơn hai bảng
+
+Bạn có thể nối thêm bảng thứ ba để lấy cả danh mục sản phẩm.
+
+```sql
+SELECT TOP (20)
+  p.product_name,
+  b.brand_name,
+  c.category_name,
+  p.list_price
+FROM production.products AS p
+INNER JOIN production.brands AS b
+  ON p.brand_id = b.brand_id
+INNER JOIN production.categories AS c
+  ON p.category_id = c.category_id
+ORDER BY c.category_name, p.list_price DESC;
+```
+
+Hãy đọc từng JOIN theo cặp. Đầu tiên `products` nối với `brands`, sau đó kết quả này nối tiếp với `categories`.
+
+## Những lỗi thường gặp với INNER JOIN
+
+- Quên điều kiện `ON`, gây lỗi hoặc biến query thành logic sai.
+- JOIN sai cột, ví dụ nối `product_id` với `brand_id`. Query có thể vẫn chạy nhưng kết quả vô nghĩa.
+- Không dùng alias khiến tên cột trùng khó đọc.
+- Chọn cột không ghi alias bảng khi nhiều bảng có cùng tên cột như `customer_id` hoặc `store_id`.
+- Dùng INNER JOIN khi cần giữ cả dòng không có bản ghi liên quan. Trường hợp đó thường cần `LEFT JOIN`, sẽ học ở bài tiếp theo.
+
+## Bài tập thực hành
+
+Hãy viết query trả lời các câu hỏi sau:
+
+- Mỗi đơn hàng thuộc về khách hàng nào?
+- Mỗi sản phẩm thuộc thương hiệu nào?
+- Mỗi sản phẩm thuộc danh mục nào?
+
+Gợi ý cho câu sản phẩm:
+
+```sql
+SELECT TOP (30)
+  p.product_name,
+  b.brand_name,
+  c.category_name
+FROM production.products AS p
+JOIN production.brands AS b
+  ON p.brand_id = b.brand_id
+JOIN production.categories AS c
+  ON p.category_id = c.category_id;
+```
+
+Sau khi chạy, hãy thử xóa một JOIN và quan sát kết quả thiếu thông tin gì.
+
+## Câu hỏi thường gặp về INNER JOIN
+
+### JOIN và INNER JOIN có khác nhau không?
+
+Trong SQL Server, `JOIN` mặc định là `INNER JOIN`. Viết `INNER JOIN` rõ hơn khi học, còn dự án thật tùy convention của team.
+
+### INNER JOIN có làm mất dòng không?
+
+Có. INNER JOIN chỉ giữ dòng có bản ghi khớp ở cả hai bảng. Nếu không có bản ghi liên quan, dòng sẽ không xuất hiện.
+
+### Điều kiện JOIN có bắt buộc là dấu bằng không?
+
+Không bắt buộc, nhưng JOIN phổ biến nhất là nối bằng khóa chính và khóa ngoại. Các điều kiện không bằng sẽ học kỹ hơn trong bài JOIN nâng cao.
+
+## Tóm tắt
+
+INNER JOIN giúp kết hợp dữ liệu liên quan giữa nhiều bảng bằng khóa chính và khóa ngoại. Bạn đã nối đơn hàng với khách hàng, sản phẩm với thương hiệu và danh mục. Ở bài tiếp theo, chúng ta sẽ học `LEFT JOIN`, `RIGHT JOIN`, `FULL JOIN` và `CROSS JOIN` để hiểu các trường hợp không khớp.

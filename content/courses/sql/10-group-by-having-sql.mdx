@@ -1,0 +1,162 @@
+---
+title: "GROUP BY và HAVING trong SQL: Tổng hợp dữ liệu theo nhóm"
+description: "Học GROUP BY và HAVING để tính doanh thu theo cửa hàng, số đơn theo khách hàng và tránh lỗi COUNT với LEFT JOIN."
+slug: "group-by-having-sql"
+course: "sql"
+order: 10
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["group by trong sql", "having trong sql", "tổng hợp dữ liệu theo nhóm", "count left join sql", "group by sql server", "báo cáo doanh thu sql"]
+publishedAt: "2026-04-28"
+---
+
+## GROUP BY trong SQL là gì?
+
+GROUP BY trong SQL dùng để gom các dòng có cùng giá trị ở một hoặc nhiều cột, sau đó tính aggregate cho từng nhóm. Nếu aggregate functions trả lời tổng thể, `GROUP BY` trả lời theo từng nhóm như doanh thu theo cửa hàng, số đơn theo khách hàng hoặc giá trung bình theo danh mục.
+
+Trong BikeStores, `GROUP BY` là kỹ năng cốt lõi để tạo báo cáo bán hàng.
+
+## Cú pháp GROUP BY cơ bản
+
+Ví dụ đếm số sản phẩm theo năm model:
+
+```sql
+SELECT
+  model_year,
+  COUNT(*) AS total_products
+FROM production.products
+GROUP BY model_year
+ORDER BY model_year;
+```
+
+Mọi cột xuất hiện trong `SELECT` mà không nằm trong aggregate thường phải có trong `GROUP BY`. Vì vậy `model_year` phải được đưa vào `GROUP BY`.
+
+## GROUP BY nhiều bảng với JOIN
+
+Tính số sản phẩm theo danh mục:
+
+```sql
+SELECT
+  c.category_name,
+  COUNT(*) AS total_products,
+  AVG(p.list_price) AS avg_price
+FROM production.products AS p
+JOIN production.categories AS c
+  ON p.category_id = c.category_id
+GROUP BY c.category_name
+ORDER BY total_products DESC;
+```
+
+Ở đây ta JOIN để lấy tên danh mục, sau đó group theo `category_name`. Nếu group theo `category_id`, kết quả vẫn đúng nhưng người đọc khó hiểu hơn nếu không chọn tên danh mục.
+
+## Tính doanh thu theo cửa hàng
+
+Doanh thu nằm ở chi tiết đơn hàng, còn cửa hàng nằm ở bảng đơn hàng. Vì vậy cần JOIN `orders`, `order_items` và `stores`.
+
+```sql
+SELECT
+  st.store_name,
+  SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue
+FROM sales.orders AS o
+JOIN sales.order_items AS oi
+  ON o.order_id = oi.order_id
+JOIN sales.stores AS st
+  ON o.store_id = st.store_id
+GROUP BY st.store_name
+ORDER BY revenue DESC;
+```
+
+Đây là mẫu báo cáo rất thực tế: JOIN để gom đủ dữ liệu, GROUP BY để chia nhóm, SUM để tính số liệu.
+
+## HAVING khác WHERE thế nào?
+
+`WHERE` lọc dòng trước khi group. `HAVING` lọc nhóm sau khi group.
+
+Ví dụ chỉ lấy cửa hàng có doanh thu trên 1 triệu:
+
+```sql
+SELECT
+  st.store_name,
+  SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue
+FROM sales.orders AS o
+JOIN sales.order_items AS oi
+  ON o.order_id = oi.order_id
+JOIN sales.stores AS st
+  ON o.store_id = st.store_id
+GROUP BY st.store_name
+HAVING SUM(oi.quantity * oi.list_price * (1 - oi.discount)) > 1000000
+ORDER BY revenue DESC;
+```
+
+Không thể dùng aggregate như `SUM(...) > 1000000` trong `WHERE` cùng cấp vì lúc `WHERE` chạy, nhóm chưa được tạo.
+
+## Lỗi kinh điển: COUNT(*) với LEFT JOIN
+
+Khi dùng `LEFT JOIN`, `COUNT(*)` có thể làm bạn hiểu sai. Ví dụ muốn đếm số đơn của mỗi khách hàng:
+
+```sql
+SELECT
+  c.customer_id,
+  c.first_name,
+  c.last_name,
+  COUNT(*) AS wrong_order_count,
+  COUNT(o.order_id) AS correct_order_count
+FROM sales.customers AS c
+LEFT JOIN sales.orders AS o
+  ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.first_name, c.last_name;
+```
+
+Nếu khách hàng chưa có đơn, `LEFT JOIN` vẫn tạo một dòng với cột đơn hàng là `NULL`. `COUNT(*)` đếm dòng đó thành 1, còn `COUNT(o.order_id)` trả về 0. Đây là edge case cực kỳ quan trọng.
+
+## Những lỗi thường gặp với GROUP BY và HAVING
+
+- Chọn cột không aggregate nhưng quên đưa vào `GROUP BY`.
+- Dùng `WHERE` để lọc aggregate, ví dụ `WHERE COUNT(*) > 5`, là sai.
+- Group theo tên nhưng tên không duy nhất. Với dữ liệu thật, nên group theo ID và chọn thêm tên nếu cần.
+- Tính doanh thu sau JOIN nhưng không hiểu quan hệ một-nhiều, dẫn đến nhân dòng.
+- Dùng `COUNT(*)` sau `LEFT JOIN` khi cần đếm bản ghi bên phải.
+
+## Bài tập thực hành
+
+Hãy viết các báo cáo sau:
+
+- Số sản phẩm theo từng thương hiệu.
+- Giá trung bình theo từng danh mục.
+- Doanh thu theo từng cửa hàng.
+- Khách hàng có từ 2 đơn hàng trở lên.
+
+Gợi ý cho câu cuối:
+
+```sql
+SELECT
+  c.customer_id,
+  c.first_name,
+  c.last_name,
+  COUNT(o.order_id) AS total_orders
+FROM sales.customers AS c
+JOIN sales.orders AS o
+  ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.first_name, c.last_name
+HAVING COUNT(o.order_id) >= 2;
+```
+
+Sau khi chạy, hãy đổi `JOIN` thành `LEFT JOIN` và quan sát kết quả có thêm khách hàng nào không.
+
+## Câu hỏi thường gặp về GROUP BY trong SQL
+
+### GROUP BY có bắt buộc đi với aggregate không?
+
+Thường là có ý nghĩa nhất khi đi với aggregate. Bạn vẫn có thể dùng `GROUP BY` để loại trùng, nhưng `DISTINCT` thường rõ hơn cho mục đích đó.
+
+### HAVING có thay thế WHERE không?
+
+Không. `WHERE` lọc dòng trước khi group, `HAVING` lọc nhóm sau khi group. Hai phần này phục vụ hai thời điểm khác nhau.
+
+### Có nên group theo tên hay ID?
+
+Trong báo cáo nghiêm túc, nên group theo khóa định danh như `customer_id`, `store_id`, `category_id`, rồi chọn thêm tên để hiển thị. Tên có thể trùng hoặc thay đổi.
+
+## Tóm tắt
+
+Bạn đã học `GROUP BY`, `HAVING`, báo cáo doanh thu theo nhóm và lỗi `COUNT(*)` với `LEFT JOIN`. Ở bài tiếp theo, chúng ta sẽ học subquery để dùng kết quả của một query bên trong query khác.
