@@ -1,0 +1,146 @@
+---
+title: "Bảo mật khi dùng Claude Code: Secrets, guardrails và dữ liệu nhạy cảm"
+description: "Học cách dùng Claude Code an toàn: không lộ secret, tránh lệnh phá hủy, bảo vệ file nhạy cảm và thiết kế guardrails."
+slug: "bao-mat-va-guardrails-khi-dung-claude-code"
+course: "claude-code"
+order: 17
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["bảo mật Claude Code", "Claude Code secrets", "Claude Code guardrails", "Claude Code .env", "Claude Code lệnh nguy hiểm", "an toàn khi dùng Claude Code"]
+publishedAt: "2026-04-27"
+---
+
+## Bảo mật khi dùng Claude Code là gì?
+
+Bảo mật khi dùng Claude Code là tập hợp thói quen và cấu hình giúp bạn tránh lộ secret, tránh chạy lệnh phá hủy, không commit dữ liệu nhạy cảm và kiểm soát quyền truy cập của Claude. Đây là phần bắt buộc nếu bạn dùng Claude Code trong dự án thật.
+
+AI có thể giúp bạn nhanh hơn, nhưng tốc độ không được đánh đổi bằng an toàn. Một lệnh sai hoặc một file `.env` bị commit có thể tạo hậu quả lớn hơn nhiều so với thời gian tiết kiệm được.
+
+## Không đưa secret vào prompt hoặc repo
+
+Secret gồm API key, database URL, access token, private key, cookie session và credential. Không dán các giá trị này vào prompt nếu không thật sự cần và không commit chúng vào repo.
+
+Prompt an toàn:
+
+```text
+File .env có biến DATABASE_URL và API_KEY, nhưng tôi không dán giá trị thật.
+Hãy kiểm tra code đang đọc biến môi trường đúng tên hay chưa.
+Không yêu cầu tôi cung cấp secret.
+```
+
+Bạn có thể mô tả tên biến mà không đưa giá trị thật. Trong nhiều trường hợp, Claude chỉ cần biết biến tồn tại, không cần biết secret.
+
+## Bảo vệ file nhạy cảm
+
+Các file nên được bảo vệ:
+
+- `.env`
+- `.env.local`
+- `.env.production`
+- `credentials.json`
+- private key
+- database dump chứa dữ liệu thật
+- file log có PII
+
+Bạn nên ghi rule trong `CLAUDE.md` hoặc `.claude/rules/security.md`:
+
+```markdown
+# Security Rules
+
+- Never read, edit or commit .env files unless explicitly asked.
+- Never print secrets in terminal output.
+- Never commit credentials, private keys or production data dumps.
+- Ask before running commands that delete files or mutate databases.
+```
+
+Rule này giúp Claude nhớ giới hạn trong các phiên sau.
+
+## Chặn lệnh nguy hiểm bằng hook
+
+Guardrail mạnh hơn rule là hook. Ví dụ bạn có thể chặn lệnh Bash nguy hiểm trước khi chạy.
+
+```bash
+#!/bin/bash
+INPUT=$(cat)
+COMMAND=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // ""')
+
+if printf '%s' "$COMMAND" | grep -qE 'rm\s+-rf|git\s+reset\s+--hard'; then
+  printf '%s\n' '{"decision":"block","reason":"Dangerous command blocked."}'
+  exit 1
+fi
+
+exit 0
+```
+
+Hook không thay thế review của con người, nhưng nó giảm rủi ro với các lệnh rõ ràng nguy hiểm.
+
+## Kiểm tra trước khi commit
+
+Trước khi commit, hãy yêu cầu Claude kiểm tra file nhạy cảm:
+
+```text
+Trước khi commit, hãy kiểm tra git status và diff.
+Nếu có .env, credential, token, key hoặc dữ liệu nhạy cảm, hãy dừng và báo cho tôi.
+Không tự commit các file đó.
+```
+
+Đây là thói quen đơn giản nhưng rất quan trọng. Untracked file là nơi secret dễ bị commit nhầm nhất.
+
+## Dữ liệu cá nhân và log
+
+Không chỉ secret mới nhạy cảm. Log có thể chứa email, số điện thoại, IP, địa chỉ, payment id hoặc thông tin người dùng. Khi đưa log cho Claude, hãy ẩn phần không cần thiết.
+
+Ví dụ thay thế:
+
+```text
+user_email: [redacted]
+token: [redacted]
+request_id: req_123
+error: Cannot read properties of undefined
+```
+
+Bạn vẫn giữ được thông tin debug quan trọng mà không lộ dữ liệu cá nhân.
+
+## Những lỗi bảo mật thường gặp
+
+- Dán API key thật vào prompt.
+- Cho Claude đọc file `.env` khi không cần.
+- Commit settings local chứa đường dẫn hoặc token.
+- Chạy lệnh xóa dữ liệu mà không backup.
+- Dùng MCP với quyền quá rộng.
+- Dán log production chưa redacted.
+
+## Bài tập thực hành
+
+Hãy tạo một checklist bảo mật cho repo của bạn:
+
+- File nào không bao giờ được commit?
+- Lệnh nào cần hỏi trước khi chạy?
+- Hook nào nên chặn lệnh nguy hiểm?
+- Rule nào nên viết vào `.claude/rules/security.md`?
+- Log nào cần redacted trước khi đưa cho Claude?
+
+Prompt gợi ý:
+
+```text
+Hãy giúp tôi thiết kế guardrails cho Claude Code trong dự án này.
+Không đọc .env. Chỉ đề xuất rule, hook và checklist an toàn.
+```
+
+## Câu hỏi thường gặp về bảo mật Claude Code
+
+### Claude có cần đọc .env để sửa lỗi config không?
+
+Thường là không. Bạn có thể cung cấp tên biến và mô tả lỗi mà không đưa giá trị thật.
+
+### Rules có đủ để chặn lệnh nguy hiểm không?
+
+Rules giúp Claude nhớ, nhưng hook có tính enforcement tốt hơn. Nên kết hợp cả hai.
+
+### Có nên dùng dữ liệu production khi debug không?
+
+Chỉ dùng khi thật sự cần và phải redacted. Ưu tiên dữ liệu giả lập hoặc staging.
+
+## Tóm tắt
+
+Bảo mật khi dùng Claude Code xoay quanh secrets, file nhạy cảm, lệnh nguy hiểm, MCP permissions và log có dữ liệu cá nhân. Bạn đã học cách viết rules, dùng hooks và kiểm tra trước commit. Bài cuối sẽ là dự án thực hành xây dựng một bộ `.claude` hoàn chỉnh.

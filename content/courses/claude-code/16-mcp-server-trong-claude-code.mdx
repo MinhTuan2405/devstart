@@ -1,0 +1,127 @@
+---
+title: "MCP server trong Claude Code là gì? Khi nào nên dùng MCP"
+description: "Tìm hiểu MCP server trong Claude Code, khác gì hooks, khi nào nên kết nối database, docs hoặc công cụ ngoài qua MCP."
+slug: "mcp-server-trong-claude-code"
+course: "claude-code"
+order: 16
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["MCP server Claude Code", "MCP là gì", "Claude Code MCP", "MCP vs hooks", "Model Context Protocol", "kết nối công cụ với Claude Code"]
+publishedAt: "2026-04-27"
+---
+
+## MCP server trong Claude Code là gì?
+
+MCP server là cách cung cấp thêm công cụ hoặc nguồn dữ liệu cho Claude Code thông qua Model Context Protocol. Nếu Claude cần truy vấn database, đọc tài liệu nội bộ, gọi API hoặc lấy dữ liệu từ hệ thống ngoài, MCP có thể là cầu nối phù hợp.
+
+Bạn không cần MCP để bắt đầu học Claude Code. Nhưng khi workflow vượt khỏi file local và terminal thông thường, MCP giúp Claude làm việc với nguồn dữ liệu có cấu trúc hơn.
+
+## MCP khác gì hooks?
+
+Hooks chạy lệnh tự động quanh vòng đời tool call. MCP cung cấp tool hoặc dữ liệu mới để Claude chủ động sử dụng.
+
+Nói ngắn gọn:
+
+- Hooks phù hợp để chặn, log, format hoặc phản ứng với hành vi của Claude.
+- MCP phù hợp để Claude truy vấn hệ thống ngoài hoặc dùng năng lực mới.
+
+Ví dụ hook:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "node check-command.js" }]
+      }
+    ]
+  }
+}
+```
+
+Ví dụ MCP config minh họa:
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${DATABASE_URL}"
+      }
+    }
+  }
+}
+```
+
+Hook kiểm soát workflow. MCP mở rộng khả năng truy cập dữ liệu.
+
+## Khi nào nên dùng MCP?
+
+Hãy cân nhắc MCP khi Claude cần:
+
+- Truy vấn database theo quyền kiểm soát.
+- Đọc tài liệu nội bộ từ một hệ thống riêng.
+- Lấy thông tin issue, ticket hoặc release từ công cụ ngoài.
+- Gọi API nội bộ để kiểm tra dữ liệu thật.
+- Dùng tool chuyên biệt không có sẵn trong terminal.
+
+Không nên dùng MCP chỉ vì nó nghe nâng cao. Nếu file local và lệnh CLI đã đủ, hãy giữ workflow đơn giản.
+
+## Cấu hình MCP an toàn
+
+Khi kết nối MCP, hãy chú ý secret và quyền truy cập. Không hardcode connection string thật vào file được commit. Dùng biến môi trường và settings local nếu cấu hình chỉ dành cho máy cá nhân.
+
+Prompt kiểm tra trước khi thêm MCP:
+
+```text
+Hãy đề xuất cấu hình MCP cho nhu cầu này.
+Không ghi secret thật vào file.
+Phân biệt phần nên commit và phần nên để local.
+```
+
+Nếu MCP có quyền đọc dữ liệu nhạy cảm, hãy giới hạn scope. Claude không nên có quyền rộng hơn nhu cầu của task.
+
+## Những lỗi thường gặp khi dùng MCP
+
+- Thêm MCP khi chưa có nhu cầu rõ.
+- Commit secret hoặc connection string thật.
+- Cho MCP quyền đọc/ghi quá rộng.
+- Không phân biệt MCP với hooks.
+- Không ghi lại cách chạy MCP cho team.
+
+## Bài tập thực hành
+
+Hãy chọn một nhu cầu và quyết định có cần MCP không:
+
+- Claude cần đọc file trong repo.
+- Claude cần chặn lệnh `rm -rf`.
+- Claude cần truy vấn database staging.
+- Claude cần format file sau khi edit.
+
+Gợi ý trả lời:
+
+- Đọc file trong repo: không cần MCP.
+- Chặn lệnh nguy hiểm: dùng hook.
+- Truy vấn database: cân nhắc MCP.
+- Format sau edit: dùng hook hoặc script.
+
+## Câu hỏi thường gặp về MCP Claude Code
+
+### Người mới có cần học MCP ngay không?
+
+Không cần ngay. Hãy học context, commands, rules, hooks và workflow sửa code trước. MCP hữu ích khi bạn cần kết nối hệ thống ngoài.
+
+### MCP có an toàn không?
+
+An toàn nếu cấu hình quyền đúng, không commit secret và giới hạn dữ liệu Claude được truy cập.
+
+### MCP có thay thế hooks không?
+
+Không. MCP và hooks giải quyết hai vấn đề khác nhau: mở rộng công cụ và kiểm soát workflow.
+
+## Tóm tắt
+
+MCP server giúp Claude Code kết nối với nguồn dữ liệu hoặc công cụ ngoài. Bạn đã biết MCP khác hooks thế nào, khi nào nên dùng và cách cấu hình an toàn. Bài tiếp theo sẽ tập trung vào bảo mật, secret và guardrails khi dùng Claude Code.

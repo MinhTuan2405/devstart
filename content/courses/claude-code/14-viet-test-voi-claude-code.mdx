@@ -1,0 +1,125 @@
+---
+title: "Viết test với Claude Code: Kiểm thử thay đổi đúng cách"
+description: "Học cách dùng Claude Code để đọc test hiện có, viết test mới, chạy kiểm tra và tránh tạo test vô nghĩa."
+slug: "viet-test-voi-claude-code"
+course: "claude-code"
+order: 14
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["viết test với Claude Code", "Claude Code testing", "Claude Code viết unit test", "Claude Code integration test", "Claude Code chạy test", "kiểm thử với Claude Code"]
+publishedAt: "2026-04-27"
+---
+
+## Viết test với Claude Code là gì?
+
+Viết test với Claude Code là dùng Claude để hiểu test framework hiện có, tìm pattern test trong dự án, tạo test cho hành vi quan trọng và chạy kiểm tra sau khi sửa code. Test tốt giúp bạn biết thay đổi có đúng không, không chỉ biết code có chạy không.
+
+Claude có thể viết test nhanh, nhưng nếu không có hướng dẫn, nó dễ tạo test quá nông: chỉ kiểm tra component render mà không kiểm tra hành vi thật. Vì vậy, người dùng cần giao rõ mục tiêu test.
+
+## Bắt đầu bằng cách đọc test hiện có
+
+Trước khi yêu cầu Claude viết test, hãy yêu cầu nó tìm pattern test trong dự án.
+
+```text
+Hãy tìm test hiện có liên quan đến module này.
+Cho tôi biết framework test đang dùng, cách đặt tên file và pattern arrange-act-assert nếu có.
+Chưa viết test mới.
+```
+
+Nếu dự án chưa có test, Claude cần nói rõ điều đó. Đừng để Claude tự bịa lệnh `npm test` nếu package không có script test.
+
+## Chọn loại test phù hợp
+
+Không phải mọi thay đổi đều cần cùng một loại test. Bạn có thể yêu cầu Claude phân loại trước:
+
+- Unit test: kiểm tra một hàm nhỏ hoặc logic thuần.
+- Component test: kiểm tra UI render, interaction và state.
+- Integration test: kiểm tra nhiều phần phối hợp, ví dụ form gọi API mock.
+- E2E test: kiểm tra luồng người dùng thật từ trình duyệt.
+
+Prompt mẫu:
+
+```text
+Với thay đổi này, hãy đề xuất loại test phù hợp nhất.
+Giải thích vì sao chọn loại test đó.
+Không thêm test nếu dự án chưa có framework phù hợp.
+```
+
+Claude nên chọn test theo rủi ro, không theo thói quen. Bug logic nhỏ có thể chỉ cần unit test. Luồng thanh toán hoặc đăng nhập có thể cần integration hoặc E2E.
+
+## Viết test theo hành vi, không theo implementation
+
+Test tốt kiểm tra hành vi người dùng hoặc kết quả đầu ra, không phụ thuộc quá sâu vào chi tiết implementation. Nếu test kiểm tra tên state nội bộ, refactor nhỏ cũng làm test fail dù app vẫn đúng.
+
+Prompt tốt:
+
+```text
+Hãy viết test kiểm tra hành vi người dùng.
+Không test implementation detail như tên state nội bộ.
+Ưu tiên query theo text, role hoặc output quan sát được.
+```
+
+Ví dụ acceptance criteria cho test:
+
+```text
+Test cần kiểm tra:
+- Khi submit form rỗng, hiển thị lỗi bắt buộc.
+- Khi API trả 401, hiển thị lỗi đăng nhập.
+- Khi login thành công, gọi router chuyển trang.
+```
+
+Danh sách này giúp Claude tạo test có mục tiêu thay vì test cho đủ file.
+
+## Chạy test và xử lý lỗi test
+
+Sau khi viết test, hãy chạy test liên quan trước. Nếu test fail, yêu cầu Claude đọc lỗi và sửa nguyên nhân thật.
+
+```text
+Hãy chạy test liên quan trước.
+Nếu test fail, phân tích lỗi test trước khi sửa.
+Không cập nhật expectation chỉ để test pass nếu behavior thật đang sai.
+```
+
+Điểm cuối rất quan trọng. Một lỗi phổ biến là sửa expectation theo output sai, làm test pass nhưng bug vẫn còn.
+
+## Những lỗi thường gặp khi dùng Claude viết test
+
+- Tạo test không chạy được vì import sai framework.
+- Mock quá nhiều khiến test không còn ý nghĩa.
+- Snapshot lớn khó review.
+- Test implementation detail thay vì behavior.
+- Không chạy test sau khi viết.
+- Sửa expectation để che bug.
+
+## Bài tập thực hành
+
+Chọn một hàm hoặc component nhỏ và yêu cầu Claude viết test cho 3 case:
+
+- Trường hợp bình thường.
+- Trường hợp input rỗng hoặc null.
+- Trường hợp lỗi hoặc edge case.
+
+Prompt gợi ý:
+
+```text
+Hãy đọc test hiện có trước, sau đó viết test cho hành vi này.
+Test phải theo pattern của dự án và chạy được bằng script hiện có.
+```
+
+## Câu hỏi thường gặp về test với Claude Code
+
+### Claude có tự biết framework test không?
+
+Không nên giả định. Hãy yêu cầu Claude đọc package và test hiện có trước.
+
+### Có nên yêu cầu Claude viết test trước khi sửa bug không?
+
+Nên nếu bug quan trọng và có framework test. Test fail trước fix giúp bạn biết fix đúng vấn đề.
+
+### Nếu dự án không có test thì sao?
+
+Hãy yêu cầu Claude nói rõ không có test script, sau đó đề xuất cách kiểm tra thủ công hoặc kế hoạch thêm test framework nếu cần.
+
+## Tóm tắt
+
+Viết test với Claude Code cần bắt đầu từ test hiện có, chọn loại test phù hợp, kiểm tra behavior và chạy test liên quan. Bạn đã học cách tránh test vô nghĩa và cách xử lý khi test fail. Bài tiếp theo sẽ học workflow git, commit và pull request với Claude Code.

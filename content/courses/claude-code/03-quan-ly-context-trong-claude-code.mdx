@@ -1,0 +1,156 @@
+---
+title: "Quản lý context trong Anthropic Claude Code với /compact và /clear"
+description: "Học quản lý context trong Anthropic Claude Code bằng Escape, memory, rewind, /compact và /clear khi làm việc dài."
+slug: "quan-ly-context-trong-claude-code"
+course: "claude-code"
+order: 3
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["quản lý context trong Claude Code", "Anthropic Claude Code context", "Claude Code /compact", "Claude Code /clear", "Claude Code Escape", "rewind Claude Code", "Claude Code memory", "làm việc hiệu quả với Claude Code", "context window Claude"]
+publishedAt: "2026-04-27"
+---
+
+## Quản lý context trong Claude Code là gì?
+
+Quản lý context trong Claude Code là cách bạn kiểm soát những gì Claude đang nhớ trong phiên làm việc. Khi cuộc trò chuyện dài dần, context có thể chứa thông tin hữu ích, lỗi cũ hoặc hướng đi không còn liên quan. Biết dùng Escape, `/compact` và `/clear` giúp Claude tập trung hơn.
+
+Người mới thường nghĩ chỉ cần tiếp tục chat là đủ. Thực tế, khi một phiên kéo dài qua nhiều bug, nhiều file và nhiều thử nghiệm, Claude có thể bị nhiễu bởi thông tin cũ. Quản lý context giúp bạn giữ phần có giá trị và loại bỏ phần gây nhiễu đúng lúc.
+
+## Vì sao Anthropic Claude Code cần quản lý context?
+
+Claude Code của Anthropic làm việc tốt nhất khi context còn đúng với nhiệm vụ hiện tại. Nếu cuộc trò chuyện đã đi qua nhiều hướng thử sai, Claude có thể vẫn nhìn thấy giả định cũ, log lỗi cũ hoặc giải pháp đã bị loại bỏ. Khi đó, câu trả lời tiếp theo dễ bị kéo lệch khỏi mục tiêu thật.
+
+Bạn có thể hình dung context window như bàn làm việc của Claude. Nếu trên bàn có đúng file, đúng yêu cầu và đúng quy tắc, Claude xử lý nhanh hơn. Nếu trên bàn có quá nhiều ghi chú cũ, Claude vẫn có thể làm việc nhưng dễ nhầm đâu là thông tin mới nhất.
+
+Vì vậy, khi học Anthropic Claude Code, đừng chỉ học lệnh `/compact` và `/clear` như mẹo giao diện. Hãy xem chúng là kỹ năng điều phối context: giữ lại hiểu biết có ích, loại bỏ nhiễu và chuyển nhiệm vụ đúng thời điểm.
+
+## Dùng Escape để dừng Claude đúng lúc
+
+Khi Claude đang đi sai hướng, bạn không cần đợi nó hoàn thành. Bạn có thể nhấn Escape để ngắt phản hồi hiện tại. Đây là thao tác đơn giản nhưng rất quan trọng khi Claude bắt đầu sửa quá rộng, giải thích lan man hoặc hiểu sai yêu cầu.
+
+Ví dụ tình huống nên dừng:
+
+- Claude bắt đầu sửa file dù bạn chỉ yêu cầu phân tích.
+- Claude chọn hướng refactor quá lớn so với bug nhỏ.
+- Claude chạy theo giả định sai về framework hoặc command.
+- Claude lặp lại một lỗi đã được bạn sửa trước đó.
+
+Sau khi dừng, hãy đưa chỉ dẫn ngắn và cụ thể hơn:
+
+```text
+Dừng hướng này. Tôi chỉ muốn sửa lỗi validate form, không refactor component.
+Hãy đọc lại file liên quan và đề xuất thay đổi nhỏ nhất trước.
+```
+
+Escape không phải là thất bại. Đó là cách bạn điều khiển phiên làm việc giống như đang hướng dẫn một đồng đội junior: dừng sớm khi hướng đi sai sẽ tiết kiệm thời gian hơn sửa hậu quả về sau.
+
+## Kết hợp Escape với memory
+
+Một cách dùng Escape mạnh hơn là dừng Claude khi nó lặp lại lỗi, sau đó ghi memory bằng `#`. Memory nên mô tả quy tắc đúng để Claude áp dụng trong tương lai.
+
+Ví dụ:
+
+```text
+# Trong dự án này, không tạo helper mới nếu logic chỉ dùng một lần. Ưu tiên sửa trực tiếp trong function hiện tại.
+```
+
+Sau đó bạn có thể tiếp tục:
+
+```text
+Tiếp tục với quy tắc vừa lưu. Hãy sửa lại theo hướng nhỏ hơn và không tạo helper mới.
+```
+
+Cách làm này đặc biệt hữu ích với các lỗi lặp lại như dùng sai package manager, chạy sai lệnh test, tạo quá nhiều abstraction hoặc bỏ qua quy ước đặt tên của dự án.
+
+## Rewind conversation khi context bị rối
+
+Nếu bạn nhấn Escape hai lần, Claude Code có thể cho phép quay lại một điểm trước đó trong cuộc trò chuyện. Đây thường được gọi là rewind. Mục tiêu là trở về trạng thái context sạch hơn mà vẫn giữ phần hiểu biết quan trọng trước khi cuộc trò chuyện đi lệch.
+
+Rewind hữu ích khi:
+
+- Bạn đã dành quá nhiều tin nhắn để debug một hướng sai.
+- Claude đã đọc nhiều log lỗi không còn liên quan.
+- Bạn muốn quay lại trước thời điểm chọn sai giải pháp.
+- Bạn muốn giữ hiểu biết về codebase nhưng bỏ phần thử nghiệm gây nhiễu.
+
+Sau khi rewind, hãy viết lại yêu cầu rõ hơn. Ví dụ:
+
+```text
+Quay lại mục tiêu ban đầu: sửa lỗi đăng xuất trên Safari.
+Không dùng hướng đã thử trước đó. Hãy kiểm tra cookie config và browser compatibility trước.
+```
+
+## Dùng /compact để giữ phần quan trọng
+
+`/compact` tóm tắt lịch sử cuộc trò chuyện để giảm độ dài context nhưng vẫn giữ thông tin chính. Đây là lựa chọn tốt khi phiên làm việc dài, Claude đã học được nhiều điều về dự án và bạn muốn tiếp tục cùng chủ đề.
+
+```text
+/compact
+```
+
+Bạn nên dùng `/compact` khi:
+
+- Phiên làm việc đã dài nhưng vẫn cùng một mục tiêu.
+- Claude đã hiểu cấu trúc dự án và bạn muốn giữ hiểu biết đó.
+- Bạn vừa hoàn thành một phần lớn và chuẩn bị sang phần kế tiếp liên quan.
+
+Sau khi compact, hãy kiểm tra nhanh bản tóm tắt. Nếu thiếu điều quan trọng, hãy bổ sung ngay bằng một tin nhắn ngắn.
+
+## Dùng /clear khi cần bắt đầu lại
+
+`/clear` xóa lịch sử cuộc trò chuyện hiện tại và tạo một phiên gần như mới. Đây là lựa chọn phù hợp khi bạn chuyển sang việc không liên quan hoặc context cũ có khả năng gây hiểu lầm.
+
+```text
+/clear
+```
+
+Nên dùng `/clear` khi:
+
+- Bạn chuyển từ sửa bug frontend sang thiết kế database hoàn toàn khác.
+- Cuộc trò chuyện cũ chứa nhiều giả định sai.
+- Bạn muốn Claude đọc lại từ đầu thay vì dựa vào hiểu biết trước đó.
+- Bạn đang chuẩn bị một nhiệm vụ nhạy cảm và muốn context gọn.
+
+Khác với `/compact`, `/clear` không cố giữ lại lịch sử. Vì vậy, nếu có thông tin quan trọng cần dùng lâu dài, hãy đưa vào `CLAUDE.md`, rule file hoặc memory trước.
+
+## Những lỗi thường gặp khi quản lý context
+
+- Tiếp tục phiên quá dài dù Claude đã nhiều lần hiểu sai mục tiêu.
+- Dùng `/clear` quá sớm và làm mất context hữu ích mà chưa ghi lại.
+- Không dùng Escape khi Claude bắt đầu tạo thay đổi ngoài phạm vi.
+- Ghi memory quá mơ hồ nên Claude khó áp dụng.
+- Để log lỗi cũ trong context sau khi nguyên nhân đã được loại trừ.
+
+## Bài tập thực hành
+
+Trong một phiên Claude Code, hãy thử mô phỏng quy trình sau:
+
+- Yêu cầu Claude đọc một dự án và tóm tắt cấu trúc.
+- Đưa thêm một yêu cầu nhỏ, ví dụ tìm file cấu hình lint.
+- Chạy `/compact` và kiểm tra Claude giữ lại những gì.
+- Sau đó chạy `/clear` và hỏi lại cùng câu hỏi để cảm nhận sự khác biệt.
+
+Gợi ý prompt:
+
+```text
+Hãy tóm tắt những gì bạn đang biết về dự án này sau khi compact.
+Nếu thiếu lệnh kiểm tra hoặc entrypoint chính, hãy nói rõ là chưa biết.
+```
+
+## Câu hỏi thường gặp về quản lý context trong Claude Code
+
+### Khi nào dùng /compact thay vì /clear?
+
+Dùng `/compact` khi bạn vẫn tiếp tục cùng nhiệm vụ và muốn giữ hiểu biết quan trọng. Dùng `/clear` khi bạn chuyển sang nhiệm vụ khác hoặc context cũ đang gây nhiễu.
+
+### Escape có làm mất toàn bộ cuộc trò chuyện không?
+
+Không. Escape chỉ dừng phản hồi hiện tại hoặc hỗ trợ quay lại điểm trước đó tùy thao tác. Nó giúp bạn kiểm soát hướng đi mà không nhất thiết xóa sạch context.
+
+### Có nên ghi mọi thứ vào memory không?
+
+Không. Memory chỉ nên dùng cho quy tắc lặp lại và có giá trị lâu dài. Thông tin tạm thời của một bug cụ thể nên nằm trong cuộc trò chuyện hoặc tài liệu dự án, không nên thành memory cá nhân.
+
+## Tóm tắt
+
+Quản lý context trong Claude Code giúp bạn giữ Claude tập trung, tránh lặp lỗi và giảm nhiễu trong phiên dài. Bạn đã học cách dùng Escape, memory, rewind, `/compact` và `/clear`. Ở bài tiếp theo, chúng ta sẽ đi vào cấu trúc `.claude/` để tổ chức commands, rules, hooks, skills và agents cho dự án.

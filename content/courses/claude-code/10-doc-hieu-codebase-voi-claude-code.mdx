@@ -1,0 +1,132 @@
+---
+title: "Cách đọc hiểu codebase mới với Claude Code"
+description: "Học quy trình dùng Claude Code để khám phá cấu trúc dự án, tìm entrypoint, đọc file liên quan và ghi lại context quan trọng."
+slug: "doc-hieu-codebase-voi-claude-code"
+course: "claude-code"
+order: 10
+duration: "24 phút"
+difficulty: "Dễ"
+keywords: ["đọc hiểu codebase với Claude Code", "Claude Code đọc dự án", "khám phá codebase", "Claude Code cho dự án mới", "dùng @file trong Claude Code", "Claude Code giải thích code"]
+publishedAt: "2026-04-27"
+---
+
+## Đọc hiểu codebase với Claude Code là gì?
+
+Đọc hiểu codebase với Claude Code là quá trình để Claude hỗ trợ bạn khám phá dự án: cấu trúc thư mục, entrypoint, luồng dữ liệu, lệnh chạy, file cấu hình và những khu vực dễ rủi ro. Mục tiêu không phải sửa ngay, mà là xây bản đồ dự án trước khi thay đổi code.
+
+Đây là kỹ năng rất quan trọng khi bạn mới vào một repo, nhận một task lạ hoặc cần review dự án cũ. Nếu bỏ qua bước đọc hiểu, Claude có thể sửa đúng cú pháp nhưng sai kiến trúc.
+
+## Bắt đầu bằng câu hỏi tổng quan
+
+Prompt đầu tiên nên yêu cầu Claude đọc dự án và báo cáo, chưa sửa file. Ví dụ:
+
+```text
+Hãy đọc cấu trúc dự án này và tóm tắt:
+- Framework hoặc ngôn ngữ chính
+- Entry point quan trọng
+- Lệnh dev, lint, test, build nếu tìm thấy
+- Thư mục chứa UI, logic dùng chung và dữ liệu
+
+Chưa sửa file nào. Nếu chưa chắc, hãy nói rõ chưa chắc.
+```
+
+Câu cuối rất quan trọng. Nó giảm khả năng Claude bịa thông tin khi chưa đọc đủ file.
+
+## Tìm entrypoint và luồng chính
+
+Sau tổng quan, hãy yêu cầu Claude đi sâu vào luồng chính của app. Với web app, luồng đó có thể là route, layout, component và data loader. Với backend, có thể là server entry, router, service và database layer.
+
+Prompt mẫu:
+
+```text
+Hãy tìm luồng chạy chính của dự án.
+Cho tôi biết request hoặc user action đi qua những file nào.
+Chỉ đọc và giải thích, chưa sửa code.
+```
+
+Kết quả tốt nên có đường dẫn file cụ thể. Nếu Claude chỉ trả lời chung chung như "app có frontend và backend", hãy yêu cầu nó chỉ ra file bằng tên.
+
+## Dùng @file và @folder để giao tiếp chính xác
+
+Khi đã biết file quan trọng, dùng `@` để trỏ rõ vị trí cần đọc. Cách này tốt hơn nói mơ hồ "đọc component login".
+
+Ví dụ:
+
+```text
+Hãy đọc @app/login/page.tsx và @lib/auth.ts.
+Giải thích luồng đăng nhập bằng tiếng Việt dễ hiểu.
+Không sửa file.
+```
+
+Bạn cũng có thể yêu cầu so sánh hai khu vực:
+
+```text
+So sánh cách @app/api/users/route.ts và @app/api/orders/route.ts xử lý validate input.
+Chỉ ra pattern chung và điểm khác nhau.
+```
+
+Khi làm việc với ảnh hoặc UI, bạn có thể dùng screenshot để giao tiếp chính xác hơn. Screenshot hữu ích khi lỗi là bố cục, màu sắc, khoảng cách hoặc trạng thái giao diện mà mô tả bằng chữ dễ thiếu.
+
+## Ghi lại context sau khi đã hiểu dự án
+
+Sau khi Claude giúp bạn đọc codebase, hãy chuyển phần hiểu biết bền vững vào `CLAUDE.md` hoặc rules. Ví dụ:
+
+- Dự án dùng package manager nào.
+- Lệnh kiểm tra chính xác là gì.
+- File generated nào không được sửa.
+- Pattern import, component hoặc service đang dùng.
+- Quy ước đặt test ở đâu.
+
+Prompt mẫu:
+
+```text
+Dựa trên những gì vừa đọc, hãy đề xuất nội dung nên thêm vào CLAUDE.md.
+Chỉ đề xuất phần chắc chắn, không thêm giả định.
+```
+
+Đừng ghi mọi chi tiết nhỏ vào context. Chỉ ghi những thứ giúp các phiên sau tránh sai lầm lặp lại.
+
+## Những lỗi thường gặp khi khám phá codebase
+
+- Yêu cầu Claude sửa bug trước khi hiểu luồng liên quan.
+- Không hỏi lệnh kiểm tra, dẫn đến chạy sai script.
+- Không phân biệt thông tin chắc chắn và suy đoán.
+- Đưa quá nhiều file không liên quan vào một lần đọc.
+- Không ghi lại context quan trọng sau khi đã khám phá xong.
+
+## Bài tập thực hành
+
+Chọn một dự án bất kỳ và yêu cầu Claude tạo bản đồ codebase.
+
+Yêu cầu output gồm:
+
+- Mục đích dự án trong 3 câu.
+- 5 thư mục hoặc file quan trọng nhất.
+- Lệnh chạy và kiểm tra.
+- Một luồng chính được giải thích từng bước.
+- 3 điều nên ghi vào `CLAUDE.md`.
+
+Prompt gợi ý:
+
+```text
+Hãy đọc dự án và tạo onboarding note cho người mới.
+Không sửa file. Nếu thiếu thông tin, hãy ghi "chưa xác định".
+```
+
+## Câu hỏi thường gặp về đọc codebase với Claude Code
+
+### Có nên để Claude đọc toàn bộ dự án không?
+
+Không phải lúc nào cũng cần. Hãy bắt đầu từ cấu trúc và file quan trọng, sau đó đi sâu theo luồng nhiệm vụ. Đọc quá rộng có thể làm context bị nhiễu.
+
+### Claude có thể hiểu sai kiến trúc không?
+
+Có. Vì vậy bạn nên yêu cầu dẫn file cụ thể, phân biệt chắc chắn và suy đoán, rồi kiểm tra lại bằng code thật.
+
+### Khi nào nên cập nhật CLAUDE.md?
+
+Khi bạn phát hiện quy ước hoặc lệnh quan trọng có giá trị lâu dài. Không cần cập nhật cho mọi chi tiết tạm thời.
+
+## Tóm tắt
+
+Đọc hiểu codebase là bước nền trước khi sửa code bằng Claude Code. Bạn đã học cách hỏi tổng quan, tìm entrypoint, dùng `@file`, tận dụng screenshot và ghi lại context bền vững. Bài tiếp theo sẽ hướng dẫn cách giao task rõ ràng để Claude thực thi đúng mục tiêu.

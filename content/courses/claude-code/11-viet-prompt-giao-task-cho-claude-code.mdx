@@ -1,0 +1,147 @@
+---
+title: "Cách viết prompt giao task cho Claude Code"
+description: "Học cách viết prompt rõ mục tiêu, phạm vi, ràng buộc và tiêu chí hoàn thành để Claude Code làm đúng task."
+slug: "viet-prompt-giao-task-cho-claude-code"
+course: "claude-code"
+order: 11
+duration: "22 phút"
+difficulty: "Dễ"
+keywords: ["viết prompt cho Claude Code", "giao task cho Claude Code", "Claude Code prompt template", "Claude Code acceptance criteria", "Claude Code scope", "prompt sửa bug Claude Code"]
+publishedAt: "2026-04-27"
+---
+
+## Prompt giao task cho Claude Code là gì?
+
+Prompt giao task cho Claude Code là bản mô tả công việc đủ rõ để Claude hiểu mục tiêu, phạm vi, ràng buộc và cách kiểm tra kết quả. Prompt tốt không cần dài, nhưng phải nói rõ cần làm gì, không làm gì và thế nào là hoàn thành.
+
+Claude Code mạnh hơn chat thông thường vì có thể đọc file, sửa code và chạy lệnh. Chính vì vậy, prompt mơ hồ sẽ nguy hiểm hơn. Nếu bạn nói "sửa phần auth", Claude có thể đụng quá nhiều file. Nếu bạn nói rõ lỗi, hành vi mong muốn và giới hạn, kết quả sẽ kiểm soát được hơn.
+
+## Công thức prompt 5 phần
+
+Một prompt giao task tốt thường có 5 phần:
+
+- Context: thông tin nền hoặc file liên quan.
+- Goal: mục tiêu cần đạt.
+- Scope: phạm vi được phép sửa.
+- Constraints: điều không được làm.
+- Verification: cách kiểm tra sau khi sửa.
+
+Template:
+
+```text
+Context:
+[Mô tả ngắn tình huống hoặc file liên quan]
+
+Goal:
+[Kết quả mong muốn]
+
+Scope:
+[File/thư mục được phép đọc hoặc sửa]
+
+Constraints:
+[Điều không được làm]
+
+Verification:
+[Lệnh hoặc cách kiểm tra]
+```
+
+Template này đặc biệt hữu ích khi bạn giao task sửa bug, refactor nhỏ hoặc thêm tính năng trong codebase thật.
+
+## Ví dụ prompt mơ hồ và prompt tốt
+
+Prompt mơ hồ:
+
+```text
+Sửa login giúp tôi.
+```
+
+Prompt này thiếu lỗi cụ thể, thiếu phạm vi và thiếu cách kiểm tra. Claude phải tự đoán.
+
+Prompt tốt hơn:
+
+```text
+Context:
+Người dùng nhập sai mật khẩu nhưng form login không hiện thông báo lỗi.
+File có thể liên quan: @app/login/page.tsx và @lib/auth.ts.
+
+Goal:
+Khi API trả lỗi xác thực, hiển thị thông báo rõ ràng dưới form.
+
+Scope:
+Chỉ sửa UI login và logic gọi auth liên quan. Không refactor toàn bộ auth flow.
+
+Constraints:
+Không đổi schema database. Không thêm dependency mới.
+
+Verification:
+Chạy npm run lint. Nếu không chạy được, báo lỗi đầy đủ.
+```
+
+Prompt tốt không đảm bảo Claude luôn đúng, nhưng giúp giảm đáng kể hướng sửa sai.
+
+## Thêm acceptance criteria vào task
+
+Acceptance criteria là danh sách điều kiện để xem task đã hoàn thành chưa. Với Claude Code, phần này rất quan trọng vì nó biến yêu cầu mơ hồ thành kết quả kiểm tra được.
+
+Ví dụ:
+
+```text
+Acceptance criteria:
+- Khi email rỗng, form báo "Vui lòng nhập email".
+- Khi mật khẩu rỗng, form báo "Vui lòng nhập mật khẩu".
+- Khi API trả 401, form báo "Email hoặc mật khẩu không đúng".
+- Không thay đổi layout desktop hiện tại.
+- npm run lint pass.
+```
+
+Nếu task có UI, acceptance criteria nên mô tả cả desktop và mobile. Nếu task có API, nên nói rõ status code, response shape và edge cases.
+
+## Khi nào nên yêu cầu Claude lập kế hoạch trước?
+
+Không phải task nào cũng cần kế hoạch dài. Nhưng với task ảnh hưởng nhiều file, hãy yêu cầu Claude phân tích trước khi sửa.
+
+Prompt mẫu:
+
+```text
+Hãy đọc các file liên quan và đề xuất kế hoạch trước.
+Chưa sửa file cho đến khi tôi xác nhận.
+Kế hoạch cần nêu file sẽ sửa, lý do sửa và rủi ro chính.
+```
+
+Cách này phù hợp khi bạn chưa chắc phạm vi, hoặc khi codebase có nhiều pattern cũ. Với bug nhỏ đã rõ, bạn có thể cho Claude sửa trực tiếp nhưng vẫn nên yêu cầu thay đổi nhỏ nhất.
+
+## Những lỗi thường gặp khi giao task
+
+- Chỉ nói mục tiêu mà không nói phạm vi.
+- Không đưa ví dụ lỗi hoặc hành vi mong muốn.
+- Không nói cách kiểm tra.
+- Quên cấm thêm dependency hoặc refactor rộng.
+- Đưa quá nhiều yêu cầu khác nhau vào một prompt.
+
+## Bài tập thực hành
+
+Hãy viết lại prompt mơ hồ sau thành prompt đủ 5 phần:
+
+```text
+Tối ưu trang dashboard cho tôi.
+```
+
+Gợi ý: hãy bổ sung dashboard đang chậm ở đâu, chỉ số mong muốn, file liên quan, phạm vi không được đụng, và cách kiểm tra sau khi sửa.
+
+## Câu hỏi thường gặp về prompt Claude Code
+
+### Prompt càng dài càng tốt không?
+
+Không. Prompt tốt là prompt đủ thông tin. Dài nhưng lan man có thể làm Claude khó tập trung.
+
+### Có nên đưa file path vào prompt không?
+
+Có, nếu bạn biết file liên quan. Dùng `@file` giúp Claude đọc đúng nơi và giảm đoán mò.
+
+### Nếu chưa biết lỗi nằm ở đâu thì sao?
+
+Hãy yêu cầu Claude điều tra trước, chưa sửa file. Sau khi xác định phạm vi, bạn mới giao task sửa.
+
+## Tóm tắt
+
+Prompt giao task cho Claude Code nên có context, goal, scope, constraints và verification. Bạn đã biết cách viết prompt rõ ràng, thêm acceptance criteria và yêu cầu kế hoạch khi cần. Bài tiếp theo sẽ đi vào quy trình sửa code an toàn bằng Claude Code.

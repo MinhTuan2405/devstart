@@ -76,7 +76,7 @@ export function getLessonBySlug(courseName: string, slug: string): Lesson | null
 }
 
 export function getAllLessons(): Lesson[] {
-  const courseNames = ['python', 'cpp', 'html-css', 'machine-learning']
+  const courseNames = ['python', 'cpp', 'html-css', 'machine-learning', 'claude-code']
   return courseNames.flatMap((name) => getLessonsByCourseName(name))
 }
 
@@ -146,5 +146,11 @@ export const courseInfo: Record<string, { name: string; description: string; ico
     description: 'Làm quen học máy, dữ liệu và cách xây dựng mô hình dự đoán từ cơ bản.',
     icon: '🤖',
     slug: 'machine-learning',
+  },
+  'claude-code': {
+    name: 'Claude Code',
+    description: 'Học Claude Code từ cài đặt, context, workflow sửa code, testing, git, MCP, bảo mật đến thiết lập .claude hoàn chỉnh.',
+    icon: '🧠',
+    slug: 'claude-code',
   },
 }

@@ -1,0 +1,206 @@
+---
+title: "Claude Code Hooks của Anthropic là gì? Tự động hóa workflow"
+description: "Học Claude Code Hooks của Anthropic, PreToolUse, PostToolUse, Notification, Stop và cách viết hook an toàn."
+slug: "hooks-trong-claude-code"
+course: "claude-code"
+order: 7
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["Claude Code Hooks", "Anthropic Claude Code Hooks", "hooks trong Claude Code", "PreToolUse Claude Code", "PostToolUse Claude Code", "Claude Code settings hooks", "tự động hóa Claude Code", "block tool Claude Code", "Claude Code hook events"]
+publishedAt: "2026-04-27"
+---
+
+## Claude Code Hooks là gì?
+
+Claude Code Hooks là cơ chế chạy lệnh shell tự động tại các thời điểm trong vòng đời Claude, ví dụ trước khi gọi tool, sau khi tool chạy xong, khi có notification hoặc khi phiên dừng. Hooks giúp bạn thêm lớp tự động hóa và guardrail bên ngoài quyết định của Claude.
+
+Điểm quan trọng là hook chạy như lệnh của hệ điều hành. Điều đó giúp bạn format file, log lệnh, chặn thao tác nguy hiểm hoặc gửi thông báo. Nhưng cũng vì vậy, hook cần được viết cẩn thận để không làm chậm workflow hoặc gây tác dụng phụ ngoài ý muốn.
+
+## Hooks trong Anthropic Claude Code khác gì prompt?
+
+Prompt là lời nhắc để Claude tự quyết định hành động. Hook là lớp thực thi bên ngoài Claude, chạy theo event đã cấu hình. Vì vậy, Anthropic Claude Code Hooks phù hợp cho những việc cần tính bắt buộc hơn prompt, ví dụ chặn lệnh xóa nguy hiểm, ghi log tool call hoặc chạy kiểm tra nhẹ sau khi sửa file.
+
+Nói đơn giản: prompt hướng dẫn Claude nên làm gì, còn hook kiểm soát điều gì xảy ra trước hoặc sau khi Claude dùng tool. Đây là lý do các keyword như `PreToolUse Claude Code`, `PostToolUse Claude Code`, `block tool Claude Code` thường đi cùng chủ đề hooks.
+
+## Hooks được cấu hình ở đâu?
+
+Hooks thường được khai báo trong settings global hoặc settings của dự án. Với dự án, vị trí phổ biến là `.claude/settings.json`.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [],
+    "PostToolUse": [],
+    "Notification": [],
+    "Stop": []
+  }
+}
+```
+
+Nếu hook áp dụng cho cả team, bạn có thể commit `.claude/settings.json`. Nếu hook chỉ dành cho máy cá nhân, hãy dùng settings local và không commit.
+
+## Bốn hook event quan trọng
+
+Claude Code có nhiều điểm để gắn hook, nhưng người mới nên hiểu bốn event chính:
+
+- `PreToolUse`: chạy trước khi Claude gọi tool. Event này có thể chặn thao tác.
+- `PostToolUse`: chạy sau khi tool hoàn tất. Event này phù hợp để log, format hoặc kiểm tra nhẹ.
+- `Notification`: chạy khi Claude gửi notification.
+- `Stop`: chạy khi Claude kết thúc task hoặc phiên làm việc.
+
+`PreToolUse` là event nhạy cảm nhất vì nó có thể quyết định cho phép hoặc chặn tool call. Các event còn lại thường dùng để quan sát hoặc phản ứng sau khi sự việc đã xảy ra.
+
+## Cấu trúc một hook
+
+Mỗi hook entry thường có `matcher` và danh sách `hooks`. `matcher` xác định tool nào sẽ kích hoạt hook.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/check-bash-command.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Trong ví dụ này, hook chỉ chạy trước tool `Bash`. Nếu bạn muốn match mọi tool, có thể để matcher rỗng hoặc bỏ matcher tùy cấu hình được hỗ trợ.
+
+Các matcher thường gặp là `Bash`, `Read`, `Write`, `Edit`, `MultiEdit`, `WebFetch`, `TodoWrite` và `Task`.
+
+## Hook nhận dữ liệu gì?
+
+Hook nhận payload JSON qua stdin. Với `PreToolUse`, payload thường có tên tool và input mà Claude định dùng.
+
+```json
+{
+  "session_id": "abc123",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "npm run build",
+    "description": "Builds the app"
+  }
+}
+```
+
+Với `PostToolUse`, payload còn có kết quả tool. Điều này hữu ích nếu bạn muốn log command đã chạy hoặc kiểm tra kết quả sau khi tool hoàn tất.
+
+## Chặn lệnh nguy hiểm bằng PreToolUse
+
+`PreToolUse` có thể chặn Claude bằng exit code khác 0. Nếu stdout trả JSON có `decision: "block"`, Claude sẽ thấy lý do bị chặn.
+
+Ví dụ script chặn `rm -rf`:
+
+```bash
+#!/bin/bash
+INPUT=$(cat)
+COMMAND=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // ""')
+
+if printf '%s' "$COMMAND" | grep -qE 'rm\s+-rf'; then
+  printf '%s\n' '{"decision":"block","reason":"rm -rf is not allowed. Use safer deletion."}'
+  exit 1
+fi
+
+exit 0
+```
+
+Ý tưởng ở đây không phải là chặn mọi lệnh mạnh, mà là bảo vệ những thao tác dễ gây mất dữ liệu. Bạn có thể mở rộng script để chặn ghi vào `.env`, xóa thư mục build quan trọng hoặc push force lên nhánh chính.
+
+## Ví dụ hook thực tế
+
+Hook log tất cả lệnh Bash vào file riêng:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/log-claude-bash.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Hook gửi thông báo khi Claude dừng:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/notify-claude-done.js"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Trong dự án thật, hãy ưu tiên script có tên rõ ràng thay vì nhét logic dài trực tiếp vào JSON. Script riêng dễ test, dễ review và ít lỗi escape ký tự hơn.
+
+## Hooks khác gì MCP servers?
+
+Hooks phù hợp khi bạn muốn phản ứng với hành vi của Claude: chặn tool, log lệnh, format file hoặc gửi thông báo. MCP servers phù hợp khi bạn muốn cung cấp thêm công cụ hoặc nguồn dữ liệu để Claude chủ động truy vấn.
+
+Nói ngắn gọn:
+
+- Dùng hooks để kiểm soát và tự động hóa quanh workflow.
+- Dùng MCP khi Claude cần năng lực mới hoặc kết nối tới hệ thống khác.
+
+## Những lỗi thường gặp khi dùng hooks
+
+- Viết hook quá nặng khiến mỗi thao tác nhỏ đều chậm.
+- Chạy command có side effect lớn mà không ghi rõ trong team.
+- Không xử lý trường hợp payload thiếu field.
+- Commit hook phụ thuộc vào đường dẫn chỉ tồn tại trên máy cá nhân.
+- Chặn quá rộng khiến Claude không thể làm việc bình thường.
+
+## Bài tập thực hành
+
+Hãy thiết kế một hook `PreToolUse` cho tool `Bash` với mục tiêu chặn lệnh nguy hiểm.
+
+Yêu cầu:
+
+- Chặn `rm -rf`.
+- Chặn lệnh có chứa `.env` nếu là thao tác ghi hoặc xóa.
+- Cho phép các lệnh đọc thông thường.
+- Trả về lý do chặn rõ ràng.
+
+Bạn chưa cần triển khai hoàn chỉnh ngay. Hãy viết danh sách rule trước, sau đó mới chuyển thành script.
+
+## Câu hỏi thường gặp về Claude Code Hooks
+
+### Hooks có an toàn không?
+
+Hooks an toàn nếu bạn viết rõ, review kỹ và tránh side effect nguy hiểm. Vì hooks chạy lệnh shell, bạn không nên copy script lạ vào dự án mà chưa hiểu nó làm gì.
+
+### Có nên chạy test sau mọi edit bằng hook không?
+
+Không phải lúc nào cũng nên. Với dự án nhỏ, điều này có thể hữu ích. Với dự án lớn, chạy test sau mọi edit có thể làm chậm nghiêm trọng. Hãy chọn lệnh nhẹ hoặc chạy theo event phù hợp.
+
+### PreToolUse có thể chặn Claude hoàn toàn không?
+
+Có thể chặn một tool call cụ thể nếu hook trả exit code khác 0. Đây là cơ chế hữu ích để ngăn thao tác nguy hiểm trước khi nó xảy ra.
+
+## Tóm tắt
+
+Claude Code Hooks giúp bạn tự động hóa và kiểm soát workflow bằng lệnh shell ở các event như `PreToolUse`, `PostToolUse`, `Notification` và `Stop`. Bạn đã biết cách cấu hình hook, đọc payload, chặn lệnh nguy hiểm và tránh lỗi thường gặp. Ở bài tiếp theo, chúng ta sẽ học skills và agents để đóng gói workflow chuyên sâu hơn.

@@ -1,0 +1,142 @@
+---
+title: "Git và pull request với Claude Code: Làm việc không phá repo"
+description: "Học cách dùng Claude Code với git status, diff, commit message, pull request và quy tắc an toàn khi làm việc nhóm."
+slug: "git-va-pull-request-voi-claude-code"
+course: "claude-code"
+order: 15
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["git với Claude Code", "Claude Code pull request", "Claude Code commit", "Claude Code git diff", "Claude Code code review", "Claude Code làm việc nhóm"]
+publishedAt: "2026-04-27"
+---
+
+## Git với Claude Code là gì?
+
+Git với Claude Code là cách để Claude hỗ trợ bạn xem trạng thái repo, đọc diff, viết commit message, chuẩn bị pull request và review thay đổi. Điểm quan trọng là Claude có thể giúp thao tác git, nhưng bạn cần giữ quy tắc an toàn để không phá lịch sử hoặc commit nhầm file.
+
+Trong dự án thật, git là ranh giới giữa thay đổi local và thay đổi được chia sẻ. Vì vậy, đừng để Claude commit, amend hoặc push nếu bạn chưa yêu cầu rõ.
+
+## Bắt đầu bằng git status và git diff
+
+Trước khi nhờ Claude commit hoặc tạo PR, hãy yêu cầu nó đọc trạng thái repo.
+
+```text
+Hãy kiểm tra git status và git diff.
+Tóm tắt file nào đã thay đổi, file nào là untracked, và thay đổi nào liên quan đến task hiện tại.
+Chưa commit, chưa push.
+```
+
+Nếu repo có thay đổi của người khác hoặc thay đổi ngoài task, Claude cần nhận biết và không tự revert. Đây là nguyên tắc quan trọng khi nhiều người hoặc nhiều agent cùng làm việc trong một workspace.
+
+## Viết commit message đúng mục đích
+
+Commit message tốt nói rõ mục đích thay đổi, không chỉ liệt kê file. Bạn có thể yêu cầu Claude dựa vào diff để đề xuất message.
+
+```text
+Dựa trên diff hiện tại, hãy đề xuất commit message ngắn gọn.
+Không commit. Chỉ đề xuất message và giải thích vì sao.
+```
+
+Ví dụ message tốt:
+
+```text
+Add Claude Code course lessons
+```
+
+Ví dụ message yếu:
+
+```text
+update files
+```
+
+Nếu team dùng conventional commits, hãy ghi trong `CLAUDE.md` hoặc rule file để Claude tuân thủ.
+
+## Quy tắc an toàn khi commit
+
+Trước khi commit, Claude cần kiểm tra:
+
+- Có file secret như `.env`, credentials hoặc token không?
+- Có file build output hoặc cache không?
+- Có untracked file liên quan task không?
+- Lint/test có pass không?
+- Commit có quá nhiều thay đổi không liên quan không?
+
+Prompt mẫu:
+
+```text
+Hãy chuẩn bị commit cho task này.
+Trước khi commit, kiểm tra git status, git diff và file untracked.
+Không commit secret, .env, build output hoặc thay đổi không liên quan.
+```
+
+Nếu có file đáng ngờ, Claude nên dừng và hỏi bạn, không tự quyết định commit.
+
+## Chuẩn bị pull request với Claude Code
+
+Khi tạo PR, Claude có thể giúp tổng hợp summary, test plan và rủi ro. PR tốt không chỉ nói "đã sửa" mà nêu rõ người review cần chú ý gì.
+
+Template PR đơn giản:
+
+```markdown
+## Summary
+- Thêm khóa học Claude Code vào trang khóa học.
+- Bổ sung route chi tiết bài học và metadata SEO.
+
+## Verification
+- npm run lint
+- npm run build
+
+## Notes
+- Build có warning edge runtime đã tồn tại trước đó.
+```
+
+Bạn có thể yêu cầu Claude tạo PR body dựa trên diff:
+
+```text
+Dựa trên các commit trong branch này, hãy viết PR summary.
+Bao gồm Summary, Verification và Risks.
+Không tạo PR cho đến khi tôi xác nhận.
+```
+
+## Những lỗi thường gặp khi dùng Claude với git
+
+- Commit nhầm `.env` hoặc file chứa credential.
+- Commit cả thay đổi không liên quan của người khác.
+- Dùng amend khi không cần.
+- Push hoặc force push khi chưa được yêu cầu.
+- Không chạy kiểm tra trước khi tạo PR.
+
+## Bài tập thực hành
+
+Tạo một thay đổi nhỏ trong repo học tập, sau đó yêu cầu Claude:
+
+- Chạy git status.
+- Đọc diff.
+- Tóm tắt thay đổi.
+- Đề xuất commit message.
+- Viết PR body nháp.
+
+Prompt gợi ý:
+
+```text
+Hãy review thay đổi git hiện tại và chuẩn bị nội dung commit/PR.
+Chưa commit, chưa push, chưa tạo PR.
+```
+
+## Câu hỏi thường gặp về git với Claude Code
+
+### Có nên để Claude commit không?
+
+Có thể nếu bạn yêu cầu rõ và đã kiểm tra diff. Không nên để Claude tự commit khi bạn chỉ yêu cầu sửa code.
+
+### Claude có nên tự push không?
+
+Không, trừ khi bạn yêu cầu rõ. Push là hành động chia sẻ thay đổi ra remote nên cần chủ động xác nhận.
+
+### Nếu có thay đổi ngoài task thì sao?
+
+Claude nên bỏ qua hoặc hỏi bạn. Không được tự revert thay đổi không do nó tạo ra.
+
+## Tóm tắt
+
+Claude Code có thể hỗ trợ git rất tốt nếu bạn giữ quy trình an toàn: xem status, đọc diff, tránh secret, commit đúng phạm vi và chỉ push khi được yêu cầu. Bài tiếp theo sẽ giới thiệu MCP servers và cách phân biệt MCP với hooks.
