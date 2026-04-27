@@ -1,0 +1,158 @@
+---
+title: "Ranking functions trong SQL: ROW_NUMBER, RANK, DENSE_RANK, NTILE"
+description: "Học các hàm xếp hạng trong SQL Server để tìm top sản phẩm theo danh mục và xử lý trường hợp đồng hạng."
+slug: "ranking-functions-sql"
+course: "sql"
+order: 18
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["ranking functions sql", "row_number trong sql", "rank trong sql", "dense_rank trong sql", "ntile trong sql", "top n per group sql"]
+publishedAt: "2026-04-28"
+---
+
+## Ranking functions trong SQL là gì?
+
+Ranking functions trong SQL là nhóm hàm dùng để đánh số thứ tự hoặc xếp hạng các dòng trong một cửa sổ dữ liệu. Các hàm quan trọng gồm `ROW_NUMBER`, `RANK`, `DENSE_RANK` và `NTILE`. Chúng rất hữu ích khi tìm top sản phẩm, top khách hàng hoặc chia dữ liệu thành nhóm.
+
+Trong BikeStores, bạn có thể xếp hạng sản phẩm theo giá trong từng danh mục hoặc xếp hạng cửa hàng theo doanh thu.
+
+## ROW_NUMBER dùng để đánh số duy nhất
+
+`ROW_NUMBER()` tạo số thứ tự duy nhất cho từng dòng theo thứ tự bạn chỉ định.
+
+```sql
+SELECT
+  c.category_name,
+  p.product_name,
+  p.list_price,
+  ROW_NUMBER() OVER (
+    PARTITION BY c.category_name
+    ORDER BY p.list_price DESC
+  ) AS price_row_number
+FROM production.products AS p
+JOIN production.categories AS c
+  ON p.category_id = c.category_id;
+```
+
+Mỗi danh mục có dãy số riêng vì ta dùng `PARTITION BY c.category_name`. Sản phẩm đắt nhất trong mỗi danh mục có `price_row_number = 1`.
+
+## Tìm top N mỗi nhóm bằng ROW_NUMBER
+
+Vì không dùng được window function trong `WHERE` cùng cấp, hãy dùng CTE.
+
+```sql
+WITH ranked_products AS (
+  SELECT
+    c.category_name,
+    p.product_name,
+    p.list_price,
+    ROW_NUMBER() OVER (
+      PARTITION BY c.category_name
+      ORDER BY p.list_price DESC, p.product_id
+    ) AS rn
+  FROM production.products AS p
+  JOIN production.categories AS c
+    ON p.category_id = c.category_id
+)
+SELECT
+  category_name,
+  product_name,
+  list_price
+FROM ranked_products
+WHERE rn <= 3
+ORDER BY category_name, rn;
+```
+
+Thêm `p.product_id` vào `ORDER BY` giúp thứ tự ổn định khi nhiều sản phẩm có cùng giá.
+
+## RANK và DENSE_RANK xử lý đồng hạng
+
+`RANK()` cho cùng hạng với giá trị bằng nhau nhưng có khoảng trống. `DENSE_RANK()` cho cùng hạng nhưng không có khoảng trống.
+
+```sql
+SELECT
+  c.category_name,
+  p.product_name,
+  p.list_price,
+  RANK() OVER (
+    PARTITION BY c.category_name
+    ORDER BY p.list_price DESC
+  ) AS price_rank,
+  DENSE_RANK() OVER (
+    PARTITION BY c.category_name
+    ORDER BY p.list_price DESC
+  ) AS dense_price_rank
+FROM production.products AS p
+JOIN production.categories AS c
+  ON p.category_id = c.category_id;
+```
+
+Nếu hai sản phẩm đồng giá ở hạng 1, `RANK` sẽ nhảy hạng tiếp theo thành 3, còn `DENSE_RANK` sẽ là 2.
+
+## NTILE dùng để chia nhóm
+
+`NTILE(n)` chia các dòng trong partition thành `n` nhóm tương đối đều nhau.
+
+```sql
+SELECT
+  product_name,
+  list_price,
+  NTILE(4) OVER (ORDER BY list_price DESC) AS price_quartile
+FROM production.products;
+```
+
+Ví dụ trên chia sản phẩm thành 4 nhóm theo giá. Nhóm 1 là nhóm giá cao nhất nếu sắp xếp `DESC`.
+
+## Những lỗi thường gặp với ranking functions
+
+- Dùng `ROW_NUMBER` mà `ORDER BY` không đủ ổn định, khiến thứ tự đồng hạng có thể thay đổi.
+- Nhầm `RANK` và `DENSE_RANK`. Hãy nhớ `RANK` có khoảng trống, `DENSE_RANK` không.
+- Lọc trực tiếp `WHERE ROW_NUMBER() ... <= 3`, gây lỗi. Hãy dùng CTE hoặc subquery.
+- Quên `PARTITION BY` khi muốn xếp hạng theo từng nhóm.
+- Dùng `NTILE` và nghĩ các nhóm luôn có số dòng bằng nhau tuyệt đối. Khi tổng dòng không chia hết, một số nhóm có thể nhiều hơn một dòng.
+
+## Bài tập thực hành
+
+Hãy viết các query sau:
+
+- Top 3 sản phẩm đắt nhất trong mỗi danh mục.
+- Xếp hạng sản phẩm theo giá trong toàn bộ database bằng `RANK` và `DENSE_RANK`.
+- Chia sản phẩm thành 4 nhóm giá bằng `NTILE(4)`.
+
+Gợi ý top 3 mỗi nhóm:
+
+```sql
+WITH ranked_products AS (
+  SELECT
+    p.product_name,
+    c.category_name,
+    p.list_price,
+    ROW_NUMBER() OVER (PARTITION BY c.category_name ORDER BY p.list_price DESC, p.product_id) AS rn
+  FROM production.products AS p
+  JOIN production.categories AS c
+    ON p.category_id = c.category_id
+)
+SELECT *
+FROM ranked_products
+WHERE rn <= 3;
+```
+
+Sau khi chạy, hãy thay `ROW_NUMBER` bằng `RANK` và xem số dòng mỗi danh mục có thể thay đổi không.
+
+## Câu hỏi thường gặp về ranking functions
+
+### ROW_NUMBER có cần ORDER BY không?
+
+Trong thực tế nên luôn dùng `ORDER BY` để thứ tự có ý nghĩa. Không có thứ tự rõ ràng, số thứ tự không đáng tin cho báo cáo.
+
+### RANK và DENSE_RANK nên dùng khi nào?
+
+Dùng `RANK` khi bạn muốn phản ánh khoảng trống do đồng hạng, ví dụ thi đấu. Dùng `DENSE_RANK` khi muốn danh sách hạng liên tục.
+
+### NTILE có phải phần trăm không?
+
+Không trực tiếp. `NTILE(4)` chia thành 4 nhóm gần đều nhau. Nếu cần percentile chính xác hơn, hãy học `PERCENT_RANK` và `CUME_DIST` ở bài sau.
+
+## Tóm tắt
+
+Bạn đã học `ROW_NUMBER`, `RANK`, `DENSE_RANK`, `NTILE` và mẫu top N per group. Ở bài tiếp theo, chúng ta sẽ học `LAG`, `LEAD`, `FIRST_VALUE`, `LAST_VALUE`, `PERCENT_RANK` và `CUME_DIST`.

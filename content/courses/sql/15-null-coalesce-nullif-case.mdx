@@ -1,0 +1,173 @@
+---
+title: "NULL, COALESCE, NULLIF và CASE WHEN trong SQL"
+description: "Học cách xử lý NULL, tránh chia cho 0 và phân loại dữ liệu bằng CASE WHEN trong SQL Server với BikeStores."
+slug: "null-coalesce-nullif-case"
+course: "sql"
+order: 15
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["null trong sql", "coalesce trong sql", "nullif trong sql", "case when trong sql", "xử lý dữ liệu thiếu sql", "tránh chia cho 0 sql"]
+publishedAt: "2026-04-28"
+---
+
+## NULL trong SQL là gì?
+
+NULL trong SQL biểu thị giá trị chưa biết, thiếu hoặc không áp dụng. NULL không phải số 0, không phải chuỗi rỗng và cũng không bằng chính nó theo cách so sánh thông thường. Vì vậy, xử lý NULL đúng là kỹ năng bắt buộc khi làm dữ liệu thực tế.
+
+Trong BikeStores, `shipped_date` có thể là `NULL` nếu đơn chưa giao, `phone` có thể thiếu, `manager_id` có thể `NULL` nếu nhân viên là quản lý cấp cao.
+
+## Kiểm tra NULL bằng IS NULL
+
+Không dùng `= NULL`. Hãy dùng `IS NULL` hoặc `IS NOT NULL`.
+
+```sql
+SELECT
+  order_id,
+  order_status,
+  order_date,
+  shipped_date
+FROM sales.orders
+WHERE shipped_date IS NULL;
+```
+
+Tìm khách hàng có số điện thoại:
+
+```sql
+SELECT
+  customer_id,
+  first_name,
+  last_name,
+  phone
+FROM sales.customers
+WHERE phone IS NOT NULL;
+```
+
+Nếu viết `phone <> NULL`, SQL không trả kết quả như bạn mong đợi vì so sánh với NULL cho ra trạng thái không xác định.
+
+## COALESCE dùng để thay giá trị NULL
+
+`COALESCE()` trả về giá trị đầu tiên không phải `NULL` trong danh sách.
+
+```sql
+SELECT TOP (20)
+  first_name,
+  last_name,
+  COALESCE(phone, 'Chua co so dien thoai') AS phone_display
+FROM sales.customers;
+```
+
+Bạn cũng có thể dùng `COALESCE` trong phép nối chuỗi hoặc báo cáo hiển thị.
+
+```sql
+SELECT
+  staff.first_name + ' ' + staff.last_name AS staff_name,
+  COALESCE(manager.first_name + ' ' + manager.last_name, 'Khong co quan ly') AS manager_name
+FROM sales.staffs AS staff
+LEFT JOIN sales.staffs AS manager
+  ON staff.manager_id = manager.staff_id;
+```
+
+## NULLIF dùng để tránh chia cho 0
+
+`NULLIF(x, y)` trả về `NULL` nếu `x = y`, ngược lại trả về `x`. Mẫu phổ biến là tránh lỗi chia cho 0.
+
+Ví dụ tính doanh thu trung bình trên mỗi đơn hàng:
+
+```sql
+SELECT
+  SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue,
+  COUNT(DISTINCT o.order_id) AS total_orders,
+  SUM(oi.quantity * oi.list_price * (1 - oi.discount))
+    / NULLIF(COUNT(DISTINCT o.order_id), 0) AS revenue_per_order
+FROM sales.orders AS o
+JOIN sales.order_items AS oi
+  ON o.order_id = oi.order_id;
+```
+
+Nếu mẫu lọc nào đó làm số đơn bằng 0, mẫu `NULLIF(..., 0)` giúp biểu thức trả `NULL` thay vì làm query lỗi.
+
+## CASE WHEN dùng để phân loại dữ liệu
+
+`CASE WHEN` cho phép tạo cột mới dựa trên điều kiện.
+
+```sql
+SELECT TOP (20)
+  product_name,
+  list_price,
+  CASE
+    WHEN list_price >= 3000 THEN 'Cao cap'
+    WHEN list_price >= 1000 THEN 'Tam trung'
+    ELSE 'Pho thong'
+  END AS price_segment
+FROM production.products
+ORDER BY list_price DESC;
+```
+
+SQL kiểm tra điều kiện từ trên xuống dưới và trả về nhánh đầu tiên đúng. Vì vậy, thứ tự điều kiện rất quan trọng.
+
+Bạn cũng có thể phân loại trạng thái đơn hàng:
+
+```sql
+SELECT
+  order_id,
+  order_status,
+  CASE order_status
+    WHEN 1 THEN 'Pending'
+    WHEN 2 THEN 'Processing'
+    WHEN 3 THEN 'Rejected'
+    WHEN 4 THEN 'Completed'
+    ELSE 'Unknown'
+  END AS order_status_name
+FROM sales.orders;
+```
+
+## Những lỗi thường gặp với NULL và CASE
+
+- Dùng `= NULL` hoặc `<> NULL` thay vì `IS NULL` và `IS NOT NULL`.
+- Quên `ELSE` trong `CASE`, khiến các trường hợp không khớp trả về `NULL`.
+- Sắp xếp điều kiện `CASE` sai thứ tự, ví dụ kiểm tra `>= 1000` trước `>= 3000`, làm nhóm cao cấp không bao giờ xuất hiện.
+- Dùng `COALESCE` với các kiểu dữ liệu không tương thích.
+- Không dùng `NULLIF` khi mẫu số có thể bằng 0.
+
+## Bài tập thực hành
+
+Hãy viết query thực hiện các yêu cầu sau:
+
+- Hiển thị số điện thoại khách hàng, nếu thiếu thì ghi `Chua co`.
+- Phân loại sản phẩm theo giá: dưới 500, từ 500 đến dưới 1500, từ 1500 trở lên.
+- Hiển thị tên trạng thái đơn hàng từ `order_status`.
+- Tính doanh thu trung bình trên mỗi đơn và tránh chia cho 0 bằng `NULLIF`.
+
+Gợi ý:
+
+```sql
+SELECT TOP (30)
+  product_name,
+  list_price,
+  CASE
+    WHEN list_price < 500 THEN 'Gia thap'
+    WHEN list_price < 1500 THEN 'Gia trung binh'
+    ELSE 'Gia cao'
+  END AS price_group
+FROM production.products;
+```
+
+Sau khi chạy, hãy đổi thứ tự các nhánh `WHEN` để thấy kết quả có thể sai như thế nào.
+
+## Câu hỏi thường gặp về NULL và CASE WHEN
+
+### NULL có giống chuỗi rỗng không?
+
+Không. Chuỗi rỗng là một giá trị có tồn tại nhưng không có ký tự. NULL là không có giá trị hoặc chưa biết.
+
+### COALESCE khác ISNULL không?
+
+SQL Server có `ISNULL()`, nhưng `COALESCE()` chuẩn SQL hơn và nhận nhiều đối số. Trong bài học này ưu tiên `COALESCE`.
+
+### CASE WHEN có dùng được trong GROUP BY không?
+
+Có. Bạn có thể dùng `CASE WHEN` để tạo nhóm phân loại rồi group theo biểu thức đó, nhưng hãy đảm bảo biểu thức trong `SELECT` và `GROUP BY` nhất quán.
+
+## Tóm tắt
+
+Bạn đã học cách xử lý `NULL`, dùng `COALESCE`, tránh chia cho 0 với `NULLIF` và phân loại dữ liệu bằng `CASE WHEN`. Ở bài tiếp theo, chúng ta sẽ học ngày giờ trong SQL Server để phân tích đơn hàng theo thời gian.

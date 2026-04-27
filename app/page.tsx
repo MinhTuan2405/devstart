@@ -108,7 +108,7 @@ export default function HomePage() {
             cho người mới bắt đầu
           </h1>
           <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-slate-500 md:text-xl">
-            Khóa học Python, C++, HTML/CSS, Machine Learning và Claude Code bằng tiếng Việt.
+            Khóa học Python, C++, HTML/CSS, Machine Learning, Claude Code và SQL bằng tiếng Việt.
             Giải thích đơn giản, ví dụ thực tế, lộ trình rõ ràng.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">

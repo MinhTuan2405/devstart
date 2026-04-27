@@ -41,6 +41,12 @@ const courseColors: Record<string, { bg: string; border: string; iconBg: string;
     iconBg: 'bg-fuchsia-100',
     btn: 'bg-fuchsia-600 hover:bg-fuchsia-700 shadow-fuchsia-600/25',
   },
+  sql: {
+    bg: 'from-cyan-50 to-white',
+    border: 'border-cyan-100 hover:border-cyan-300',
+    iconBg: 'bg-cyan-100',
+    btn: 'bg-cyan-600 hover:bg-cyan-700 shadow-cyan-600/25',
+  },
 }
 
 export default function CourseCard({

@@ -1,0 +1,143 @@
+---
+title: "JOIN nâng cao trong SQL: Self join, nhiều bảng và nhiều điều kiện"
+description: "Học self join, multiple joins và JOIN nhiều điều kiện trong SQL Server qua nhân viên, đơn hàng và tồn kho BikeStores."
+slug: "join-nang-cao"
+course: "sql"
+order: 8
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["self join trong sql", "multiple joins sql", "join nhiều điều kiện", "non equi join sql", "sql join nâng cao", "join nhiều bảng sql"]
+publishedAt: "2026-04-28"
+---
+
+## JOIN nâng cao trong SQL gồm những gì?
+
+JOIN nâng cao trong SQL gồm self join, JOIN nhiều bảng và JOIN với nhiều điều kiện. Đây là bước chuyển từ truy vấn học thuật sang truy vấn báo cáo thật, nơi một câu hỏi thường liên quan đến khách hàng, đơn hàng, nhân viên, cửa hàng và sản phẩm cùng lúc.
+
+Trong BikeStores, bảng `sales.staffs` rất phù hợp để học self join vì nhân viên có cột `manager_id` trỏ về chính bảng `staffs`.
+
+## Self join là gì?
+
+Self join là kỹ thuật JOIN một bảng với chính nó. Mỗi lần xuất hiện của bảng cần có alias khác nhau để SQL biết bạn đang nói đến vai trò nào.
+
+Ví dụ lấy nhân viên và quản lý trực tiếp của họ:
+
+```sql
+SELECT
+  staff.first_name + ' ' + staff.last_name AS staff_name,
+  manager.first_name + ' ' + manager.last_name AS manager_name
+FROM sales.staffs AS staff
+LEFT JOIN sales.staffs AS manager
+  ON staff.manager_id = manager.staff_id
+ORDER BY staff_name;
+```
+
+Ta dùng `LEFT JOIN` vì quản lý cấp cao nhất có thể có `manager_id IS NULL`. Nếu dùng `INNER JOIN`, nhân viên không có quản lý sẽ bị loại khỏi kết quả.
+
+## JOIN nhiều bảng trong một báo cáo
+
+Một báo cáo đơn hàng thường cần dữ liệu từ nhiều bảng: đơn hàng, khách hàng, cửa hàng và nhân viên.
+
+```sql
+SELECT TOP (50)
+  o.order_id,
+  o.order_date,
+  c.first_name + ' ' + c.last_name AS customer_name,
+  st.store_name,
+  sf.first_name + ' ' + sf.last_name AS staff_name
+FROM sales.orders AS o
+JOIN sales.customers AS c
+  ON o.customer_id = c.customer_id
+JOIN sales.stores AS st
+  ON o.store_id = st.store_id
+JOIN sales.staffs AS sf
+  ON o.staff_id = sf.staff_id
+ORDER BY o.order_date DESC;
+```
+
+Khi query dài, hãy viết mỗi JOIN trên nhiều dòng và dùng alias có ý nghĩa: `o` cho orders, `c` cho customers, `st` cho stores, `sf` cho staffs.
+
+## JOIN nhiều điều kiện
+
+Đôi khi một điều kiện JOIN không đủ. Bảng `production.stocks` định danh tồn kho bằng cặp `store_id` và `product_id`, nên khi nối vào khung cửa hàng x sản phẩm, bạn cần cả hai điều kiện.
+
+```sql
+SELECT
+  st.store_name,
+  p.product_name,
+  stock.quantity
+FROM sales.stores AS st
+CROSS JOIN production.products AS p
+LEFT JOIN production.stocks AS stock
+  ON stock.store_id = st.store_id
+ AND stock.product_id = p.product_id;
+```
+
+Nếu chỉ JOIN theo `store_id`, mỗi sản phẩm sẽ bị ghép với nhiều dòng tồn kho sai. Đây là lỗi rất nguy hiểm vì query vẫn chạy nhưng số liệu sai.
+
+## Non-equi join là gì?
+
+JOIN không bắt buộc luôn dùng dấu bằng. Bạn có thể dùng điều kiện khác khi nghiệp vụ cần.
+
+Ví dụ tạo các cặp sản phẩm trong cùng danh mục nhưng sản phẩm A rẻ hơn sản phẩm B:
+
+```sql
+SELECT TOP (50)
+  cheap.product_name AS cheaper_product,
+  expensive.product_name AS more_expensive_product,
+  cheap.list_price AS cheaper_price,
+  expensive.list_price AS expensive_price
+FROM production.products AS cheap
+JOIN production.products AS expensive
+  ON cheap.category_id = expensive.category_id
+ AND cheap.list_price < expensive.list_price
+ORDER BY cheap.category_id, cheap.list_price;
+```
+
+Loại query này hữu ích khi so sánh, xếp cặp hoặc tìm quan hệ không phải khóa ngoại.
+
+## Những lỗi thường gặp với JOIN nâng cao
+
+- Self join nhưng dùng cùng một alias cho hai vai trò, khiến SQL không biết cột thuộc bên nào.
+- JOIN nhiều bảng nhưng thiếu một điều kiện, tạo kết quả nhân dòng bất thường.
+- Dùng `INNER JOIN` với dữ liệu có thể thiếu, làm mất dòng cần báo cáo.
+- JOIN bảng chi tiết như `order_items` rồi quên rằng một đơn hàng có nhiều dòng, khiến số dòng tăng lên.
+- Không kiểm tra số dòng sau mỗi JOIN. Với query phức tạp, nên xây từng bước và kiểm tra kết quả.
+
+## Bài tập thực hành
+
+Hãy viết báo cáo đơn hàng gồm:
+
+- Mã đơn hàng.
+- Ngày đặt hàng.
+- Tên khách hàng.
+- Tên cửa hàng.
+- Tên nhân viên phụ trách.
+- Tên quản lý của nhân viên nếu có.
+
+Gợi ý thêm self join vào query đơn hàng:
+
+```sql
+LEFT JOIN sales.staffs AS manager
+  ON sf.manager_id = manager.staff_id
+```
+
+Sau khi chạy, hãy kiểm tra những dòng có `manager_name` là `NULL` và giải thích vì sao.
+
+## Câu hỏi thường gặp về JOIN nâng cao
+
+### Self join có tạo bảng mới không?
+
+Không. Self join chỉ là cách dùng cùng một bảng nhiều lần trong một query với các alias khác nhau.
+
+### JOIN nhiều bảng có làm query chậm không?
+
+Có thể, nếu bảng lớn và thiếu index phù hợp. Nhưng JOIN là kỹ thuật bình thường trong database quan hệ. Quan trọng là JOIN đúng cột và lọc dữ liệu hợp lý.
+
+### Làm sao biết JOIN bị nhân dòng sai?
+
+Hãy kiểm tra số dòng trước và sau JOIN, đồng thời hiểu quan hệ một-một, một-nhiều hoặc nhiều-nhiều giữa các bảng. Nếu số dòng tăng bất thường, cần xem lại điều kiện JOIN.
+
+## Tóm tắt
+
+Bạn đã học self join, JOIN nhiều bảng, JOIN nhiều điều kiện và non-equi join. Đây là nền tảng để tạo báo cáo thực tế từ BikeStores. Ở bài tiếp theo, chúng ta sẽ học aggregate functions để tính tổng, đếm, trung bình, nhỏ nhất và lớn nhất.

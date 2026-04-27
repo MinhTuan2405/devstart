@@ -1,0 +1,179 @@
+---
+title: "LIKE, BETWEEN, IN và NULL trong SQL: Lọc dữ liệu thực tế"
+description: "Học LIKE, BETWEEN, IN, IS NULL và IS NOT NULL để lọc chuỗi, khoảng giá, danh sách giá trị và dữ liệu thiếu."
+slug: "like-between-in-null"
+course: "sql"
+order: 4
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["like trong sql", "between trong sql", "in trong sql", "is null trong sql", "lọc chuỗi trong sql", "lọc dữ liệu thiếu sql"]
+publishedAt: "2026-04-28"
+---
+
+## LIKE, BETWEEN, IN và NULL dùng để làm gì?
+
+LIKE, BETWEEN, IN và IS NULL là nhóm toán tử giúp lọc dữ liệu thực tế linh hoạt hơn so với so sánh đơn giản. Bạn dùng chúng để tìm tên sản phẩm theo mẫu chữ, lọc khoảng giá, chọn nhiều bang cùng lúc hoặc phát hiện dữ liệu còn thiếu.
+
+Trong BikeStores, các toán tử này xuất hiện liên tục: tìm xe có tên chứa một từ khóa, lọc sản phẩm trong khoảng giá, lấy khách hàng ở nhiều bang, hoặc kiểm tra đơn hàng chưa có ngày giao.
+
+## LIKE trong SQL dùng để tìm theo mẫu chữ
+
+`LIKE` dùng với ký tự đại diện:
+
+- `%` đại diện cho bất kỳ chuỗi nào, kể cả chuỗi rỗng.
+- `_` đại diện cho đúng một ký tự.
+
+Ví dụ tìm sản phẩm có tên chứa chữ `Trek`:
+
+```sql
+SELECT
+  product_name,
+  model_year,
+  list_price
+FROM production.products
+WHERE product_name LIKE '%Trek%'
+ORDER BY product_name;
+```
+
+Tìm sản phẩm bắt đầu bằng `Electra`:
+
+```sql
+SELECT
+  product_name,
+  list_price
+FROM production.products
+WHERE product_name LIKE 'Electra%';
+```
+
+Trong SQL Server, việc phân biệt chữ hoa chữ thường phụ thuộc vào collation của database hoặc cột. Vì vậy `LIKE '%trek%'` có thể vẫn tìm được `Trek` trong nhiều cấu hình mặc định.
+
+## BETWEEN trong SQL dùng để lọc khoảng
+
+`BETWEEN` lọc giá trị nằm trong khoảng và bao gồm cả hai đầu mút.
+
+```sql
+SELECT
+  product_name,
+  list_price
+FROM production.products
+WHERE list_price BETWEEN 500 AND 1500
+ORDER BY list_price;
+```
+
+Query trên bao gồm cả sản phẩm có giá đúng 500 hoặc đúng 1500. Đây là edge case quan trọng: `BETWEEN` không phải khoảng mở.
+
+Với ngày tháng, hãy cẩn thận nếu cột có thời gian. Với kiểu `DATE`, câu sau ổn:
+
+```sql
+SELECT
+  order_id,
+  order_date
+FROM sales.orders
+WHERE order_date BETWEEN '2018-01-01' AND '2018-12-31';
+```
+
+Nhưng nếu cột là `DATETIME`, nên dùng `>= '2018-01-01' AND < '2019-01-01'` để không bỏ sót dữ liệu trong ngày cuối.
+
+## IN trong SQL dùng để lọc nhiều giá trị
+
+`IN` thay thế nhiều điều kiện `OR` khi bạn cần lọc theo danh sách.
+
+```sql
+SELECT
+  first_name,
+  last_name,
+  city,
+  state
+FROM sales.customers
+WHERE state IN ('NY', 'CA', 'TX')
+ORDER BY state, city;
+```
+
+`IN` giúp query ngắn và dễ đọc hơn:
+
+```sql
+WHERE state = 'NY'
+   OR state = 'CA'
+   OR state = 'TX'
+```
+
+Hai cách có ý nghĩa gần giống nhau, nhưng `IN` phù hợp hơn khi danh sách dài.
+
+## IS NULL và IS NOT NULL trong SQL
+
+`NULL` nghĩa là chưa có giá trị hoặc không xác định. Không nên kiểm tra `NULL` bằng `=`.
+
+Ví dụ tìm đơn hàng chưa có ngày giao:
+
+```sql
+SELECT
+  order_id,
+  order_status,
+  order_date,
+  shipped_date
+FROM sales.orders
+WHERE shipped_date IS NULL;
+```
+
+Tìm đơn đã có ngày giao:
+
+```sql
+SELECT
+  order_id,
+  order_date,
+  shipped_date
+FROM sales.orders
+WHERE shipped_date IS NOT NULL;
+```
+
+Edge case quan trọng: `shipped_date = NULL` không trả kết quả đúng vì trong SQL, `NULL` không bằng bất kỳ giá trị nào, kể cả chính `NULL`.
+
+## Những lỗi thường gặp khi lọc dữ liệu
+
+- Nghĩ `BETWEEN 500 AND 1500` không bao gồm 500 và 1500. Thực tế là có bao gồm.
+- Dùng `LIKE '%keyword%'` trên bảng rất lớn mà không hiểu chi phí tìm kiếm. Mẫu bắt đầu bằng `%` thường khó tận dụng index.
+- Dùng `NOT IN` với danh sách hoặc subquery có `NULL`, có thể dẫn đến kết quả bất ngờ.
+- Dùng `= NULL` hoặc `<> NULL`. Hãy dùng `IS NULL` và `IS NOT NULL`.
+- Quên dấu nháy đơn trong danh sách `IN`, ví dụ `IN (NY, CA)` là sai nếu đó là chuỗi.
+
+## Bài tập thực hành
+
+Hãy viết query cho các yêu cầu sau:
+
+- Tìm sản phẩm có tên chứa `Mountain`.
+- Tìm sản phẩm có giá từ 300 đến 800.
+- Tìm khách hàng ở các bang `NY`, `CA`, `TX`.
+- Tìm đơn hàng chưa được giao, tức `shipped_date IS NULL`.
+
+Gợi ý:
+
+```sql
+SELECT
+  order_id,
+  order_date,
+  required_date,
+  shipped_date
+FROM sales.orders
+WHERE shipped_date IS NULL
+ORDER BY required_date;
+```
+
+Sau đó thử đổi thành `IS NOT NULL` để so sánh số lượng kết quả.
+
+## Câu hỏi thường gặp về LIKE, BETWEEN, IN và NULL
+
+### LIKE có phân biệt chữ hoa chữ thường không?
+
+Trong SQL Server, điều này phụ thuộc vào collation. Nhiều database mặc định không phân biệt hoa thường, nhưng bạn không nên giả định nếu làm việc trên hệ thống lạ.
+
+### BETWEEN có dùng được cho ngày không?
+
+Có, nhưng cần cẩn thận với cột có thời gian. Với `DATETIME`, cách an toàn là dùng điều kiện nửa mở: lớn hơn hoặc bằng ngày bắt đầu và nhỏ hơn ngày kế tiếp sau ngày kết thúc.
+
+### Vì sao không dùng = NULL?
+
+Vì `NULL` là giá trị không xác định. SQL không thể kết luận `column = NULL` là đúng, nên bạn phải dùng `IS NULL`.
+
+## Tóm tắt
+
+Bạn đã học cách lọc dữ liệu bằng `LIKE`, `BETWEEN`, `IN`, `IS NULL` và `IS NOT NULL`. Đây là những công cụ rất thực tế khi làm báo cáo. Ở bài tiếp theo, chúng ta sẽ học alias để đặt tên cột và bảng cho query dễ đọc hơn.

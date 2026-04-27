@@ -1,0 +1,150 @@
+---
+title: "Alias trong SQL: Đặt tên cột và bảng dễ đọc hơn"
+description: "Học alias trong SQL để đổi tên cột kết quả, rút gọn tên bảng và chuẩn bị cho các truy vấn JOIN trong BikeStores."
+slug: "alias-trong-sql"
+course: "sql"
+order: 5
+duration: "16 phút"
+difficulty: "Dễ"
+keywords: ["alias trong sql", "as trong sql", "đặt tên cột sql", "đặt bí danh bảng sql", "table alias sql", "column alias sql"]
+publishedAt: "2026-04-28"
+---
+
+## Alias trong SQL là gì?
+
+Alias trong SQL là tên tạm thời cho cột hoặc bảng trong một truy vấn. Bạn dùng alias để kết quả dễ đọc hơn, rút gọn tên bảng dài và tránh nhầm cột khi JOIN nhiều bảng. Alias không đổi tên thật của bảng hay cột trong database.
+
+Khi mới học SQL, alias có vẻ chỉ là phần trang trí. Nhưng khi bắt đầu JOIN `sales.orders`, `sales.customers` và `sales.staffs`, alias giúp query ngắn, rõ và ít lỗi hơn rất nhiều.
+
+## Column alias dùng để đổi tên cột kết quả
+
+Bạn có thể dùng `AS` để đặt tên hiển thị cho cột trong kết quả.
+
+```sql
+SELECT
+  product_name AS ten_san_pham,
+  list_price AS gia_niem_yet
+FROM production.products;
+```
+
+Alias `ten_san_pham` và `gia_niem_yet` chỉ tồn tại trong kết quả query. Chúng không đổi tên cột `product_name` hay `list_price` trong bảng.
+
+Bạn cũng có thể đặt alias cho biểu thức tính toán:
+
+```sql
+SELECT
+  product_name,
+  list_price,
+  list_price * 0.9 AS gia_sau_giam_10_phan_tram
+FROM production.products;
+```
+
+Đây là cách thường dùng khi làm báo cáo giá, doanh thu hoặc tỷ lệ giảm giá.
+
+## Table alias dùng để rút gọn tên bảng
+
+Table alias rất hữu ích khi truy vấn có tên bảng dài hoặc cần JOIN nhiều bảng.
+
+```sql
+SELECT
+  p.product_id,
+  p.product_name,
+  p.list_price
+FROM production.products AS p
+WHERE p.list_price > 1000;
+```
+
+Sau khi đặt `production.products AS p`, bạn phải dùng `p` để tham chiếu bảng đó trong cùng query. Không nên vừa dùng `p.product_name` vừa dùng `production.products.product_name` trong cùng phạm vi.
+
+## Alias chuẩn bị cho JOIN
+
+Khi JOIN, nhiều bảng có cột trùng tên như `customer_id`, `store_id`, `product_id`. Alias giúp chỉ rõ cột đến từ bảng nào.
+
+```sql
+SELECT
+  o.order_id,
+  c.first_name,
+  c.last_name,
+  o.order_date
+FROM sales.orders AS o
+JOIN sales.customers AS c
+  ON o.customer_id = c.customer_id;
+```
+
+Nếu không dùng alias, query sẽ dài hơn:
+
+```sql
+SELECT
+  sales.orders.order_id,
+  sales.customers.first_name,
+  sales.customers.last_name,
+  sales.orders.order_date
+FROM sales.orders
+JOIN sales.customers
+  ON sales.orders.customer_id = sales.customers.customer_id;
+```
+
+Cả hai đều đúng, nhưng cách dùng alias dễ đọc hơn khi query lớn dần.
+
+## Có bắt buộc dùng AS không?
+
+Trong SQL Server, `AS` thường là tùy chọn cho alias. Hai câu sau đều hợp lệ:
+
+```sql
+SELECT product_name AS ten_san_pham
+FROM production.products;
+
+SELECT product_name ten_san_pham
+FROM production.products;
+```
+
+Tuy nhiên, với người mới, nên dùng `AS` cho column alias để câu lệnh rõ nghĩa. Với table alias, nhiều team bỏ `AS`, nhưng dùng hay không nên nhất quán trong một dự án.
+
+## Những lỗi thường gặp với alias
+
+- Đặt table alias rồi vẫn dùng tên bảng gốc trong cùng query. SQL Server có thể báo không bind được identifier.
+- Đặt alias có dấu cách nhưng không dùng ngoặc vuông, ví dụ `AS Total Revenue`. Nếu thật sự cần dấu cách, dùng `AS [Total Revenue]`, nhưng tốt hơn nên dùng tên không có dấu cách.
+- Dùng alias trong `WHERE` cùng cấp. Vì `WHERE` được xử lý trước `SELECT`, alias tính toán thường chưa dùng được ở đó.
+- Đặt alias quá ngắn và khó hiểu như `a`, `b`, `c` trong query dài. Hãy dùng `p`, `o`, `c`, `oi` theo tên bảng để dễ đoán.
+- Đặt alias trùng từ khóa SQL như `order` hoặc `user`, khiến query khó đọc và có thể lỗi.
+
+## Bài tập thực hành
+
+Hãy viết query lấy danh sách 20 sản phẩm gồm:
+
+- `product_name` đổi thành `ten_san_pham`.
+- `model_year` đổi thành `nam_model`.
+- `list_price` đổi thành `gia_niem_yet`.
+- Thêm cột tính `list_price * 0.95` đổi thành `gia_sau_giam_5_phan_tram`.
+
+Gợi ý:
+
+```sql
+SELECT TOP (20)
+  p.product_name AS ten_san_pham,
+  p.model_year AS nam_model,
+  p.list_price AS gia_niem_yet,
+  p.list_price * 0.95 AS gia_sau_giam_5_phan_tram
+FROM production.products AS p
+ORDER BY p.list_price DESC;
+```
+
+Sau đó thử bỏ `AS p` và sửa toàn bộ `p.` về tên bảng đầy đủ để cảm nhận sự khác biệt.
+
+## Câu hỏi thường gặp về alias trong SQL
+
+### Alias có làm đổi tên cột thật không?
+
+Không. Alias chỉ đổi tên tạm thời trong kết quả query hoặc trong phạm vi query. Cấu trúc bảng không bị thay đổi.
+
+### Khi nào nên dùng table alias?
+
+Bạn nên dùng table alias khi JOIN nhiều bảng, khi tên bảng dài, hoặc khi cùng một bảng xuất hiện nhiều lần trong self join.
+
+### Có nên đặt alias bằng tiếng Việt không?
+
+Trong bài học có thể dùng tiếng Việt không dấu để dễ hiểu. Trong dự án thật, nên theo convention của team, thường là tiếng Anh ngắn gọn và không dấu.
+
+## Tóm tắt
+
+Alias trong SQL giúp query dễ đọc hơn và là kỹ năng cần thiết trước khi học JOIN. Bạn đã biết column alias, table alias, cách dùng `AS` và các lỗi thường gặp. Ở bài tiếp theo, chúng ta sẽ dùng alias để kết hợp dữ liệu từ nhiều bảng bằng `INNER JOIN`.

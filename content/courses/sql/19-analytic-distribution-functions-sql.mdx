@@ -1,0 +1,161 @@
+---
+title: "Analytic và distribution functions trong SQL Server"
+description: "Học LAG, LEAD, FIRST_VALUE, LAST_VALUE, PERCENT_RANK và CUME_DIST để phân tích xu hướng dữ liệu trong SQL."
+slug: "analytic-distribution-functions-sql"
+course: "sql"
+order: 19
+duration: "26 phút"
+difficulty: "Trung bình"
+keywords: ["lag lead sql", "first_value last_value sql", "percent_rank sql", "cume_dist sql", "analytic functions sql", "distribution functions sql"]
+publishedAt: "2026-04-28"
+---
+
+## Analytic functions trong SQL là gì?
+
+Analytic functions trong SQL giúp lấy giá trị liên quan đến dòng hiện tại như dòng trước, dòng sau, giá trị đầu tiên hoặc giá trị cuối cùng trong một nhóm. Distribution functions như `PERCENT_RANK` và `CUME_DIST` giúp biết vị trí tương đối của một dòng trong phân phối dữ liệu.
+
+Trong BikeStores, nhóm hàm này giúp phân tích doanh thu tháng này so với tháng trước, sản phẩm đang ở percentile giá nào, hoặc giá trị đầu cuối trong từng cửa hàng.
+
+## LAG và LEAD dùng để so sánh dòng trước sau
+
+Trước tiên tạo doanh thu theo tháng:
+
+```sql
+WITH monthly_sales AS (
+  SELECT
+    YEAR(o.order_date) AS order_year,
+    MONTH(o.order_date) AS order_month,
+    SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue
+  FROM sales.orders AS o
+  JOIN sales.order_items AS oi
+    ON o.order_id = oi.order_id
+  GROUP BY YEAR(o.order_date), MONTH(o.order_date)
+)
+SELECT
+  order_year,
+  order_month,
+  revenue,
+  LAG(revenue) OVER (ORDER BY order_year, order_month) AS previous_month_revenue,
+  LEAD(revenue) OVER (ORDER BY order_year, order_month) AS next_month_revenue
+FROM monthly_sales
+ORDER BY order_year, order_month;
+```
+
+`LAG` lấy giá trị ở dòng trước. `LEAD` lấy giá trị ở dòng sau. Dòng đầu tiên thường có `previous_month_revenue = NULL`, dòng cuối cùng thường có `next_month_revenue = NULL`.
+
+## Tính tăng trưởng so với tháng trước
+
+Bạn có thể dùng `LAG` để tính phần trăm tăng trưởng.
+
+```sql
+WITH monthly_sales AS (
+  SELECT
+    YEAR(o.order_date) AS order_year,
+    MONTH(o.order_date) AS order_month,
+    SUM(oi.quantity * oi.list_price * (1 - oi.discount)) AS revenue
+  FROM sales.orders AS o
+  JOIN sales.order_items AS oi
+    ON o.order_id = oi.order_id
+  GROUP BY YEAR(o.order_date), MONTH(o.order_date)
+), with_previous AS (
+  SELECT
+    order_year,
+    order_month,
+    revenue,
+    LAG(revenue) OVER (ORDER BY order_year, order_month) AS previous_revenue
+  FROM monthly_sales
+)
+SELECT
+  order_year,
+  order_month,
+  revenue,
+  previous_revenue,
+  (revenue - previous_revenue) / NULLIF(previous_revenue, 0) AS growth_rate
+FROM with_previous;
+```
+
+`NULLIF(previous_revenue, 0)` giúp tránh chia cho 0. Nếu tháng trước không có doanh thu hoặc là dòng đầu tiên, kết quả tăng trưởng có thể là `NULL`.
+
+## FIRST_VALUE và LAST_VALUE
+
+`FIRST_VALUE` lấy giá trị đầu tiên trong window. `LAST_VALUE` lấy giá trị cuối trong window, nhưng cần chú ý frame mặc định.
+
+```sql
+SELECT
+  c.category_name,
+  p.product_name,
+  p.list_price,
+  FIRST_VALUE(p.product_name) OVER (
+    PARTITION BY c.category_name
+    ORDER BY p.list_price DESC
+  ) AS most_expensive_product,
+  LAST_VALUE(p.product_name) OVER (
+    PARTITION BY c.category_name
+    ORDER BY p.list_price DESC
+    ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+  ) AS cheapest_product
+FROM production.products AS p
+JOIN production.categories AS c
+  ON p.category_id = c.category_id;
+```
+
+Edge case quan trọng: với `LAST_VALUE`, nếu không chỉ định frame đầy đủ, kết quả thường là giá trị của dòng hiện tại chứ không phải dòng cuối toàn partition.
+
+## PERCENT_RANK và CUME_DIST
+
+`PERCENT_RANK()` trả vị trí phần trăm tương đối dựa trên rank. `CUME_DIST()` trả tỷ lệ dòng có giá trị nhỏ hơn hoặc bằng dòng hiện tại.
+
+```sql
+SELECT
+  product_name,
+  list_price,
+  PERCENT_RANK() OVER (ORDER BY list_price) AS price_percent_rank,
+  CUME_DIST() OVER (ORDER BY list_price) AS price_cume_dist
+FROM production.products
+ORDER BY list_price;
+```
+
+Hai hàm này hữu ích khi bạn muốn biết một sản phẩm nằm ở vùng giá thấp, trung bình hay cao trong toàn bộ danh mục sản phẩm.
+
+## Những lỗi thường gặp với analytic functions
+
+- Quên `ORDER BY` trong `LAG` hoặc `LEAD`, khiến khái niệm trước sau không rõ.
+- Không xử lý `NULL` ở dòng đầu hoặc dòng cuối khi dùng `LAG` và `LEAD`.
+- Dùng `LAST_VALUE` mà không mở frame đến `UNBOUNDED FOLLOWING`.
+- Nhầm `PERCENT_RANK` với phần trăm doanh thu. Đây là vị trí tương đối, không phải tỷ trọng tiền.
+- Tính tăng trưởng nhưng không tránh chia cho 0.
+
+## Bài tập thực hành
+
+Hãy viết query thực hiện các yêu cầu sau:
+
+- Tính doanh thu từng tháng.
+- Thêm doanh thu tháng trước bằng `LAG`.
+- Tính tỷ lệ tăng trưởng so với tháng trước.
+- Tìm sản phẩm đắt nhất và rẻ nhất trong từng danh mục bằng `FIRST_VALUE` và `LAST_VALUE`.
+
+Gợi ý cho `LAG` có giá trị mặc định:
+
+```sql
+LAG(revenue, 1, 0) OVER (ORDER BY order_year, order_month) AS previous_revenue
+```
+
+Sau khi chạy, hãy so sánh kết quả dùng mặc định `0` với mặc định `NULL`.
+
+## Câu hỏi thường gặp về LAG LEAD và PERCENT_RANK
+
+### LAG và LEAD có cần PARTITION BY không?
+
+Không bắt buộc. Nếu muốn so sánh trong từng nhóm, hãy dùng `PARTITION BY`. Nếu muốn so sánh toàn bộ chuỗi thời gian, có thể bỏ partition.
+
+### Vì sao LAST_VALUE trả về chính dòng hiện tại?
+
+Vì frame mặc định khi có `ORDER BY` thường kết thúc ở dòng hiện tại. Hãy dùng `ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING` để lấy dòng cuối toàn partition.
+
+### PERCENT_RANK có trả từ 0 đến 1 không?
+
+Có. Kết quả thường nằm trong khoảng 0 đến 1. Bạn có thể nhân 100 nếu muốn hiển thị dạng phần trăm.
+
+## Tóm tắt
+
+Bạn đã học `LAG`, `LEAD`, `FIRST_VALUE`, `LAST_VALUE`, `PERCENT_RANK` và `CUME_DIST`. Ở bài cuối, chúng ta sẽ học window frame kỹ hơn và làm một bài thực hành tổng hợp báo cáo BikeStores.

@@ -1,0 +1,133 @@
+---
+title: "Numeric functions trong SQL Server: Tính toán và ép kiểu"
+description: "Học CAST, ROUND, CEILING, FLOOR, ABS, SQRT và các lỗi tính toán số thường gặp trong SQL Server."
+slug: "numeric-functions-sql"
+course: "sql"
+order: 14
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["numeric functions sql", "hàm số sql server", "cast trong sql", "round trong sql", "ceiling floor sql", "tính toán doanh thu sql"]
+publishedAt: "2026-04-28"
+---
+
+## Numeric functions trong SQL Server là gì?
+
+Numeric functions trong SQL Server là các hàm và phép toán dùng để tính số, làm tròn, ép kiểu, lấy trị tuyệt đối hoặc căn bậc hai. Khi làm báo cáo bán hàng, bạn sẽ dùng chúng để tính doanh thu, phần trăm giảm giá, giá trung bình và tỷ lệ tăng trưởng.
+
+Trong BikeStores, dữ liệu giá nằm ở `list_price`, số lượng ở `quantity`, giảm giá ở `discount`. Đây là bộ dữ liệu rất phù hợp để luyện tính toán số.
+
+## Phép toán cơ bản trong SQL
+
+SQL hỗ trợ các phép toán quen thuộc: `+`, `-`, `*`, `/` và `%` cho phần dư trong SQL Server.
+
+```sql
+SELECT TOP (10)
+  order_id,
+  item_id,
+  quantity,
+  list_price,
+  discount,
+  quantity * list_price * (1 - discount) AS line_amount
+FROM sales.order_items;
+```
+
+Biểu thức `quantity * list_price * (1 - discount)` là công thức doanh thu sau giảm giá ở từng dòng đơn hàng.
+
+## CAST dùng để ép kiểu dữ liệu
+
+`CAST()` chuyển giá trị sang kiểu dữ liệu khác. Bạn thường dùng `CAST` để tránh chia số nguyên hoặc định dạng kết quả rõ hơn.
+
+```sql
+SELECT
+  CAST(10 AS DECIMAL(10, 2)) / 4 AS decimal_result,
+  10 / 4 AS integer_result;
+```
+
+Trong SQL Server, chia hai số nguyên có thể trả về kết quả số nguyên. Nếu cần phần thập phân, hãy ép ít nhất một vế sang `DECIMAL`.
+
+## ROUND, CEILING và FLOOR
+
+`ROUND()` làm tròn, `CEILING()` làm tròn lên, `FLOOR()` làm tròn xuống.
+
+```sql
+SELECT TOP (10)
+  product_name,
+  list_price,
+  ROUND(list_price, 0) AS rounded_price,
+  CEILING(list_price) AS price_ceiling,
+  FLOOR(list_price) AS price_floor
+FROM production.products
+ORDER BY list_price DESC;
+```
+
+`ROUND(number, 2)` làm tròn đến 2 chữ số thập phân. Với tiền tệ, hãy ưu tiên kiểu `DECIMAL` để giữ độ chính xác.
+
+## ABS và SQRT
+
+`ABS()` lấy trị tuyệt đối. `SQRT()` lấy căn bậc hai.
+
+```sql
+SELECT
+  ABS(-125) AS absolute_value,
+  SQRT(144) AS square_root;
+```
+
+Trong báo cáo, `ABS()` hữu ích khi đo độ lệch. Ví dụ so sánh giá sản phẩm với giá trung bình:
+
+```sql
+SELECT TOP (20)
+  product_name,
+  list_price,
+  ABS(list_price - (SELECT AVG(list_price) FROM production.products)) AS distance_from_avg
+FROM production.products
+ORDER BY distance_from_avg DESC;
+```
+
+## Những lỗi thường gặp khi tính toán số
+
+- Chia số nguyên và mất phần thập phân. Hãy `CAST` sang `DECIMAL`.
+- Chia cho 0, làm query lỗi. Bài sau sẽ dùng `NULLIF()` để tránh lỗi này.
+- Quên áp dụng giảm giá khi tính doanh thu từ `sales.order_items`.
+- Dùng kiểu số xấp xỉ cho tiền tệ. Với tiền, nên dùng `DECIMAL` hoặc kiểu phù hợp theo dự án.
+- Làm tròn quá sớm. Nếu làm tròn từng dòng trước khi tổng hợp, kết quả tổng có thể lệch so với làm tròn ở bước cuối.
+
+## Bài tập thực hành
+
+Hãy viết query trả lời các câu hỏi sau:
+
+- Tính doanh thu từng dòng đơn hàng.
+- Làm tròn doanh thu từng dòng đến 2 chữ số thập phân.
+- Tính phần trăm giảm giá dưới dạng phần trăm, ví dụ `discount * 100`.
+- Tìm 20 sản phẩm có giá lệch xa nhất so với giá trung bình.
+
+Gợi ý:
+
+```sql
+SELECT TOP (20)
+  order_id,
+  item_id,
+  ROUND(quantity * list_price * (1 - discount), 2) AS rounded_line_amount,
+  discount * 100 AS discount_percent
+FROM sales.order_items
+ORDER BY rounded_line_amount DESC;
+```
+
+Sau khi chạy, hãy thử bỏ `ROUND` để xem kết quả gốc.
+
+## Câu hỏi thường gặp về numeric functions trong SQL
+
+### SQL Server có MOD không?
+
+SQL Server dùng toán tử `%` để lấy phần dư, không dùng `MOD()` như một số hệ quản trị khác.
+
+### ROUND có thay đổi dữ liệu trong bảng không?
+
+Không. `ROUND()` trong `SELECT` chỉ thay đổi kết quả hiển thị của query. Dữ liệu gốc không đổi trừ khi bạn dùng `UPDATE`.
+
+### Vì sao 10 / 4 ra 2 thay vì 2.5?
+
+Vì cả hai vế là số nguyên. Hãy dùng `CAST(10 AS DECIMAL(10, 2)) / 4` để nhận kết quả thập phân.
+
+## Tóm tắt
+
+Bạn đã học phép toán số, `CAST`, `ROUND`, `CEILING`, `FLOOR`, `ABS` và `SQRT` trong SQL Server. Ở bài tiếp theo, chúng ta sẽ học `NULL`, `COALESCE`, `NULLIF` và `CASE WHEN` để xử lý dữ liệu thiếu và điều kiện phân loại.
