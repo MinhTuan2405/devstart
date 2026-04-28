@@ -1,0 +1,167 @@
+---
+title: "Superpowers là gì? Framework kỹ năng cho OpenCode, Claude Code và agentic coding"
+description: "Superpowers là gì? Tìm hiểu framework kỹ năng cho coding agent, cách dùng với OpenCode, Claude Code và quy trình agentic coding."
+slug: "superpowers-la-gi-opencode-claude-code-agentic-coding"
+category: "huong-dan"
+tags: ["superpowers", "opencode", "claude code", "agentic coding"]
+keywords: ["superpowers là gì", "superpowers opencode", "superpowers claude code", "agentic coding là gì", "ai coding agent skills", "subagent-driven development", "hướng dẫn superpowers cho opencode", "framework kỹ năng cho coding agent"]
+publishedAt: "2026-04-28"
+readingTime: "8 phút"
+coverImage: "/opengraph-image.png"
+---
+
+## Superpowers là gì?
+
+Superpowers là gì? Superpowers là một framework kỹ năng và phương pháp phát triển phần mềm cho coding agent như OpenCode, Claude Code, Codex hoặc Cursor. Nó không phải là model AI mới, mà là bộ workflow giúp agent hỏi rõ yêu cầu, lập kế hoạch, viết test, chia việc cho subagent và kiểm tra kết quả trước khi báo xong.
+
+Dự án này được mô tả là một phương pháp phát triển phần mềm hoàn chỉnh cho coding agent, xây trên các skill có thể kết hợp với nhau. Nói đơn giản, Superpowers cố gắng biến AI coding agent từ một công cụ trả lời nhanh thành một cộng sự làm việc có quy trình.
+
+## Bài viết này gồm những gì?
+
+Bài viết này tập trung vào một câu hỏi thực tế: nếu bạn dùng OpenCode hoặc Claude Code, Superpowers giúp gì cho workflow lập trình hằng ngày?
+
+- Superpowers liên quan gì đến OpenCode và Claude Code
+- Agentic coding là gì khi có skill framework
+- Quy trình cơ bản của Superpowers
+- Cách cài hoặc dùng Superpowers với OpenCode và Claude Code
+- Ví dụ thực tế khi sửa lỗi hoặc thêm tính năng
+- Những sai lầm thường gặp khi dùng coding agent
+
+## Vì sao Superpowers liên quan đến OpenCode và Claude Code?
+
+OpenCode và Claude Code đều là môi trường để bạn giao việc cho coding agent. Vấn đề là agent mạnh đến đâu vẫn có thể làm sai nếu yêu cầu mơ hồ, thiếu kế hoạch, không có test hoặc không kiểm tra lại kết quả.
+
+Superpowers giải quyết vấn đề đó bằng cách đưa vào một lớp kỹ năng. Khi agent thấy bạn đang làm việc phức tạp, nó không nên nhảy ngay vào sửa code. Nó nên hỏi lại mục tiêu, tách yêu cầu thành thiết kế, viết kế hoạch, rồi mới triển khai.
+
+Với Claude Code, Superpowers có thể được cài như plugin. Với OpenCode, tài liệu hướng dẫn dùng plugin và skill tool gốc của OpenCode. Phần khác nhau nằm ở cách tích hợp, còn ý tưởng chính vẫn giống nhau: agent phải làm việc theo quy trình rõ ràng.
+
+## Agentic coding là gì khi dùng Superpowers?
+
+Agentic coding là cách làm việc trong đó AI không chỉ gợi ý đoạn code, mà chủ động đi qua nhiều bước để hoàn thành một nhiệm vụ lập trình. Agent có thể đọc codebase, hỏi lại yêu cầu, lập kế hoạch, sửa file, chạy kiểm tra và báo cáo kết quả.
+
+Điểm quan trọng là agentic coding không có nghĩa là giao toàn bộ quyền kiểm soát cho AI. Bạn vẫn là người quyết định mục tiêu, duyệt hướng làm và kiểm tra kết quả cuối cùng. Superpowers giúp phần giữa trở nên có cấu trúc hơn.
+
+Một workflow agentic coding tốt thường có các nguyên tắc sau:
+
+- Không viết code khi chưa hiểu yêu cầu
+- Không mở rộng phạm vi nếu không cần
+- Ưu tiên thay đổi nhỏ, dễ kiểm tra
+- Có test hoặc bước xác minh rõ ràng
+- Có review trước khi kết luận hoàn tất
+
+## Quy trình cơ bản của Superpowers
+
+Superpowers tổ chức công việc qua nhiều skill. Bạn không nhất thiết phải nhớ tên từng skill, nhưng nên hiểu nhịp làm việc của nó.
+
+- Brainstorming: agent hỏi để làm rõ ý tưởng, ràng buộc và hướng tiếp cận
+- Writing plans: agent biến thiết kế thành kế hoạch nhỏ, có file cần sửa và bước kiểm tra
+- Test-driven development: agent viết test trước, thấy test fail, rồi mới viết code tối thiểu để pass
+- Subagent-driven development: agent chính chia việc cho subagent để làm từng phần và review kết quả
+- Requesting code review: agent kiểm tra lại lỗi, rủi ro, thiếu test hoặc hành vi hồi quy
+- Verification before completion: agent chạy lệnh kiểm tra trước khi báo hoàn thành
+
+Điểm đáng chú ý là Superpowers xem các workflow này như quy trình bắt buộc trong ngữ cảnh phù hợp, không chỉ là lời khuyên chung chung.
+
+## Cách dùng Superpowers với OpenCode
+
+Theo [tài liệu Superpowers cho OpenCode](https://github.com/obra/superpowers/blob/main/docs/README.opencode.md), cách cài hiện tại là thêm plugin vào `opencode.json` ở global hoặc project-level.
+
+```json
+{
+  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]
+}
+```
+
+Sau đó bạn restart OpenCode. Plugin sẽ tự đăng ký skills để OpenCode có thể khám phá và load. Bạn có thể kiểm tra bằng cách hỏi agent:
+
+```text
+Tell me about your superpowers
+```
+
+Khi làm việc, bạn có thể yêu cầu OpenCode dùng skill tool để liệt kê hoặc load skill phù hợp:
+
+```text
+use skill tool to list skills
+use skill tool to load superpowers/brainstorming
+```
+
+Với người mới, cách an toàn nhất là bắt đầu bằng các task nhỏ. Ví dụ: sửa một bug có thể tái hiện, thêm một validation đơn giản hoặc viết test cho một hàm đã có.
+
+## Cách dùng Superpowers với Claude Code
+
+Với Claude Code, Superpowers có thể được cài từ marketplace chính thức hoặc marketplace của Superpowers. Theo README, lệnh cài từ marketplace chính thức là:
+
+```bash
+/plugin install superpowers@claude-plugins-official
+```
+
+Một lựa chọn khác là thêm Superpowers marketplace rồi cài plugin:
+
+```bash
+/plugin marketplace add obra/superpowers-marketplace
+/plugin install superpowers@superpowers-marketplace
+```
+
+Sau khi cài, điểm quan trọng không phải là nhớ thật nhiều lệnh. Điều quan trọng là thay đổi cách bạn giao việc. Thay vì nói "sửa giúp tôi lỗi này", hãy cung cấp dấu hiệu tái hiện, kỳ vọng đúng và yêu cầu agent xác minh bằng lệnh cụ thể.
+
+## Ví dụ thực tế: sửa lỗi bằng agentic workflow
+
+Giả sử bạn có một ứng dụng Next.js và trang blog bị lỗi khi một bài viết thiếu `readingTime`. Một prompt mơ hồ có thể là:
+
+```text
+Trang blog đang lỗi, sửa giúp tôi.
+```
+
+Prompt này dễ khiến agent đoán mò. Với Superpowers hoặc bất kỳ workflow agentic coding nào, bạn nên giao việc rõ hơn:
+
+```text
+Trang blog Next.js bị lỗi khi một bài viết không có readingTime trong frontmatter. Hãy đọc code liên quan, xác định nguyên nhân, đề xuất cách sửa nhỏ nhất, chạy lint hoặc build để xác minh. Nếu cần thay đổi nhiều file, hãy đưa kế hoạch trước.
+```
+
+Một agent làm đúng quy trình sẽ không chỉ sửa một dòng code. Nó sẽ đọc phần load blog, kiểm tra contract frontmatter, tìm nơi render `readingTime`, sửa ở vị trí phù hợp, rồi chạy lệnh xác minh. Nếu task lớn hơn, nó nên chia nhỏ thành kế hoạch và chỉ triển khai sau khi bạn đồng ý.
+
+## Khi nào nên dùng Superpowers?
+
+Superpowers phù hợp nhất khi task có nhiều bước hoặc có rủi ro làm sai hành vi hiện có.
+
+- Thêm tính năng có ảnh hưởng nhiều file
+- Refactor code cũ nhưng cần giữ hành vi
+- Sửa bug khó tái hiện
+- Viết test cho logic quan trọng
+- Làm việc trong repo lạ hoặc có nhiều quy ước
+- Cần code review trước khi merge
+
+Với việc rất nhỏ, như đổi một câu chữ hoặc thêm một class CSS đơn giản, bạn không cần bật cả một quy trình nặng. Nguyên tắc tốt là quy trình phải giúp giảm rủi ro, không làm task đơn giản trở nên chậm chạp.
+
+## Những sai lầm thường gặp
+
+- Xem Superpowers như phép màu thay cho hiểu biết kỹ thuật
+- Bỏ qua bước làm rõ yêu cầu rồi trách agent làm sai
+- Không yêu cầu chạy test, lint hoặc build
+- Duyệt kế hoạch quá nhanh mà không đọc ràng buộc
+- Dùng subagent cho task quá nhỏ
+- Để agent tự mở rộng phạm vi ngoài yêu cầu ban đầu
+
+Sai lầm lớn nhất là nhầm tốc độ với chất lượng. Coding agent có thể viết code rất nhanh, nhưng phần quan trọng là biết code đó có đúng, đủ nhỏ và được kiểm chứng hay chưa.
+
+## Câu hỏi thường gặp về Superpowers là gì
+
+### Superpowers có thay thế OpenCode hoặc Claude Code không?
+
+Không. Superpowers không thay thế OpenCode hoặc Claude Code. Nó là lớp skill và workflow chạy cùng các công cụ đó để agent làm việc có phương pháp hơn.
+
+### Superpowers OpenCode khác gì Superpowers Claude Code?
+
+Khác biệt chính là cách tích hợp. OpenCode dùng plugin trong `opencode.json` và skill tool gốc, còn Claude Code dùng hệ thống plugin marketplace. Các ý tưởng như brainstorming, planning, TDD và review vẫn giống nhau.
+
+### Agentic coding có phù hợp với người mới học lập trình không?
+
+Có, nếu người mới vẫn đọc kế hoạch và kiểm tra kết quả. Agentic coding giúp bạn thấy một quy trình làm việc chuyên nghiệp, nhưng không nên biến thành thói quen copy code mà không hiểu.
+
+### Có nên dùng TDD với AI coding agent không?
+
+Nên dùng khi logic quan trọng hoặc dễ hồi quy. TDD buộc agent chứng minh lỗi tồn tại trước, sau đó sửa tối thiểu để test pass, nhờ vậy giảm nguy cơ sửa nhầm hoặc tạo bug mới.
+
+## Kết luận
+
+Superpowers là gì? Đó là một framework kỹ năng giúp OpenCode, Claude Code và các coding agent khác làm việc theo quy trình: hiểu yêu cầu, lập kế hoạch, viết test, triển khai nhỏ, review và xác minh. Nếu bạn đang học cách dùng AI để lập trình nghiêm túc hơn, hãy bắt đầu bằng một task nhỏ và yêu cầu agent giải thích kế hoạch trước khi sửa code.
