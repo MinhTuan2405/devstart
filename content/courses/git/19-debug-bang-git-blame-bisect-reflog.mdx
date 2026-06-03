@@ -1,0 +1,168 @@
+---
+title: "Debug bằng Git: blame, bisect và reflog"
+description: "Học cách dùng git blame, git bisect và git reflog để tìm commit gây lỗi, đọc lịch sử file và cứu commit bị mất dấu."
+slug: "debug-bang-git-blame-bisect-reflog"
+course: "git"
+order: 19
+duration: "28 phút"
+difficulty: "Khó"
+keywords: ["git blame", "git bisect", "git reflog", "debug bằng git", "tìm commit gây lỗi", "khôi phục commit git"]
+publishedAt: "2026-06-03"
+---
+
+## Debug bằng Git là gì?
+
+Debug bằng Git là dùng lịch sử commit để hiểu ai sửa dòng code nào, commit nào gây lỗi và HEAD từng trỏ đến đâu. `git blame`, `git bisect` và `git reflog` là ba công cụ mạnh giúp bạn điều tra sự cố thay vì đoán mò trong codebase lớn.
+
+Khi làm việc trong doanh nghiệp, bug không chỉ nằm trong code hiện tại. Nó thường liên quan đến một thay đổi trong quá khứ, một merge, một revert hoặc một commit bị mất dấu.
+
+## Dùng git blame để đọc lịch sử từng dòng
+
+`git blame` cho biết mỗi dòng trong file đến từ commit nào, tác giả nào và thời điểm nào.
+
+```bash
+git blame app.js
+```
+
+Xem một khoảng dòng cụ thể:
+
+```bash
+git blame -L 10,30 app.js
+```
+
+Kết quả có thể cho bạn hash commit và tác giả. Đừng dùng blame để đổ lỗi cá nhân. Hãy dùng nó để tìm ngữ cảnh: vì sao dòng đó được thêm, PR nào liên quan, commit message nói gì.
+
+Sau khi có hash, xem commit:
+
+```bash
+git show a8f31c2
+```
+
+## Dùng git bisect để tìm commit gây lỗi
+
+`git bisect` dùng tìm kiếm nhị phân trên lịch sử commit để xác định commit đầu tiên gây lỗi. Bạn cần biết một commit đang lỗi và một commit cũ còn tốt.
+
+Bắt đầu bisect:
+
+```bash
+git bisect start
+git bisect bad
+git bisect good v1.2.0
+```
+
+Git sẽ checkout một commit ở giữa. Bạn chạy test hoặc kiểm tra thủ công, rồi đánh dấu:
+
+```bash
+git bisect good
+```
+
+Hoặc:
+
+```bash
+git bisect bad
+```
+
+Lặp lại đến khi Git tìm ra commit gây lỗi. Kết thúc:
+
+```bash
+git bisect reset
+```
+
+## Bisect tự động với script
+
+Nếu có test command đáng tin, bạn có thể tự động hóa bisect:
+
+```bash
+git bisect start
+git bisect bad
+git bisect good v1.2.0
+git bisect run npm test
+```
+
+Git sẽ chạy `npm test` ở từng commit. Exit code `0` là good, khác `0` là bad. Cách này cực kỳ mạnh trong repo có test ổn định.
+
+Nếu test flaky hoặc phụ thuộc môi trường, bisect tự động có thể cho kết quả sai. Hãy xác nhận lại commit tìm được bằng cách đọc diff và chạy kiểm tra thủ công.
+
+## Dùng git reflog để cứu lịch sử local
+
+`git reflog` ghi lại các vị trí HEAD từng đi qua trong repo local. Nó rất hữu ích khi bạn reset nhầm, rebase lỗi hoặc mất dấu commit local.
+
+```bash
+git reflog
+```
+
+Kết quả mẫu:
+
+```text
+a8f31c2 HEAD@{0}: reset: moving to HEAD~1
+74d91ae HEAD@{1}: commit: Add checkout page
+```
+
+Nếu muốn quay lại commit cũ, bạn có thể tạo branch cứu hộ:
+
+```bash
+git switch -c rescue-checkout 74d91ae
+```
+
+Tạo branch mới an toàn hơn việc reset ngay, vì bạn giữ được điểm cần cứu để kiểm tra.
+
+## Debug workflow thực tế
+
+Khi gặp bug xuất hiện gần đây:
+
+- Tái hiện bug và xác định điều kiện lỗi.
+- Xem file nghi ngờ bằng `git log -- path/to/file`.
+- Dùng `git blame` để tìm commit sửa dòng liên quan.
+- Nếu chưa rõ, dùng `git bisect` giữa version tốt và version lỗi.
+- Sau khi tìm commit, đọc PR, message và test liên quan.
+- Fix bằng branch mới và pull request, không sửa trực tiếp trên main.
+
+Git giúp tìm manh mối, nhưng bạn vẫn cần hiểu code và nghiệp vụ để sửa đúng.
+
+## Những lỗi thường gặp khi debug bằng Git
+
+- Dùng blame để trách người thay vì tìm ngữ cảnh.
+- Quên `git bisect reset`, khiến repo vẫn ở commit giữa lịch sử.
+- Chọn mốc good/bad không chính xác.
+- Dựa vào test flaky khi chạy bisect tự động.
+- Reset ngay theo reflog mà không tạo branch cứu hộ trước.
+
+## Bài tập thực hành
+
+Tạo vài commit rồi xem blame và log theo file.
+
+```bash
+echo "version 1" > debug.txt
+git add debug.txt
+git commit -m "Add debug file"
+echo "version 2" >> debug.txt
+git commit -am "Update debug file"
+git blame debug.txt
+```
+
+Xem reflog:
+
+```bash
+git reflog
+git log --oneline -- debug.txt
+```
+
+Mục tiêu là hiểu Git có nhiều lớp lịch sử: log commit, blame theo dòng và reflog local.
+
+## Câu hỏi thường gặp về git blame, bisect và reflog
+
+### git blame có chính xác không?
+
+Nó cho biết commit gần nhất chạm vào dòng đó. Nhưng dòng code có thể bị di chuyển hoặc refactor, nên hãy đọc thêm commit và PR liên quan.
+
+### git bisect có dùng được với bug không có test không?
+
+Có. Bạn có thể kiểm tra thủ công ở mỗi commit, nhưng sẽ mất thời gian hơn. Nếu có script kiểm tra, bisect hiệu quả hơn nhiều.
+
+### Reflog có tồn tại trên remote không?
+
+Reflog chủ yếu là local. Đừng dựa vào reflog của máy bạn như cơ chế backup chính thức cho team.
+
+## Tóm tắt
+
+`git blame`, `git bisect` và `git reflog` giúp bạn điều tra lịch sử, tìm commit gây lỗi và cứu commit local. Bài cuối khóa sẽ mô phỏng một quy trình Git thực chiến trong doanh nghiệp từ issue đến release.

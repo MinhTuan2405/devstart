@@ -1,0 +1,118 @@
+---
+title: "Git là gì? Học Git cho người mới bắt đầu"
+description: "Giải thích Git là gì, Git dùng để làm gì và vì sao lập trình viên cần học Git trước khi làm việc nhóm."
+slug: "git-la-gi"
+course: "git"
+order: 1
+duration: "16 phút"
+difficulty: "Dễ"
+keywords: ["git là gì", "học git", "học git cho người mới bắt đầu", "git cơ bản", "git dùng để làm gì", "version control là gì"]
+publishedAt: "2026-06-03"
+---
+
+## Git là gì?
+
+Git là hệ thống quản lý phiên bản giúp bạn lưu lịch sử thay đổi của code, quay lại phiên bản cũ, so sánh file và làm việc nhóm mà không ghi đè lẫn nhau. Khi học Git, bạn không chỉ học vài câu lệnh, mà học cách quản lý thay đổi trong dự án phần mềm.
+
+Nếu code là bản thảo của một sản phẩm, Git giống như cuốn sổ ghi lại ai đã sửa gì, sửa lúc nào và vì sao. Đây là kỹ năng nền tảng cho cả người mới bắt đầu lẫn lập trình viên có kinh nghiệm.
+
+## Git dùng để làm gì trong dự án thật?
+
+Git được dùng trong hầu hết team phát triển phần mềm vì nó giải quyết nhiều vấn đề thực tế:
+
+- Lưu lịch sử thay đổi thay vì copy thư mục kiểu `project-final-v2-new`.
+- Tạo nhánh riêng để làm tính năng mà không ảnh hưởng code chính.
+- Gửi code lên remote repository như GitHub, GitLab hoặc Bitbucket.
+- Review code qua pull request trước khi merge vào branch chính.
+- Quay lại, sửa hoặc hủy thay đổi khi phát hiện lỗi.
+
+Ví dụ một lịch sử Git có thể trông như sau:
+
+```bash
+git log --oneline
+```
+
+Kết quả mẫu:
+
+```text
+a8f31c2 Add login form
+74d91ae Fix product price format
+21c9b03 Initial commit
+```
+
+Mỗi dòng là một commit. Commit là một mốc lưu trạng thái code tại một thời điểm có ý nghĩa.
+
+## Git khác gì GitHub?
+
+Git là công cụ chạy trên máy của bạn để quản lý lịch sử code. GitHub là dịch vụ lưu repository trên mạng, giúp nhiều người cùng clone, push, pull, tạo pull request và review code.
+
+Bạn có thể dùng Git mà không cần GitHub. Nhưng trong doanh nghiệp, Git thường đi cùng một remote platform như GitHub Enterprise, GitLab, Bitbucket hoặc Azure DevOps.
+
+Ví dụ Git làm việc local:
+
+```bash
+git init
+git add README.md
+git commit -m "Add README"
+```
+
+Ví dụ Git làm việc với GitHub hoặc GitLab:
+
+```bash
+git remote add origin git@github.com:team/project.git
+git push -u origin main
+```
+
+## Khi nào bạn thật sự cần học Git?
+
+Bạn nên học Git ngay khi bắt đầu viết project nhỏ đầu tiên. Không cần chờ đến khi đi làm mới học. Người mới có thể bắt đầu với `status`, `add`, `commit`, `log`; sau đó học `branch`, `merge`, `pull`, `push`.
+
+Người đã có kinh nghiệm nên học sâu hơn về workflow, rebase, revert, conflict, protected branch, review diff và quy tắc không phá lịch sử remote. Đây là phần tạo khác biệt giữa biết dùng Git và dùng Git chuyên nghiệp.
+
+## Những lỗi thường gặp khi mới học Git
+
+- Nghĩ Git chỉ dùng để backup code. Thực tế Git là công cụ quản lý lịch sử và phối hợp team.
+- Commit quá ít hoặc quá nhiều, khiến lịch sử khó review.
+- Không đọc `git status` trước khi chạy lệnh.
+- Nhầm Git với GitHub, dẫn đến không hiểu phần nào là local, phần nào là remote.
+- Copy project thành nhiều thư mục thay vì tạo branch hoặc commit.
+
+## Bài tập thực hành
+
+Tạo một thư mục mới tên `git-first-project`, thêm file `README.md`, sau đó khởi tạo Git và tạo commit đầu tiên.
+
+```bash
+mkdir git-first-project
+cd git-first-project
+git init
+echo "Học Git từng bước" > README.md
+git status
+```
+
+Sau đó chạy:
+
+```bash
+git add README.md
+git commit -m "Add first README"
+git log --oneline
+```
+
+Mục tiêu của bài tập là thấy được vòng đời đầu tiên: tạo file, xem trạng thái, đưa vào staging, commit và đọc lịch sử.
+
+## Câu hỏi thường gặp về Git
+
+### Có cần học Git trước khi học lập trình không?
+
+Không bắt buộc, nhưng nên học Git sớm sau khi biết tạo file và viết chương trình nhỏ. Git giúp bạn lưu tiến độ học và tránh mất code.
+
+### Git có khó không?
+
+Git khó khi bạn học quá nhiều lệnh cùng lúc. Hãy bắt đầu bằng vài lệnh cơ bản, hiểu local repository trước, rồi mới học branch, remote và rebase.
+
+### Người đi làm cần biết Git ở mức nào?
+
+Bạn cần biết đọc diff, commit đúng phạm vi, tạo branch, xử lý conflict, pull request, revert thay đổi sai và tuân thủ workflow của team.
+
+## Tóm tắt
+
+Git là công cụ quản lý phiên bản giúp lập trình viên lưu lịch sử, làm việc nhóm và kiểm soát thay đổi an toàn. Ở bài tiếp theo, bạn sẽ cài đặt Git và cấu hình tên, email, SSH/HTTPS để sẵn sàng dùng trong dự án thật.

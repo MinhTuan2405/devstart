@@ -1,0 +1,148 @@
+---
+title: "Git submodule, subtree và monorepo: Làm việc với repo phức tạp"
+description: "Tìm hiểu Git submodule, subtree, monorepo và cách chọn mô hình quản lý nhiều project trong doanh nghiệp."
+slug: "submodule-subtree-monorepo"
+course: "git"
+order: 17
+duration: "26 phút"
+difficulty: "Khó"
+keywords: ["git submodule", "git subtree", "monorepo", "repo phức tạp", "quản lý nhiều repository", "git nâng cao"]
+publishedAt: "2026-06-03"
+---
+
+## Vì sao cần submodule, subtree hoặc monorepo?
+
+Khi dự án lớn hơn, một repo đơn giản có thể không đủ. Team có thể cần dùng thư viện chung, chia sẻ component, quản lý nhiều service hoặc giữ nhiều package trong một nơi. Git submodule, subtree và monorepo là ba cách phổ biến để tổ chức code phức tạp, mỗi cách có đánh đổi riêng.
+
+Không nên chọn mô hình vì nghe hiện đại. Hãy chọn theo cách team build, test, release và phân quyền.
+
+## Git submodule là gì?
+
+Git submodule cho phép nhúng một repository khác vào trong repo hiện tại ở một commit cụ thể. Repo cha lưu pointer đến commit của repo con, không copy toàn bộ lịch sử vào repo cha.
+
+Thêm submodule:
+
+```bash
+git submodule add git@github.com:team/shared-ui.git packages/shared-ui
+git commit -m "Add shared UI submodule"
+```
+
+Clone repo có submodule:
+
+```bash
+git clone --recurse-submodules git@github.com:team/app.git
+```
+
+Nếu đã clone mà thiếu submodule:
+
+```bash
+git submodule update --init --recursive
+```
+
+Submodule phù hợp khi repo con có vòng đời riêng và cần giữ đúng commit được dùng.
+
+## Nhược điểm của submodule
+
+Submodule dễ gây rối cho người mới vì bạn phải cập nhật repo con và commit pointer trong repo cha. Nếu quên bước nào, teammate có thể không nhận đúng phiên bản.
+
+Quy trình cập nhật submodule thường là:
+
+```bash
+cd packages/shared-ui
+git pull origin main
+cd ../..
+git status
+git add packages/shared-ui
+git commit -m "Update shared UI submodule"
+```
+
+Trong doanh nghiệp, submodule cần tài liệu rõ ràng, nếu không onboarding sẽ khó.
+
+## Git subtree là gì?
+
+Git subtree cho phép đưa nội dung repo khác vào repo hiện tại như một thư mục, nhưng không yêu cầu developer thao tác với repo con riêng biệt như submodule.
+
+Ví dụ thêm subtree:
+
+```bash
+git subtree add --prefix=packages/shared-ui git@github.com:team/shared-ui.git main --squash
+```
+
+Cập nhật subtree:
+
+```bash
+git subtree pull --prefix=packages/shared-ui git@github.com:team/shared-ui.git main --squash
+```
+
+Subtree dễ dùng hơn với người clone repo vì không cần `submodule update`, nhưng lịch sử và thao tác sync có thể khó hiểu nếu team chưa quen.
+
+## Monorepo là gì?
+
+Monorepo là mô hình đặt nhiều project, package hoặc service trong cùng một repository. Ví dụ:
+
+```text
+apps/web
+apps/api
+packages/ui
+packages/config
+```
+
+Monorepo giúp chia sẻ code, refactor xuyên project và đồng bộ version dễ hơn. Nhưng nó cần tooling tốt để build/test đúng phần thay đổi, phân quyền hợp lý và tránh repo quá nặng.
+
+Các công cụ thường gặp trong monorepo gồm pnpm workspaces, npm workspaces, Turborepo, Nx, Bazel hoặc tooling nội bộ.
+
+## Chọn mô hình nào?
+
+Gợi ý thực tế:
+
+- Dùng repo riêng nếu project độc lập, release riêng và ít chia sẻ code.
+- Dùng submodule nếu cần gắn repo con vào commit cụ thể và chấp nhận quy trình phức tạp.
+- Dùng subtree nếu muốn copy nội dung repo con vào repo cha nhưng vẫn sync được.
+- Dùng monorepo nếu nhiều project liên quan chặt, cần refactor chung và có tooling tốt.
+
+Không có lựa chọn miễn phí. Mỗi mô hình đổi một loại phức tạp này lấy một loại phức tạp khác.
+
+## Những lỗi thường gặp với repo phức tạp
+
+- Dùng submodule nhưng không hướng dẫn clone và update.
+- Chọn monorepo nhưng không có tooling để test/build theo phạm vi.
+- Đưa quá nhiều project không liên quan vào cùng repo.
+- Không thống nhất quyền sở hữu package hoặc thư mục.
+- Sync subtree/submodule mà không hiểu commit nào đang được dùng.
+
+## Bài tập thực hành
+
+Không cần tạo submodule thật nếu chưa có repo phụ. Hãy đọc cấu trúc repo hiện tại và trả lời:
+
+```bash
+git remote -v
+git branch --show-current
+git log --oneline -5
+```
+
+Nếu có repo phụ để thử, thêm submodule vào repo demo:
+
+```bash
+git submodule add git@github.com:your-name/shared-demo.git libs/shared-demo
+git status
+```
+
+Mục tiêu là hiểu submodule tạo thêm `.gitmodules` và một pointer trong repo cha, không chỉ tạo thư mục thường.
+
+## Câu hỏi thường gặp về submodule và monorepo
+
+### Submodule có nên dùng cho người mới không?
+
+Không nên bắt đầu bằng submodule. Hãy học Git cơ bản, branch, remote và pull request trước. Submodule chỉ cần khi dự án có nhu cầu thật.
+
+### Monorepo có tốt hơn nhiều repo không?
+
+Không luôn đúng. Monorepo tốt khi project liên quan chặt và tooling mạnh. Nhiều repo tốt khi service độc lập và team cần phân quyền tách biệt.
+
+### Subtree có thay thế submodule không?
+
+Có thể trong một số trường hợp. Subtree dễ clone hơn, nhưng sync với repo nguồn cũng có quy trình riêng cần team hiểu.
+
+## Tóm tắt
+
+Submodule, subtree và monorepo là cách quản lý code khi dự án lớn hoặc nhiều repo liên quan. Bạn đã biết ý nghĩa và đánh đổi của từng mô hình. Bài tiếp theo sẽ học bảo mật khi dùng Git, một chủ đề rất quan trọng trong môi trường doanh nghiệp.

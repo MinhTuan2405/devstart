@@ -1,0 +1,152 @@
+---
+title: "Git hooks và pre-commit checks: Tự động kiểm tra trước khi commit"
+description: "Học Git hooks, pre-commit, pre-push và cách dùng hook để chạy lint, test, format trước khi đưa code lên repository."
+slug: "git-hooks-va-pre-commit"
+course: "git"
+order: 16
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["git hooks", "pre commit git", "pre push hook", "git hook là gì", "lint trước khi commit", "automation git"]
+publishedAt: "2026-06-03"
+---
+
+## Git hooks là gì?
+
+Git hooks là script được Git chạy tự động tại một số thời điểm như trước commit, sau commit, trước push hoặc khi merge. Hooks giúp team tự động kiểm tra lint, test, format, secret hoặc commit message trước khi thay đổi đi xa hơn. Đây là lớp bảo vệ hữu ích trong dự án doanh nghiệp.
+
+Hooks không thay thế CI, nhưng giúp phát hiện lỗi sớm ngay trên máy developer.
+
+## Hooks nằm ở đâu?
+
+Trong mỗi repo có thư mục `.git/hooks`. Bạn có thể xem các hook mẫu:
+
+```bash
+ls .git/hooks
+```
+
+Bạn thường thấy file như:
+
+```text
+pre-commit.sample
+pre-push.sample
+commit-msg.sample
+```
+
+File `.sample` chưa chạy. Muốn bật hook, tạo file không có đuôi `.sample`, ví dụ `.git/hooks/pre-commit`, và cấp quyền executable trên hệ Unix.
+
+## Tạo pre-commit hook đơn giản
+
+Ví dụ hook chặn commit nếu file staged có chuỗi `TODO_SECRET`.
+
+```bash
+#!/bin/sh
+
+if git diff --cached --name-only | xargs grep -n "TODO_SECRET"; then
+  echo "Found TODO_SECRET in staged files"
+  exit 1
+fi
+
+exit 0
+```
+
+Lưu vào `.git/hooks/pre-commit`. Trên macOS/Linux, chạy:
+
+```bash
+chmod +x .git/hooks/pre-commit
+```
+
+Khi hook exit code `1`, Git sẽ chặn commit. Khi exit code `0`, commit tiếp tục.
+
+## Chạy lint hoặc test trước commit
+
+Với project JavaScript, pre-commit có thể chạy lint:
+
+```bash
+#!/bin/sh
+
+npm run lint
+```
+
+Nếu lint fail, commit bị chặn. Tuy nhiên, hook quá nặng có thể làm developer khó chịu. Thực tế thường dùng pre-commit cho kiểm tra nhanh, còn test dài chạy ở CI.
+
+Ví dụ pre-push chạy test nặng hơn:
+
+```bash
+#!/bin/sh
+
+npm test
+```
+
+Đặt script này trong `.git/hooks/pre-push` nếu project có test script.
+
+## Vì sao cần tool quản lý hooks?
+
+Hook trong `.git/hooks` không được commit lên repository vì `.git` là metadata local. Nếu muốn chia sẻ hooks cho team, bạn cần tool như Husky, Lefthook, pre-commit framework hoặc cấu hình `core.hooksPath`.
+
+Ví dụ cấu hình hooks path trong repo:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Sau đó tạo thư mục `.githooks/pre-commit` và commit thư mục này vào repo nếu team thống nhất. Cách này giúp hooks trở thành một phần của codebase.
+
+## Hooks trong doanh nghiệp nên dùng thế nào?
+
+Hooks nên hỗ trợ developer, không nên thay CI hoàn toàn. Quy tắc thực tế:
+
+- Pre-commit chạy nhanh, dưới vài giây nếu có thể.
+- Pre-push có thể chạy kiểm tra nặng hơn.
+- CI vẫn là nguồn xác nhận cuối cùng.
+- Hook nên có thông báo lỗi rõ ràng.
+- Không viết hook phụ thuộc vào đường dẫn cá nhân trên máy một người.
+
+Nếu hook quá chậm, developer sẽ tìm cách bỏ qua. Khi đó automation mất tác dụng.
+
+## Những lỗi thường gặp với Git hooks
+
+- Tưởng `.git/hooks` được commit và chia sẻ cho team.
+- Hook chạy ổn trên máy một người nhưng fail trên hệ điều hành khác.
+- Hook quá nặng, làm mỗi commit mất nhiều phút.
+- Không có hướng dẫn cài đặt hook trong README hoặc onboarding docs.
+- Dựa hoàn toàn vào hook local mà không có CI.
+
+## Bài tập thực hành
+
+Tạo hook pre-commit chặn commit nếu staged diff chứa chữ `SECRET_DEMO`.
+
+```bash
+cat > .git/hooks/pre-commit << "EOF"
+#!/bin/sh
+if git diff --cached | grep "SECRET_DEMO"; then
+  echo "Do not commit SECRET_DEMO"
+  exit 1
+fi
+EOF
+```
+
+Trên macOS/Linux, cấp quyền:
+
+```bash
+chmod +x .git/hooks/pre-commit
+```
+
+Sau đó thử tạo file chứa `SECRET_DEMO`, add và commit để thấy hook chặn. Nếu dùng Windows, bạn có thể làm bài này trong Git Bash.
+
+## Câu hỏi thường gặp về Git hooks
+
+### Có thể bỏ qua hook không?
+
+Có thể dùng một số tùy chọn như `--no-verify`, nhưng không nên lạm dụng. Nếu hook sai hoặc quá chậm, hãy sửa hook thay vì bỏ qua thường xuyên.
+
+### Hook có thay thế CI không?
+
+Không. Hook chạy local và có thể bị bỏ qua. CI chạy trên server, nhất quán hơn và nên là điều kiện trước khi merge.
+
+### Pre-commit nên chạy gì?
+
+Nên chạy kiểm tra nhanh như format staged files, lint nhanh, secret scan nhẹ hoặc kiểm tra commit message. Test dài nên cân nhắc để pre-push hoặc CI.
+
+## Tóm tắt
+
+Git hooks giúp tự động hóa kiểm tra trước commit hoặc push. Bạn đã biết hook local, pre-commit, pre-push và cách chia sẻ hook qua `core.hooksPath`. Bài tiếp theo sẽ học submodule, subtree và monorepo, các mô hình repo phức tạp hơn trong doanh nghiệp.

@@ -1,0 +1,149 @@
+---
+title: "Undo trong Git: restore, reset và revert an toàn"
+description: "Học cách hoàn tác thay đổi trong Git bằng restore, reset và revert, tránh mất code và tránh phá lịch sử remote."
+slug: "undo-an-toan-restore-reset-revert"
+course: "git"
+order: 12
+duration: "28 phút"
+difficulty: "Trung bình"
+keywords: ["undo trong git", "git restore", "git reset", "git revert", "hoàn tác commit git", "git reset vs revert"]
+publishedAt: "2026-06-03"
+---
+
+## Undo trong Git cần hiểu thế nào?
+
+Undo trong Git là hoàn tác thay đổi ở working tree, staging area hoặc lịch sử commit. `git restore` thường dùng để bỏ sửa file, `git reset` di chuyển branch hoặc bỏ staging, còn `git revert` tạo commit mới để đảo ngược commit cũ. Chọn sai lệnh có thể làm mất code hoặc phá lịch sử team.
+
+Trước khi undo, luôn chạy `git status` và nếu cần thì `git diff`. Đừng sửa trạng thái Git khi bạn chưa biết mình đang undo phần nào.
+
+## Bỏ thay đổi chưa commit bằng git restore
+
+Nếu bạn sửa file nhưng muốn bỏ thay đổi và quay về phiên bản trong commit gần nhất:
+
+```bash
+git restore README.md
+```
+
+Lệnh này tác động đến working tree. Nếu file có thay đổi chưa commit, nội dung đó sẽ mất khỏi working tree. Vì vậy hãy đọc diff trước:
+
+```bash
+git diff -- README.md
+git restore README.md
+```
+
+Nếu muốn bỏ toàn bộ thay đổi chưa staged trong thư mục hiện tại, bạn có thể dùng `git restore .`, nhưng chỉ làm khi đã kiểm tra kỹ.
+
+## Bỏ staging bằng git restore --staged
+
+Nếu bạn đã `git add` nhầm file, bỏ file khỏi staging area:
+
+```bash
+git restore --staged debug.log
+```
+
+Lệnh này không xóa nội dung sửa trong working tree. Nó chỉ đưa file ra khỏi staging, nghĩa là file sẽ không nằm trong commit tiếp theo.
+
+Quy trình thường dùng:
+
+```bash
+git status
+git restore --staged debug.log
+git status
+```
+
+Đây là cách sửa lỗi `git add .` quá rộng.
+
+## Reset dùng để làm gì?
+
+`git reset` di chuyển branch hiện tại đến commit khác và có thể tác động đến staging hoặc working tree tùy mode. Người mới nên bắt đầu với `--soft` hoặc reset file khỏi staging, tránh dùng mode phá hủy khi chưa hiểu.
+
+Undo commit gần nhất nhưng giữ thay đổi trong staging:
+
+```bash
+git reset --soft HEAD~1
+```
+
+Undo commit gần nhất và giữ thay đổi trong working tree, không staged:
+
+```bash
+git reset HEAD~1
+```
+
+Reset có thể hữu ích khi bạn vừa commit nhầm local và chưa push. Nếu commit đã push và có người khác dùng, hãy cân nhắc `git revert` thay vì reset.
+
+## Revert dùng khi nào?
+
+`git revert` tạo một commit mới đảo ngược thay đổi của commit cũ. Nó không xóa lịch sử, vì vậy an toàn hơn trên branch đã push hoặc branch chung.
+
+```bash
+git revert a8f31c2
+```
+
+Kết quả là Git tạo commit mới kiểu:
+
+```text
+Revert "Add checkout page"
+```
+
+Trong doanh nghiệp, nếu một commit đã merge vào `main` và gây lỗi, `revert` thường là lựa chọn an toàn vì mọi người vẫn thấy lịch sử đầy đủ.
+
+## Chọn restore, reset hay revert
+
+Hãy chọn theo trạng thái thay đổi:
+
+- Thay đổi chưa staged: dùng `git restore file`.
+- Đã staged nhầm: dùng `git restore --staged file`.
+- Commit local gần nhất chưa push và muốn sửa lại: có thể dùng `git reset --soft HEAD~1`.
+- Commit đã push hoặc đã merge vào branch chung: ưu tiên `git revert`.
+
+Lệnh cần đặc biệt cẩn thận là reset mode xóa working tree. Khi gặp hướng dẫn dùng lệnh mạnh trên mạng, hãy hiểu tác động trước, không copy paste vào repo công ty.
+
+## Những lỗi thường gặp khi undo trong Git
+
+- Dùng reset để sửa commit đã push lên branch chung.
+- Bỏ thay đổi bằng restore mà chưa đọc diff.
+- Nhầm unstaged, staged và committed changes.
+- Revert merge commit mà không hiểu parent commit.
+- Copy lệnh nguy hiểm từ mạng khi repo đang có thay đổi quan trọng.
+
+## Bài tập thực hành
+
+Tạo file, stage nhầm, rồi bỏ staging:
+
+```bash
+echo "temporary debug" > debug.log
+git add debug.log
+git status
+git restore --staged debug.log
+git status
+```
+
+Tạo commit rồi undo local bằng reset soft:
+
+```bash
+echo "draft" > draft.txt
+git add draft.txt
+git commit -m "Add draft"
+git reset --soft HEAD~1
+git status
+```
+
+Mục tiêu là phân biệt bỏ staging, undo commit local và giữ lại nội dung file để sửa tiếp.
+
+## Câu hỏi thường gặp về undo trong Git
+
+### Khi nào nên dùng git revert thay vì git reset?
+
+Dùng `git revert` khi commit đã được push, merge hoặc người khác có thể đã dựa vào. Revert giữ lịch sử an toàn hơn.
+
+### git restore có khôi phục được file đã xóa không?
+
+Có, nếu file đã được Git theo dõi trong commit trước đó. Dùng `git restore path/to/file` để đưa file trở lại từ HEAD.
+
+### Tôi lỡ reset mất commit thì sao?
+
+Hãy kiểm tra `git reflog`. Reflog ghi lại vị trí HEAD cũ và thường giúp bạn tìm lại commit vừa mất dấu.
+
+## Tóm tắt
+
+Undo an toàn là biết thay đổi đang ở working tree, staging hay commit history. Bạn đã học `restore`, `reset` và `revert`. Bài tiếp theo sẽ học `stash` và `worktree` để chuyển việc nhanh mà không làm mất code đang dở.

@@ -31,6 +31,7 @@ export default function Footer() {
                 { href: '/khoa-hoc/machine-learning', label: '🤖 Học Machine Learning' },
                 { href: '/khoa-hoc/claude-code', label: '🧠 Học Claude Code' },
                 { href: '/khoa-hoc/sql', label: '🗄️ Học SQL' },
+                { href: '/khoa-hoc/git', label: '🌿 Học Git' },
               ].map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm transition-colors hover:text-white">

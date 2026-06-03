@@ -1,0 +1,149 @@
+---
+title: "Bảo mật khi dùng Git: Secret, signed commit và protected branch"
+description: "Học cách dùng Git an toàn, tránh commit secret, hiểu signed commit, protected branch và quy tắc bảo mật trong doanh nghiệp."
+slug: "bao-mat-khi-dung-git"
+course: "git"
+order: 18
+duration: "26 phút"
+difficulty: "Khó"
+keywords: ["bảo mật git", "commit secret", "signed commit git", "protected branch", "git security", "xóa secret khỏi git"]
+publishedAt: "2026-06-03"
+---
+
+## Bảo mật khi dùng Git quan trọng thế nào?
+
+Bảo mật khi dùng Git là việc tránh đưa secret vào repository, kiểm soát quyền push, xác minh tác giả commit và bảo vệ branch quan trọng. Một token bị commit nhầm có thể làm lộ dữ liệu, kích hoạt chi phí cloud hoặc tạo sự cố bảo mật nghiêm trọng trong doanh nghiệp.
+
+Git lưu lịch sử rất tốt. Điều đó cũng có nghĩa là secret đã commit không biến mất chỉ vì bạn xóa dòng đó trong commit sau.
+
+## Không commit secret
+
+Secret gồm API key, database password, private key, access token, cookie, certificate hoặc file `.env` thật. Các file này nên nằm ngoài Git và được quản lý bằng secret manager hoặc biến môi trường.
+
+Kiểm tra staged diff trước commit:
+
+```bash
+git diff --staged
+```
+
+Tìm chuỗi nghi ngờ trong repo:
+
+```bash
+git grep -n "API_KEY"
+git grep -n "PRIVATE KEY"
+```
+
+Đây chỉ là kiểm tra thủ công đơn giản. Team doanh nghiệp nên dùng secret scanning ở pre-commit, CI hoặc platform như GitHub secret scanning.
+
+## Nếu lỡ commit secret thì làm gì?
+
+Nếu secret đã commit, việc đầu tiên thường không phải là xóa file khỏi Git, mà là revoke hoặc rotate secret. Hãy xem secret đó đã bị lộ và không còn đáng tin.
+
+Quy trình thực tế:
+
+- Dừng sử dụng secret cũ.
+- Rotate token hoặc password trong hệ thống nguồn.
+- Xóa secret khỏi code hiện tại.
+- Điều tra phạm vi ảnh hưởng.
+- Nếu cần, làm sạch lịch sử Git theo quy trình của team.
+
+Nếu secret chỉ staged nhầm và chưa commit:
+
+```bash
+git restore --staged .env
+git restore .env
+```
+
+Nếu file `.env` cần giữ trên máy, chỉ bỏ khỏi staging:
+
+```bash
+git restore --staged .env
+```
+
+## Protected branch là gì?
+
+Protected branch là cấu hình trên GitHub, GitLab hoặc platform tương tự để bảo vệ branch quan trọng như `main`. Nó có thể chặn push trực tiếp, yêu cầu PR, yêu cầu CI pass và yêu cầu approval.
+
+Các rule phổ biến:
+
+- Không push trực tiếp vào `main`.
+- Cần ít nhất một hoặc hai approval.
+- CI phải pass trước khi merge.
+- Không cho force push.
+- Không cho xóa branch.
+
+Protected branch là một trong các biện pháp quan trọng nhất để Git workflow không phụ thuộc hoàn toàn vào thói quen cá nhân.
+
+## Signed commit là gì?
+
+Signed commit là commit được ký bằng GPG, SSH key hoặc phương thức platform hỗ trợ để xác minh commit thật sự đến từ người sở hữu key. Trên GitHub, commit đã xác minh thường hiện nhãn `Verified`.
+
+Kiểm tra cấu hình ký commit:
+
+```bash
+git config --global commit.gpgsign
+git config --global user.signingkey
+```
+
+Tùy platform, hướng dẫn tạo key và bật signing khác nhau. Trong doanh nghiệp có yêu cầu compliance, signed commit có thể là bắt buộc.
+
+## Quyền truy cập repository
+
+Không phải ai cũng cần quyền admin hoặc quyền push lên mọi branch. Nguyên tắc tối thiểu quyền giúp giảm rủi ro.
+
+Quy tắc thực tế:
+
+- Người mới nên làm qua PR, không push trực tiếp.
+- Token cá nhân nên có scope tối thiểu.
+- Xóa quyền người đã rời team.
+- Không dùng chung account hoặc token.
+- Bật SSO/MFA nếu platform hỗ trợ.
+
+Git là công cụ kỹ thuật, nhưng bảo mật Git là sự kết hợp giữa công cụ, quy trình và quyền truy cập.
+
+## Những lỗi bảo mật Git thường gặp
+
+- Commit `.env`, private key hoặc service account JSON.
+- Nghĩ xóa secret ở commit sau là đủ an toàn.
+- Dùng token có quyền quá rộng.
+- Cho phép force push lên `main`.
+- Không kiểm tra dependency hoặc script hook lạ trong repo không tin cậy.
+
+## Bài tập thực hành
+
+Tạo file `.env.example` an toàn và ignore `.env` thật.
+
+```bash
+echo "DATABASE_URL=replace_me" > .env.example
+echo ".env" >> .gitignore
+git add .env.example .gitignore
+git commit -m "Add env example and ignore local env"
+```
+
+Kiểm tra không commit `.env` thật:
+
+```bash
+echo "DATABASE_URL=secret" > .env
+git status
+git diff --staged
+```
+
+Mục tiêu là hiểu file mẫu có thể commit, còn giá trị thật thì không.
+
+## Câu hỏi thường gặp về bảo mật Git
+
+### Xóa secret khỏi file rồi commit có đủ không?
+
+Không. Secret vẫn có thể nằm trong lịch sử Git. Hãy rotate secret trước, sau đó xử lý lịch sử nếu team yêu cầu.
+
+### Có nên dùng signed commit không?
+
+Nếu công ty yêu cầu hoặc repo nhạy cảm, có. Signed commit giúp tăng khả năng xác minh tác giả commit.
+
+### Protected branch có làm chậm team không?
+
+Có thể thêm một chút quy trình, nhưng đổi lại giảm rủi ro phá branch chính, bỏ qua CI hoặc merge code chưa review.
+
+## Tóm tắt
+
+Bảo mật Git bắt đầu từ việc không commit secret, bảo vệ branch chính và kiểm soát quyền truy cập. Bài tiếp theo sẽ học debug bằng `git blame`, `git bisect` và `git reflog` để tìm lỗi trong lịch sử.

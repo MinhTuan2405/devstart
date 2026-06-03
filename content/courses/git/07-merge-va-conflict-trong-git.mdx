@@ -1,0 +1,160 @@
+---
+title: "Merge và conflict trong Git: Cách xử lý xung đột"
+description: "Học git merge, vì sao xảy ra conflict và cách xử lý xung đột Git an toàn khi nhiều người cùng sửa code."
+slug: "merge-va-conflict-trong-git"
+course: "git"
+order: 7
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["git merge", "conflict trong git", "xử lý conflict git", "merge conflict", "git branch merge", "học git"]
+publishedAt: "2026-06-03"
+---
+
+## Merge trong Git là gì?
+
+Merge trong Git là thao tác đưa thay đổi từ một branch vào branch khác. Conflict xảy ra khi Git không tự quyết định được phiên bản nào đúng, thường vì hai branch cùng sửa cùng một đoạn file. Biết xử lý conflict là kỹ năng bắt buộc khi làm việc nhóm.
+
+Merge không phải lúc nào cũng có conflict. Nếu hai branch sửa các file khác nhau hoặc các đoạn khác nhau, Git thường tự merge được.
+
+## Merge branch vào main
+
+Giả sử bạn đang ở `main` và muốn merge branch `feature/team-note`.
+
+```bash
+git switch main
+git merge feature/team-note
+```
+
+Nếu merge thành công, Git sẽ tạo fast-forward hoặc merge commit tùy lịch sử. Kiểm tra lại bằng:
+
+```bash
+git log --oneline --graph --decorate
+```
+
+Fast-forward nghĩa là `main` chỉ cần tiến lên commit mới vì chưa có commit khác xen vào. Merge commit xảy ra khi hai branch đã tách lịch sử.
+
+## Vì sao conflict xảy ra?
+
+Conflict thường xảy ra khi hai người sửa cùng dòng hoặc cùng vùng nội dung. Ví dụ branch `main` có:
+
+```text
+title=DevStart
+```
+
+Branch của bạn sửa thành:
+
+```text
+title=DevStart Git Course
+```
+
+Trong khi người khác trên `main` sửa thành:
+
+```text
+title=DevStart Learning
+```
+
+Khi merge, Git không biết nên chọn câu nào nên dừng lại và yêu cầu bạn quyết định.
+
+## Cách đọc file bị conflict
+
+File conflict có marker như sau:
+
+```text
+<<<<<<< HEAD
+title=DevStart Learning
+=======
+title=DevStart Git Course
+>>>>>>> feature/git-course
+```
+
+Phần trên `=======` là phiên bản từ branch hiện tại. Phần dưới là phiên bản từ branch đang merge vào. Bạn cần sửa file thành nội dung cuối cùng mong muốn, xóa toàn bộ marker, rồi commit.
+
+Ví dụ kết quả đã xử lý:
+
+```text
+title=DevStart Git Learning
+```
+
+Sau đó chạy:
+
+```bash
+git add config.txt
+git commit
+```
+
+Nếu merge đã tạo message sẵn, Git có thể mở editor để bạn xác nhận merge commit.
+
+## Quy trình xử lý conflict an toàn
+
+Khi gặp conflict, đừng hoảng và đừng xóa bừa. Làm theo thứ tự:
+
+- Chạy `git status` để biết file nào conflict.
+- Mở từng file, đọc marker `<<<<<<<`, `=======`, `>>>>>>>`.
+- Quyết định giữ phần nào hoặc kết hợp cả hai.
+- Chạy test hoặc kiểm tra thủ công nếu có thể.
+- `git add` file đã xử lý.
+- Chạy `git commit` để hoàn tất merge.
+
+Nếu bạn muốn hủy merge khi chưa xử lý xong:
+
+```bash
+git merge --abort
+```
+
+Lệnh này đưa repo về trạng thái trước khi merge, miễn là Git còn có thể khôi phục an toàn.
+
+## Conflict trong doanh nghiệp cần chú ý gì?
+
+Trong team thật, conflict không chỉ là chọn dòng code. Bạn cần hiểu ý định của người sửa bên kia. Nếu không chắc, hãy hỏi teammate hoặc đọc pull request liên quan.
+
+Conflict ở file cấu hình, migration database hoặc lockfile nên xử lý cẩn thận hơn. Đừng chỉ chọn một bên để cho hết conflict nếu bạn chưa hiểu hậu quả.
+
+## Những lỗi thường gặp khi xử lý conflict
+
+- Xóa marker nhưng không kiểm tra logic sau khi gộp.
+- Luôn chọn code của mình và bỏ code teammate.
+- Quên `git add` file đã xử lý nên merge chưa hoàn tất.
+- Không chạy test sau conflict.
+- Dùng `merge --abort` khi đã sửa nhiều file mà chưa lưu ý trạng thái hiện tại.
+
+## Bài tập thực hành
+
+Tạo conflict có kiểm soát bằng hai branch cùng sửa một file.
+
+```bash
+echo "title=DevStart" > app.conf
+git add app.conf
+git commit -m "Add app config"
+git switch -c feature/git-title
+echo "title=DevStart Git Course" > app.conf
+git commit -am "Update title for Git course"
+```
+
+Quay về `main`, sửa cùng file, rồi merge:
+
+```bash
+git switch main
+echo "title=DevStart Learning" > app.conf
+git commit -am "Update title for learning"
+git merge feature/git-title
+```
+
+Hãy mở `app.conf`, xử lý conflict, `git add app.conf` và `git commit`.
+
+## Câu hỏi thường gặp về merge conflict
+
+### Conflict có nghĩa là tôi làm sai không?
+
+Không. Conflict là chuyện bình thường khi nhiều người cùng sửa một vùng code. Điều quan trọng là xử lý cẩn thận.
+
+### Có nên xóa branch sau khi merge không?
+
+Có thể xóa branch local và remote sau khi pull request đã merge, miễn là team không còn cần branch đó.
+
+### git merge --abort có nguy hiểm không?
+
+Nó thường an toàn nếu bạn muốn hủy merge đang conflict. Nhưng hãy đọc `git status` trước để biết repo đang ở trạng thái nào.
+
+## Tóm tắt
+
+Merge đưa thay đổi từ branch này sang branch khác, còn conflict yêu cầu bạn tự quyết định nội dung cuối cùng. Bài tiếp theo sẽ học remote repository, clone, fetch, pull và push để làm việc với GitHub hoặc GitLab.

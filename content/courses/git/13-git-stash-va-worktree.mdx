@@ -1,0 +1,174 @@
+---
+title: "Git stash và git worktree: Chuyển việc không mất code"
+description: "Học cách dùng git stash và git worktree để tạm cất thay đổi, chuyển task nhanh và làm nhiều branch song song an toàn."
+slug: "git-stash-va-worktree"
+course: "git"
+order: 13
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["git stash", "git worktree", "chuyển branch không mất code", "stash trong git", "git nâng cao", "làm nhiều branch git"]
+publishedAt: "2026-06-03"
+---
+
+## Git stash và git worktree dùng để làm gì?
+
+`git stash` tạm cất thay đổi chưa commit để bạn chuyển branch hoặc xử lý việc gấp. `git worktree` cho phép checkout nhiều branch trong nhiều thư mục khác nhau của cùng một repo. Hai công cụ này rất hữu ích khi làm việc trong doanh nghiệp, nơi bạn thường bị chuyển ngữ cảnh giữa feature, bug và hotfix.
+
+Nếu chỉ biết commit, bạn có thể bị kẹt khi code đang dở nhưng cần chuyển sang branch khác. Stash và worktree giúp xử lý tình huống đó sạch hơn.
+
+## Dùng git stash để tạm cất thay đổi
+
+Giả sử bạn đang sửa code nhưng chưa muốn commit:
+
+```bash
+git status
+git stash push -m "WIP profile validation"
+```
+
+Sau đó working tree sạch hơn, bạn có thể chuyển branch:
+
+```bash
+git switch main
+```
+
+Xem danh sách stash:
+
+```bash
+git stash list
+```
+
+Kết quả mẫu:
+
+```text
+stash@{0}: On feature/profile: WIP profile validation
+```
+
+## Lấy lại stash
+
+Lấy stash mới nhất và giữ stash trong danh sách:
+
+```bash
+git stash apply
+```
+
+Lấy stash mới nhất và xóa khỏi danh sách stash:
+
+```bash
+git stash pop
+```
+
+Nếu có nhiều stash, chỉ rõ stash:
+
+```bash
+git stash apply stash@{1}
+```
+
+`pop` có thể tạo conflict nếu branch hiện tại khác nhiều so với lúc stash. Hãy đọc `git status` và xử lý như merge conflict.
+
+## Khi nào không nên dùng stash?
+
+Stash không thay thế commit. Nếu thay đổi đã có ý nghĩa, hãy commit vào branch riêng. Stash phù hợp với thay đổi tạm, thử nghiệm hoặc code chưa đủ sạch để commit.
+
+Một lỗi phổ biến là stash quá nhiều rồi quên nội dung bên trong. Vì vậy hãy dùng message rõ:
+
+```bash
+git stash push -m "WIP checkout coupon validation"
+```
+
+Xóa stash không cần nữa:
+
+```bash
+git stash drop stash@{0}
+```
+
+## Dùng git worktree để làm nhiều branch song song
+
+`git worktree` tạo thêm thư mục làm việc cho cùng một repo. Mỗi thư mục có thể checkout một branch khác nhau.
+
+Ví dụ bạn đang ở repo `project`, tạo worktree cho hotfix:
+
+```bash
+git worktree add ../project-hotfix hotfix/login-error
+```
+
+Nếu branch chưa tồn tại, tạo từ `main`:
+
+```bash
+git worktree add -b hotfix/login-error ../project-hotfix main
+```
+
+Bây giờ bạn có hai thư mục:
+
+- `project`: branch đang làm feature.
+- `project-hotfix`: branch hotfix riêng.
+
+Điều này tránh phải stash liên tục khi có việc khẩn cấp.
+
+## Quản lý worktree
+
+Xem danh sách worktree:
+
+```bash
+git worktree list
+```
+
+Khi xong, xóa thư mục worktree rồi prune metadata:
+
+```bash
+git worktree remove ../project-hotfix
+git worktree prune
+```
+
+Worktree rất hữu ích với repo lớn, monorepo hoặc dự án cần chạy nhiều môi trường song song. Nhưng hãy nhớ mỗi worktree vẫn chia sẻ cùng Git object database, không phải clone độc lập hoàn toàn.
+
+## Những lỗi thường gặp với stash và worktree
+
+- Stash nhiều lần nhưng không đặt message, sau đó không biết stash nào là gì.
+- Dùng stash thay cho commit lâu dài.
+- Pop stash vào branch không phù hợp và gây conflict khó hiểu.
+- Xóa thư mục worktree thủ công rồi không prune.
+- Quên rằng một branch không thể checkout cùng lúc ở hai worktree khác nhau.
+
+## Bài tập thực hành
+
+Tạo thay đổi chưa commit, stash lại, chuyển branch rồi lấy lại.
+
+```bash
+echo "work in progress" > wip.txt
+git status
+git stash push -m "WIP stash practice"
+git status
+git stash list
+```
+
+Lấy lại stash:
+
+```bash
+git stash pop
+git status
+```
+
+Nếu muốn thử worktree, tạo branch riêng trong thư mục cạnh repo:
+
+```bash
+git worktree add -b feature/worktree-practice ../worktree-practice main
+git worktree list
+```
+
+## Câu hỏi thường gặp về git stash và worktree
+
+### Stash có lưu untracked file không?
+
+Mặc định không luôn lưu untracked file. Bạn có thể dùng `git stash push -u -m "message"` nếu muốn cất cả untracked file.
+
+### Stash có nên dùng trong team không?
+
+Stash là local, không chia sẻ với team. Nó phù hợp để bạn tự quản lý công việc tạm trên máy cá nhân.
+
+### Worktree khác clone thêm repo thế nào?
+
+Worktree dùng chung dữ liệu Git với repo gốc, nhẹ hơn clone thêm. Nó phù hợp khi bạn cần nhiều branch làm việc song song trên cùng codebase.
+
+## Tóm tắt
+
+`git stash` giúp tạm cất thay đổi, còn `git worktree` giúp làm nhiều branch trong nhiều thư mục. Bài tiếp theo sẽ học tag, release và versioning để gắn Git với quy trình phát hành sản phẩm.

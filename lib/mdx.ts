@@ -76,7 +76,7 @@ export function getLessonBySlug(courseName: string, slug: string): Lesson | null
 }
 
 export function getAllLessons(): Lesson[] {
-  const courseNames = ['python', 'cpp', 'html-css', 'machine-learning', 'claude-code', 'sql']
+  const courseNames = ['python', 'cpp', 'html-css', 'machine-learning', 'claude-code', 'sql', 'git']
   return courseNames.flatMap((name) => getLessonsByCourseName(name))
 }
 
@@ -158,5 +158,11 @@ export const courseInfo: Record<string, { name: string; description: string; ico
     description: 'Học SQL với BikeStores: SELECT, WHERE, JOIN, GROUP BY, subquery, function và window functions từ cơ bản đến thực hành báo cáo.',
     icon: '🗄️',
     slug: 'sql',
+  },
+  git: {
+    name: 'Git',
+    description: 'Học Git từ cơ bản đến nâng cao: commit, branch, merge, remote, pull request, rebase, bảo mật và workflow doanh nghiệp.',
+    icon: '🌿',
+    slug: 'git',
   },
 }
