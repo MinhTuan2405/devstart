@@ -1,0 +1,169 @@
+---
+title: "Pull request và code review trong Git"
+description: "Học pull request là gì, cách chuẩn bị PR, viết mô tả, xử lý review và merge code trong doanh nghiệp."
+slug: "pull-request-va-code-review"
+course: "git"
+order: 9
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["pull request là gì", "code review git", "github pull request", "gitlab merge request", "review code", "git trong doanh nghiệp"]
+publishedAt: "2026-06-03"
+---
+
+## Pull request là gì?
+
+Pull request là đề xuất đưa thay đổi từ branch của bạn vào branch chính hoặc branch đích. Trong doanh nghiệp, pull request là nơi team review code, chạy kiểm tra tự động, thảo luận rủi ro và quyết định merge. GitLab thường gọi quy trình tương tự là merge request.
+
+Pull request không chỉ là nút bấm để merge. Nó là một tài liệu ngắn giải thích bạn đã thay đổi gì, vì sao thay đổi đó cần thiết và người review nên kiểm tra phần nào.
+
+## Chuẩn bị branch trước khi tạo pull request
+
+Trước khi tạo PR, hãy kiểm tra trạng thái local:
+
+```bash
+git status
+git diff --staged
+git log --oneline origin/main..HEAD
+```
+
+Lệnh `origin/main..HEAD` giúp bạn thấy các commit trong branch hiện tại chưa có trên `main`. Nếu thấy commit không liên quan, hãy xử lý trước khi mở PR.
+
+Cập nhật branch với main nếu cần:
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+Hoặc dùng rebase nếu workflow của team yêu cầu. Đừng tự rebase branch đã có nhiều người cùng dùng nếu chưa thống nhất.
+
+## Viết mô tả pull request tốt
+
+Một PR tốt nên trả lời ba câu hỏi:
+
+- Thay đổi gì?
+- Vì sao thay đổi?
+- Đã kiểm tra như thế nào?
+
+Template đơn giản:
+
+```markdown
+## Summary
+- Add profile page route.
+- Validate display name before saving.
+
+## Verification
+- npm run lint
+- Manual check profile update flow
+
+## Notes
+- No database schema change.
+```
+
+Nếu PR sửa bug, thêm cách tái hiện lỗi cũ và cách xác nhận lỗi đã hết. Nếu PR ảnh hưởng UI, thêm screenshot khi platform hỗ trợ.
+
+## Code review nên diễn ra thế nào?
+
+Reviewer đọc diff, chạy thử khi cần và đặt câu hỏi về logic, maintainability, security, performance. Người tạo PR cần phản hồi rõ ràng, sửa code nếu hợp lý và không xem review như công kích cá nhân.
+
+Khi nhận comment, bạn có thể:
+
+- Sửa code và push commit mới.
+- Giải thích lý do giữ nguyên.
+- Hỏi lại nếu comment chưa rõ.
+- Đánh dấu resolved sau khi xử lý.
+
+Push thêm commit vào branch PR:
+
+```bash
+git add app/profile.tsx
+git commit -m "Handle empty display name"
+git push
+```
+
+Platform sẽ tự cập nhật pull request.
+
+## Merge pull request vào branch chính
+
+Các kiểu merge phổ biến:
+
+- Merge commit: giữ lịch sử branch và tạo commit merge.
+- Squash merge: gom toàn bộ commit trong PR thành một commit.
+- Rebase merge: đưa commit của branch lên branch đích theo lịch sử tuyến tính.
+
+Team nên có quy ước rõ. Với người mới, đừng tự chọn kiểu merge nếu chưa biết repo đang dùng kiểu nào.
+
+Sau khi PR merge, cập nhật local main:
+
+```bash
+git switch main
+git pull origin main
+git branch -d feature/profile-page
+```
+
+Nếu platform đã xóa remote branch, branch local vẫn có thể cần xóa thủ công.
+
+## Quy tắc PR trong doanh nghiệp
+
+Nhiều công ty có protected branch. Điều này nghĩa là bạn không được push trực tiếp lên `main`. PR cần pass CI, có đủ approval và không có conflict.
+
+Các quy tắc phổ biến:
+
+- Ít nhất một reviewer approve.
+- CI pass trước khi merge.
+- Không merge nếu branch còn conflict.
+- Không commit secret hoặc file build output.
+- PR nhỏ, rõ phạm vi, dễ review.
+
+## Những lỗi thường gặp với pull request
+
+- PR quá lớn, chứa nhiều task khác nhau.
+- Mô tả PR chỉ ghi `done` hoặc bỏ trống.
+- Không chạy kiểm tra trước khi nhờ review.
+- Tranh luận review bằng cảm tính thay vì lý do kỹ thuật.
+- Merge khi chưa hiểu comment của reviewer.
+
+## Bài tập thực hành
+
+Tạo branch, commit thay đổi và chuẩn bị nội dung PR nháp.
+
+```bash
+git switch -c feature/pr-practice
+echo "Pull request practice" > pr.txt
+git add pr.txt
+git commit -m "Add pull request practice note"
+git push -u origin feature/pr-practice
+```
+
+Viết PR body theo mẫu:
+
+```markdown
+## Summary
+- Add PR practice note.
+
+## Verification
+- Read file content manually.
+
+## Notes
+- Practice branch only.
+```
+
+Mục tiêu là luyện cách chuẩn bị PR có ngữ cảnh, không chỉ push code.
+
+## Câu hỏi thường gặp về pull request
+
+### Pull request khác commit thế nào?
+
+Commit là một mốc thay đổi trong Git. Pull request là quy trình đề xuất, review và merge một hoặc nhiều commit vào branch đích.
+
+### PR nhỏ bao nhiêu là tốt?
+
+Không có số dòng cố định, nhưng PR tốt nên tập trung một mục đích. Nếu reviewer khó hiểu phạm vi, PR có thể đang quá lớn.
+
+### Có nên squash merge không?
+
+Tùy team. Squash giúp lịch sử main gọn, nhưng có thể mất chi tiết commit nhỏ. Hãy theo quy ước repo.
+
+## Tóm tắt
+
+Pull request là trung tâm của làm việc Git trong team. Bạn đã biết chuẩn bị branch, viết mô tả, phản hồi review và merge an toàn. Bài tiếp theo sẽ hệ thống hóa các workflow Git phổ biến trong doanh nghiệp.

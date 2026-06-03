@@ -1,0 +1,168 @@
+---
+title: "Branch trong Git: Cách tạo nhánh và chuyển nhánh"
+description: "Học branch trong Git, cách dùng git branch, git switch, git checkout và quy tắc đặt tên nhánh khi làm việc nhóm."
+slug: "branch-trong-git"
+course: "git"
+order: 6
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["branch trong git", "git branch", "git switch", "git checkout", "tạo nhánh git", "feature branch"]
+publishedAt: "2026-06-03"
+---
+
+## Branch trong Git là gì?
+
+Branch trong Git là một nhánh phát triển riêng, cho phép bạn làm tính năng, sửa bug hoặc thử nghiệm mà không ảnh hưởng trực tiếp đến branch chính. Khi học Git để đi làm, hiểu branch là bước chuyển từ commit cá nhân sang làm việc nhóm chuyên nghiệp.
+
+Bạn có thể tưởng tượng branch như một đường đi tạm thời. Code chính vẫn nằm ở `main`, còn bạn làm việc trên nhánh `feature/login-page`. Khi xong, nhánh này sẽ được review và merge trở lại.
+
+## Xem branch hiện tại
+
+Dùng `git branch` để xem các branch local:
+
+```bash
+git branch
+```
+
+Kết quả mẫu:
+
+```text
+* main
+  feature/login-page
+```
+
+Dấu `*` cho biết branch hiện tại. Bạn cũng có thể chạy:
+
+```bash
+git status
+```
+
+`git status` thường ghi rõ bạn đang ở branch nào. Đây là điều nên kiểm tra trước khi commit, vì commit nhầm branch là lỗi phổ biến.
+
+## Tạo branch mới bằng git switch
+
+Lệnh hiện đại để tạo và chuyển branch là `git switch`.
+
+```bash
+git switch -c feature/profile-page
+```
+
+Lệnh này tạo branch `feature/profile-page` từ commit hiện tại và chuyển bạn sang branch đó. Sau đó các commit mới sẽ nằm trên branch mới.
+
+Ví dụ:
+
+```bash
+echo "Profile page" > profile.txt
+git add profile.txt
+git commit -m "Add profile page note"
+```
+
+Commit này không nằm trên `main`, mà nằm trên `feature/profile-page`.
+
+## Chuyển qua lại giữa các branch
+
+Chuyển về `main`:
+
+```bash
+git switch main
+```
+
+Chuyển lại branch tính năng:
+
+```bash
+git switch feature/profile-page
+```
+
+Một số tài liệu cũ dùng `git checkout`:
+
+```bash
+git checkout -b feature/profile-page
+git checkout main
+```
+
+`checkout` vẫn dùng được, nhưng `switch` dễ hiểu hơn vì tập trung vào việc chuyển branch.
+
+## Quy tắc đặt tên branch trong team
+
+Tên branch nên ngắn, rõ và thể hiện mục đích. Một số prefix phổ biến:
+
+- `feature/`: thêm tính năng mới.
+- `bugfix/`: sửa lỗi không khẩn cấp.
+- `hotfix/`: sửa lỗi khẩn cấp trên production.
+- `chore/`: thay đổi bảo trì, config hoặc tooling.
+- `docs/`: cập nhật tài liệu.
+
+Ví dụ tốt:
+
+```text
+feature/checkout-page
+bugfix/cart-total
+docs/api-authentication
+```
+
+Trong doanh nghiệp, nhiều team gắn issue ID vào branch:
+
+```text
+feature/PROJ-123-checkout-page
+```
+
+Cách này giúp liên kết branch, pull request và ticket trong Jira hoặc Linear.
+
+## Xóa branch local sau khi xong việc
+
+Sau khi branch đã merge, bạn có thể xóa branch local:
+
+```bash
+git branch -d feature/profile-page
+```
+
+Nếu branch chưa merge, Git sẽ cảnh báo. Đừng dùng `-D` để xóa ép nếu bạn chưa chắc không cần commit trong branch đó nữa.
+
+## Những lỗi thường gặp với branch
+
+- Làm việc trực tiếp trên `main` thay vì tạo branch riêng.
+- Quên kiểm tra branch hiện tại trước khi commit.
+- Đặt tên branch quá chung như `test`, `new`, `update`.
+- Tạo branch từ một branch cũ thay vì từ `main` đã cập nhật.
+- Xóa branch khi chưa chắc thay đổi đã được merge.
+
+## Bài tập thực hành
+
+Tạo branch mới từ `main`, commit một file, rồi quay lại `main` để thấy file đó chưa có trên `main`.
+
+```bash
+git switch main
+git switch -c feature/team-note
+echo "Team note" > team-note.txt
+git add team-note.txt
+git commit -m "Add team note"
+```
+
+Sau đó chạy:
+
+```bash
+git switch main
+ls
+git switch feature/team-note
+ls
+```
+
+Mục tiêu là thấy branch tạo ra các dòng lịch sử khác nhau, không chỉ là tên gọi.
+
+## Câu hỏi thường gặp về branch trong Git
+
+### Có nên commit trực tiếp vào main không?
+
+Trong project cá nhân nhỏ thì có thể. Trong team chuyên nghiệp, thường không nên. Hãy dùng feature branch và pull request.
+
+### Branch có làm copy toàn bộ project không?
+
+Không. Git lưu branch rất nhẹ. Nó chủ yếu là con trỏ tới commit, không copy nguyên thư mục dự án.
+
+### Nên tạo branch mới từ đâu?
+
+Thông thường tạo từ branch chính đã cập nhật, ví dụ `main` hoặc `develop`, tùy workflow của team.
+
+## Tóm tắt
+
+Branch giúp bạn tách luồng công việc, làm tính năng riêng và chuẩn bị cho review. Bài tiếp theo sẽ học merge và cách xử lý conflict khi hai branch cùng sửa một phần code.

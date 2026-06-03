@@ -1,0 +1,233 @@
+---
+title: "Dự án thực chiến Git trong doanh nghiệp: Từ issue đến release"
+description: "Thực hành quy trình Git hoàn chỉnh: tạo branch từ issue, commit, push, pull request, review, merge, tag và release."
+slug: "du-an-thuc-chien-git-doanh-nghiep"
+course: "git"
+order: 20
+duration: "32 phút"
+difficulty: "Khó"
+keywords: ["dự án git thực chiến", "git trong doanh nghiệp", "git workflow", "pull request thực tế", "git release", "học git nâng cao"]
+publishedAt: "2026-06-03"
+---
+
+## Dự án thực chiến Git cần làm gì?
+
+Dự án thực chiến Git là bài mô phỏng toàn bộ quy trình làm việc trong doanh nghiệp: nhận issue, tạo branch, commit đúng phạm vi, push, mở pull request, xử lý review, merge, cập nhật main và đánh tag release. Mục tiêu là dùng Git như một quy trình team, không chỉ chạy lệnh riêng lẻ.
+
+Bạn có thể làm bài này với một repo demo đơn giản. Điều quan trọng là đi đúng luồng và ghi lại lý do mỗi bước.
+
+## Bối cảnh dự án
+
+Giả sử bạn làm trong team xây app quản lý ghi chú. Issue yêu cầu thêm file hướng dẫn sử dụng tính năng tag ghi chú. Ticket có mã `NOTE-101`.
+
+Yêu cầu:
+
+- Tạo branch từ `main` mới nhất.
+- Thêm file `docs/tags.md`.
+- Commit message rõ ràng.
+- Push branch lên remote.
+- Chuẩn bị pull request body.
+- Sau khi merge, cập nhật `main` và tạo tag release thử nghiệm.
+
+## Bước 1: Cập nhật main và tạo branch
+
+Bắt đầu bằng trạng thái sạch:
+
+```bash
+git switch main
+git pull origin main
+git status
+```
+
+Tạo branch theo issue ID:
+
+```bash
+git switch -c docs/NOTE-101-tags-guide
+```
+
+Tên branch cho biết đây là task docs, liên quan issue `NOTE-101` và chủ đề là tags guide. Đây là cách đặt tên dễ truy vết trong doanh nghiệp.
+
+## Bước 2: Thêm thay đổi và đọc diff
+
+Tạo file tài liệu:
+
+```bash
+mkdir -p docs
+cat > docs/tags.md << "EOF"
+# Tags Guide
+
+Tags help users group notes by topic.
+
+## Rules
+
+- A note can have many tags.
+- Tag names should be short.
+- Duplicate tags should be avoided.
+EOF
+```
+
+Kiểm tra trạng thái và diff:
+
+```bash
+git status
+git diff
+```
+
+Đọc diff trước khi add. Đây là bước bắt buộc nếu bạn muốn tránh commit nhầm nội dung.
+
+## Bước 3: Commit đúng phạm vi
+
+Stage file và xem staged diff:
+
+```bash
+git add docs/tags.md
+git diff --staged
+```
+
+Tạo commit:
+
+```bash
+git commit -m "Add tags guide documentation"
+```
+
+Kiểm tra commit trong branch:
+
+```bash
+git log --oneline origin/main..HEAD
+```
+
+Nếu chỉ thấy một commit đúng task, branch đã gọn. Nếu thấy commit lạ, cần dừng lại xử lý trước khi push.
+
+## Bước 4: Push và tạo pull request
+
+Push branch:
+
+```bash
+git push -u origin docs/NOTE-101-tags-guide
+```
+
+PR body đề xuất:
+
+```markdown
+## Summary
+- Add documentation for note tags.
+- Clarify basic tag rules for users.
+
+## Verification
+- Read docs/tags.md manually.
+- Confirm branch only contains docs change.
+
+## Notes
+- Related issue: NOTE-101.
+```
+
+Nếu platform có checklist, hãy điền đầy đủ. PR tốt giúp reviewer hiểu nhanh và review đúng trọng tâm.
+
+## Bước 5: Xử lý review và cập nhật branch
+
+Giả sử reviewer yêu cầu thêm ví dụ tag. Sửa file:
+
+```bash
+cat >> docs/tags.md << "EOF"
+
+## Examples
+
+- learning
+- work
+- personal
+EOF
+```
+
+Commit và push:
+
+```bash
+git add docs/tags.md
+git commit -m "Add tag examples"
+git push
+```
+
+Trong PR, trả lời comment của reviewer bằng ngôn ngữ rõ ràng, ví dụ: `Đã thêm phần Examples với 3 tag mẫu`. Không chỉ bấm resolve nếu bạn chưa sửa hoặc chưa giải thích.
+
+## Bước 6: Merge, cập nhật main và tag release
+
+Sau khi PR được approve và merge, quay về local main:
+
+```bash
+git switch main
+git pull origin main
+git branch -d docs/NOTE-101-tags-guide
+```
+
+Nếu đây là release nhỏ, tạo tag thử nghiệm:
+
+```bash
+git tag -a v0.2.0 -m "Release documentation update"
+git push origin v0.2.0
+```
+
+Trong sản phẩm thật, tag release nên theo quy trình của team, không tự tạo tag nếu bạn không có trách nhiệm release.
+
+## Checklist Git thực chiến
+
+Trước khi gửi PR, tự kiểm tra:
+
+- Branch tạo từ `main` mới nhất chưa?
+- `git status` sạch chưa?
+- Diff có đúng phạm vi task không?
+- Commit message rõ chưa?
+- Có file secret, log, build output hoặc file lớn không?
+- PR body có summary và verification không?
+- CI pass chưa?
+- Review comment đã xử lý rõ chưa?
+
+Checklist này đơn giản nhưng bao phủ phần lớn lỗi Git phổ biến trong team.
+
+## Những lỗi thường gặp trong dự án Git thực tế
+
+- Tạo branch từ branch cũ và mang theo commit không liên quan.
+- Push PR quá lớn, reviewer khó đọc.
+- Không cập nhật main trước khi làm task dài.
+- Commit nhiều lần với message `fix`, `fix 2`, `final` mà không dọn nếu team yêu cầu.
+- Merge khi CI fail hoặc review chưa xong.
+- Tự tag release khi không theo quy trình release.
+
+## Bài tập thực hành cuối khóa
+
+Lặp lại dự án trên với một issue giả khác: `NOTE-102-add-search-docs`. Yêu cầu:
+
+- Tạo branch `docs/NOTE-102-search-guide`.
+- Thêm file `docs/search.md`.
+- Tạo ít nhất 2 commit có ý nghĩa.
+- Push branch lên remote.
+- Viết PR body đầy đủ.
+- Sau khi tự review diff, ghi lại 3 điều bạn sẽ kiểm tra trước khi merge.
+
+Lệnh gợi ý:
+
+```bash
+git switch main
+git pull origin main
+git switch -c docs/NOTE-102-search-guide
+mkdir -p docs
+echo "# Search Guide" > docs/search.md
+git add docs/search.md
+git commit -m "Add search guide draft"
+```
+
+## Câu hỏi thường gặp về Git thực chiến
+
+### Người mới cần nhớ hết lệnh Git nâng cao không?
+
+Không. Hãy nhớ workflow: status, diff, add, commit, branch, push, PR, review. Các lệnh nâng cao dùng khi tình huống cần.
+
+### Làm sao biết PR đã sẵn sàng merge?
+
+PR nên đúng phạm vi, CI pass, review được approve, không còn conflict và người tạo PR đã kiểm tra diff cuối cùng.
+
+### Nếu team có workflow khác bài học thì sao?
+
+Hãy theo workflow của team. Khóa học này cung cấp nền tảng để bạn hiểu và hỏi đúng câu hỏi khi bước vào repo thật.
+
+## Tóm tắt
+
+Bạn đã hoàn thành khóa học Git từ cơ bản đến nâng cao: repo, staging, commit, branch, merge, remote, PR, workflow, rebase, undo, stash, tag, hooks, bảo mật và debug. Bước tiếp theo là áp dụng checklist vào một repo thật và luyện đọc diff trước mọi commit.

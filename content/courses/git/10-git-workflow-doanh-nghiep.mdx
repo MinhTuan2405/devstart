@@ -1,0 +1,145 @@
+---
+title: "Git workflow trong doanh nghiệp: Feature branch, Git Flow và trunk-based"
+description: "Tìm hiểu Git workflow trong doanh nghiệp, khi nào dùng feature branch, Git Flow, trunk-based và quy tắc làm việc an toàn."
+slug: "git-workflow-doanh-nghiep"
+course: "git"
+order: 10
+duration: "26 phút"
+difficulty: "Trung bình"
+keywords: ["git workflow", "git trong doanh nghiệp", "feature branch workflow", "git flow", "trunk based development", "quy trình git"]
+publishedAt: "2026-06-03"
+---
+
+## Git workflow trong doanh nghiệp là gì?
+
+Git workflow trong doanh nghiệp là bộ quy ước về cách tạo branch, commit, review, merge, release và bảo vệ code chính. Workflow giúp nhiều người cùng làm việc mà không phá sản phẩm. Biết lệnh Git là chưa đủ, bạn cần biết team dùng Git theo quy trình nào.
+
+Không có workflow tốt nhất cho mọi công ty. Startup nhỏ, team platform lớn, dự án mobile và sản phẩm enterprise có thể dùng cách khác nhau.
+
+## Feature branch workflow
+
+Feature branch workflow là cách phổ biến và dễ bắt đầu. Mỗi task có branch riêng, sau đó tạo pull request vào `main` hoặc `develop`.
+
+Luồng cơ bản:
+
+```bash
+git switch main
+git pull origin main
+git switch -c feature/checkout-page
+```
+
+Làm việc, commit và push:
+
+```bash
+git add .
+git commit -m "Add checkout page"
+git push -u origin feature/checkout-page
+```
+
+Sau đó mở pull request, review, pass CI rồi merge. Workflow này phù hợp với phần lớn team web, backend và product engineering.
+
+## Git Flow là gì?
+
+Git Flow dùng nhiều branch với vai trò rõ ràng:
+
+- `main`: code release chính thức.
+- `develop`: code tích hợp cho bản sắp tới.
+- `feature/*`: tính năng mới.
+- `release/*`: chuẩn bị phát hành.
+- `hotfix/*`: sửa lỗi khẩn cấp từ production.
+
+Ví dụ tạo branch release:
+
+```bash
+git switch develop
+git switch -c release/1.4.0
+```
+
+Git Flow hữu ích khi sản phẩm có chu kỳ release rõ, ví dụ mobile app hoặc phần mềm enterprise cần kiểm thử trước khi phát hành. Nhưng nó có thể nặng với team web deploy liên tục.
+
+## Trunk-based development là gì?
+
+Trunk-based development tập trung vào branch chính, thường là `main`. Developer tạo branch rất ngắn hoặc commit trực tiếp nếu có quyền, sau đó merge nhanh qua PR nhỏ. Tính năng chưa hoàn chỉnh thường được ẩn bằng feature flag.
+
+Luồng thường thấy:
+
+```bash
+git switch main
+git pull origin main
+git switch -c feature/small-change
+```
+
+Sau vài giờ hoặc một ngày, PR được merge vào main. Mục tiêu là tránh branch sống quá lâu, vì branch càng lâu càng dễ conflict và lệch khỏi code chính.
+
+## Chọn workflow theo bối cảnh
+
+Feature branch phù hợp khi team muốn cân bằng giữa an toàn và đơn giản. Git Flow phù hợp khi có release cycle phức tạp. Trunk-based phù hợp với team có CI/CD mạnh, test tốt và văn hóa PR nhỏ.
+
+Trong doanh nghiệp, bạn nên hỏi:
+
+- Branch chính là `main`, `master` hay `develop`?
+- Có được push trực tiếp không?
+- PR cần bao nhiêu approval?
+- Team dùng merge, squash hay rebase?
+- Hotfix production đi theo nhánh nào?
+- Release được đánh tag ra sao?
+
+## Quy tắc làm việc Git an toàn trong team
+
+Một số quy tắc gần như luôn đúng:
+
+- Luôn cập nhật branch chính trước khi tạo branch mới.
+- Commit nhỏ, rõ mục đích.
+- Pull request nhỏ, có mô tả và test plan.
+- Không push secret, `.env`, build output hoặc file không liên quan.
+- Không force push branch người khác đang dùng nếu chưa thống nhất.
+- Đọc CI và review comment trước khi merge.
+
+## Những lỗi workflow thường gặp
+
+- Mỗi người làm theo một kiểu merge khác nhau, làm lịch sử lộn xộn.
+- Branch sống quá lâu, đến lúc merge thì conflict lớn.
+- Không có protected branch, ai cũng push được vào `main`.
+- Không có quy tắc hotfix nên sửa production vội vàng.
+- PR chỉ là hình thức, không có review thật.
+
+## Bài tập thực hành
+
+Mô phỏng feature branch workflow cho một task nhỏ.
+
+```bash
+git switch main
+git pull origin main
+git switch -c feature/add-readme-section
+echo "## Workflow practice" >> README.md
+git add README.md
+git commit -m "Add workflow practice section"
+```
+
+Chuẩn bị PR:
+
+```bash
+git push -u origin feature/add-readme-section
+git log --oneline origin/main..HEAD
+git diff origin/main..HEAD -- README.md
+```
+
+Mục tiêu là hiểu một task đi từ branch mới, commit, push, PR đến merge.
+
+## Câu hỏi thường gặp về Git workflow
+
+### Git Flow có còn nên dùng không?
+
+Có, nếu sản phẩm có release cycle rõ và cần branch release/hotfix. Nhưng với web app deploy liên tục, Git Flow có thể quá nặng.
+
+### Trunk-based có nguy hiểm không?
+
+Nó an toàn khi team có test tốt, CI/CD ổn, PR nhỏ và feature flag. Nếu thiếu các điều kiện này, trunk-based dễ gây rủi ro.
+
+### Người mới nên học workflow nào trước?
+
+Hãy học feature branch workflow trước vì phổ biến, dễ hiểu và là nền tảng để hiểu Git Flow hoặc trunk-based.
+
+## Tóm tắt
+
+Git workflow biến các lệnh Git rời rạc thành quy trình làm việc nhóm. Bạn đã biết feature branch, Git Flow, trunk-based và quy tắc an toàn trong doanh nghiệp. Bài tiếp theo sẽ học rebase, kỹ thuật giúp giữ lịch sử branch gọn hơn khi dùng đúng cách.

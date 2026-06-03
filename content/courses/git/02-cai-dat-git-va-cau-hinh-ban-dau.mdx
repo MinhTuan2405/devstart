@@ -1,0 +1,145 @@
+---
+title: "Cài đặt Git và cấu hình ban đầu trên máy tính"
+description: "Hướng dẫn cài đặt Git, kiểm tra phiên bản, cấu hình tên email và chọn SSH hoặc HTTPS khi làm việc với remote."
+slug: "cai-dat-git-va-cau-hinh-ban-dau"
+course: "git"
+order: 2
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["cài đặt git", "git config", "học git", "git cho người mới", "cấu hình git", "git ssh https"]
+publishedAt: "2026-06-03"
+---
+
+## Cài đặt Git cần chuẩn bị gì?
+
+Cài đặt Git là bước đưa công cụ Git vào máy và cấu hình danh tính để mỗi commit có tác giả rõ ràng. Với người mới, bạn chỉ cần cài Git, kiểm tra `git --version`, cấu hình `user.name`, `user.email` và hiểu khi nào dùng HTTPS hoặc SSH với remote repository.
+
+Git chạy được trên Windows, macOS và Linux. Trong doanh nghiệp, mỗi commit thường phải gắn đúng email công ty để hệ thống review, audit và quyền truy cập hoạt động chính xác.
+
+## Kiểm tra Git đã được cài chưa
+
+Mở terminal, PowerShell hoặc Git Bash rồi chạy:
+
+```bash
+git --version
+```
+
+Nếu đã cài, bạn sẽ thấy kết quả tương tự:
+
+```text
+git version 2.45.0
+```
+
+Nếu máy chưa có Git, hãy cài từ trang chính thức [git-scm.com](https://git-scm.com/). Trên Windows, Git Bash thường được cài kèm và rất tiện để chạy lệnh Git. Trên macOS, bạn có thể cài qua Xcode Command Line Tools hoặc Homebrew. Trên Linux, dùng package manager của distro.
+
+## Cấu hình tên và email cho Git
+
+Git cần biết tên và email của bạn để ghi vào commit. Cấu hình global áp dụng cho mọi repository trên máy.
+
+```bash
+git config --global user.name "Nguyen Van A"
+git config --global user.email "nguyenvana@example.com"
+```
+
+Kiểm tra lại cấu hình:
+
+```bash
+git config --global --list
+```
+
+Nếu một repo công ty cần email khác, bạn có thể cấu hình riêng trong repo đó, không dùng `--global`:
+
+```bash
+git config user.email "nguyenvana@company.com"
+git config user.name "Nguyen Van A"
+```
+
+Đây là thói quen quan trọng khi bạn có cả tài khoản cá nhân và tài khoản công ty trên cùng một máy.
+
+## Chọn nhánh mặc định là main
+
+Nhiều hệ thống hiện dùng `main` làm branch mặc định. Bạn có thể cấu hình Git để repo mới tạo ra dùng `main`.
+
+```bash
+git config --global init.defaultBranch main
+```
+
+Sau đó khi chạy `git init`, branch đầu tiên sẽ là `main`. Nếu team đang dùng `master`, hãy theo quy ước của team. Điều quan trọng không phải tên branch, mà là mọi người dùng cùng một chuẩn.
+
+## SSH hay HTTPS khi kết nối remote?
+
+HTTPS dễ bắt đầu vì chỉ cần URL dạng `https://...`. SSH tiện hơn trong công việc hằng ngày vì xác thực bằng key và không cần nhập token liên tục.
+
+Remote HTTPS:
+
+```bash
+git clone https://github.com/team/project.git
+```
+
+Remote SSH:
+
+```bash
+git clone git@github.com:team/project.git
+```
+
+Trong doanh nghiệp, team thường có hướng dẫn riêng về SSH key, SSO, token hoặc VPN. Hãy đọc onboarding docs của công ty trước khi tự cấu hình.
+
+## Cấu hình editor mặc định
+
+Khi Git cần bạn viết commit message hoặc xử lý rebase, nó sẽ mở editor. Nếu không quen Vim, hãy cấu hình editor bạn dùng.
+
+Ví dụ với VS Code:
+
+```bash
+git config --global core.editor "code --wait"
+```
+
+Sau đó Git có thể mở VS Code khi cần nhập nội dung dài hơn một dòng.
+
+## Những lỗi thường gặp khi cấu hình Git
+
+- Dùng sai email, khiến commit không gắn với tài khoản GitHub hoặc tài khoản công ty.
+- Cấu hình global cho email công ty rồi commit nhầm vào project cá nhân.
+- Dùng HTTPS nhưng không biết cần personal access token khi platform yêu cầu.
+- Tạo SSH key nhưng chưa thêm public key vào GitHub hoặc GitLab.
+- Không kiểm tra `git config --list` trước khi debug lỗi xác thực.
+
+## Bài tập thực hành
+
+Chạy các lệnh sau và ghi lại kết quả:
+
+```bash
+git --version
+git config --global user.name
+git config --global user.email
+git config --global init.defaultBranch
+```
+
+Nếu `user.name` hoặc `user.email` trống, hãy cấu hình lại. Sau đó tạo repo thử nghiệm:
+
+```bash
+mkdir git-config-check
+cd git-config-check
+git init
+git status
+```
+
+Mục tiêu là bảo đảm Git đã sẵn sàng trước khi học các lệnh thao tác với repository.
+
+## Câu hỏi thường gặp về cài đặt Git
+
+### Có nên dùng Git Bash trên Windows không?
+
+Có. Git Bash cung cấp môi trường dòng lệnh quen thuộc với nhiều ví dụ Git trên mạng. Bạn vẫn có thể dùng PowerShell nếu quen, miễn là lệnh Git chạy ổn.
+
+### Email Git có cần giống email GitHub không?
+
+Nên giống hoặc là email đã được thêm vào tài khoản GitHub/GitLab. Nếu không, commit có thể không hiện đúng tác giả.
+
+### Có bắt buộc dùng SSH không?
+
+Không bắt buộc. HTTPS vẫn dùng được, nhưng SSH thường tiện hơn cho lập trình viên làm việc với nhiều repo mỗi ngày.
+
+## Tóm tắt
+
+Bạn đã biết cách kiểm tra Git, cấu hình tên email, chọn branch mặc định và hiểu khác nhau giữa SSH với HTTPS. Bài tiếp theo sẽ giải thích repository, working tree, staging area và commit, bốn khái niệm cốt lõi của Git.

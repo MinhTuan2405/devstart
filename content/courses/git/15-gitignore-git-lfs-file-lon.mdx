@@ -1,0 +1,162 @@
+---
+title: ".gitignore, Git LFS và quản lý file lớn trong Git"
+description: "Học cách dùng .gitignore, tránh commit file rác, cấu hình Git LFS và quản lý file lớn an toàn trong repository."
+slug: "gitignore-git-lfs-file-lon"
+course: "git"
+order: 15
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["gitignore", ".gitignore", "git lfs", "file lớn trong git", "không commit node_modules", "quản lý file git"]
+publishedAt: "2026-06-03"
+---
+
+## .gitignore dùng để làm gì?
+
+`.gitignore` cho Git biết những file hoặc thư mục nào không nên theo dõi, ví dụ `node_modules`, file log, build output, cache hoặc file môi trường. Dùng `.gitignore` đúng giúp repo sạch, giảm rủi ro commit nhầm secret và tránh làm lịch sử Git nặng không cần thiết.
+
+Git tốt nhất cho source code và file text. Nó không phù hợp để lưu mọi thứ trong thư mục dự án.
+
+## Tạo file .gitignore cơ bản
+
+Ví dụ `.gitignore` cho một project Node.js:
+
+```gitignore
+node_modules/
+.next/
+dist/
+build/
+*.log
+.env
+.env.local
+```
+
+Sau đó kiểm tra trạng thái:
+
+```bash
+git status
+```
+
+Nếu file đã được Git track trước đó, thêm vào `.gitignore` không tự bỏ file khỏi Git. Bạn cần xóa khỏi index nhưng giữ file trên máy:
+
+```bash
+git rm --cached .env
+git commit -m "Stop tracking local env file"
+```
+
+## Pattern thường dùng trong .gitignore
+
+Một vài pattern hữu ích:
+
+```gitignore
+# Bỏ qua mọi file log
+*.log
+
+# Bỏ qua thư mục build ở mọi nơi
+build/
+
+# Bỏ qua file env local
+.env*.local
+
+# Nhưng vẫn track file ví dụ
+!.env.example
+```
+
+File `.env.example` nên được commit để teammate biết cần biến môi trường nào, nhưng giá trị thật trong `.env` không nên commit.
+
+## Git LFS là gì?
+
+Git LFS, viết tắt của Large File Storage, là cơ chế quản lý file lớn bằng pointer trong Git và lưu nội dung thật ở storage riêng. Nó thường dùng cho ảnh lớn, video, model, dataset nhỏ hoặc binary asset.
+
+Cài và bật Git LFS:
+
+```bash
+git lfs install
+```
+
+Track file theo pattern:
+
+```bash
+git lfs track "*.psd"
+git lfs track "*.zip"
+```
+
+Lệnh này tạo hoặc cập nhật `.gitattributes`. Bạn cần commit `.gitattributes` để team cùng dùng rule LFS.
+
+## Khi nào nên dùng Git LFS?
+
+Dùng Git LFS khi file cần nằm trong repo workflow nhưng quá lớn hoặc là binary khó diff. Không nên dùng Git LFS để biến Git thành kho lưu trữ mọi loại artifact.
+
+Ví dụ nên cân nhắc LFS:
+
+- File thiết kế lớn.
+- Binary asset game.
+- Model file dùng trong demo.
+- Dataset nhỏ cần version cùng code.
+
+Không nên đưa vào Git, kể cả LFS, nếu đó là build output có thể tái tạo, cache, dependency folder hoặc log.
+
+## Kiểm tra file lớn trước khi commit
+
+Trước khi commit, xem danh sách file staged:
+
+```bash
+git status
+git diff --staged --stat
+```
+
+Nếu thấy file lạ hoặc quá lớn, bỏ khỏi staging:
+
+```bash
+git restore --staged path/to/large-file.zip
+```
+
+Trong doanh nghiệp, commit nhầm file lớn có thể làm repo chậm cho mọi người. Xóa file lớn khỏi lịch sử Git phức tạp hơn nhiều so với chặn từ đầu.
+
+## Những lỗi thường gặp với .gitignore và LFS
+
+- Thêm `.gitignore` sau khi file rác đã được track, rồi nghĩ Git sẽ tự bỏ qua.
+- Commit `.env` chứa token hoặc password.
+- Commit `node_modules`, `vendor`, `.next`, `dist` hoặc build output.
+- Track LFS nhưng quên commit `.gitattributes`.
+- Dùng Git LFS cho artifact không cần version cùng source code.
+
+## Bài tập thực hành
+
+Tạo `.gitignore` cho repo thử nghiệm:
+
+```bash
+echo "node_modules/" > .gitignore
+echo "*.log" >> .gitignore
+echo ".env" >> .gitignore
+git add .gitignore
+git commit -m "Add gitignore rules"
+```
+
+Kiểm tra rule hoạt động:
+
+```bash
+mkdir node_modules
+echo "SECRET=demo" > .env
+echo "debug" > app.log
+git status
+```
+
+Mục tiêu là thấy các file bị ignore không xuất hiện như untracked file.
+
+## Câu hỏi thường gặp về .gitignore và Git LFS
+
+### Vì sao file trong .gitignore vẫn hiện trong git status?
+
+Có thể file đã được Git track trước đó. Hãy dùng `git rm --cached file` để bỏ khỏi index, sau đó commit thay đổi.
+
+### Có nên commit .env.example không?
+
+Có. `.env.example` giúp người khác biết cần biến môi trường nào, nhưng không chứa secret thật.
+
+### Git LFS có miễn phí không?
+
+Tùy platform và dung lượng. GitHub, GitLab hoặc hệ thống công ty có giới hạn riêng. Hãy kiểm tra chính sách trước khi đưa nhiều file lớn vào LFS.
+
+## Tóm tắt
+
+`.gitignore` giúp repo sạch và tránh commit file không phù hợp. Git LFS hỗ trợ file lớn khi thật sự cần version cùng code. Bài tiếp theo sẽ học Git hooks và pre-commit checks để tự động chặn lỗi trước khi commit hoặc push.

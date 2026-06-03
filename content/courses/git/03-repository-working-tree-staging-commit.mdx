@@ -1,0 +1,144 @@
+---
+title: "Repository, working tree, staging và commit trong Git"
+description: "Giải thích repository, working tree, staging area và commit trong Git bằng ví dụ dễ hiểu cho người mới."
+slug: "repository-working-tree-staging-commit"
+course: "git"
+order: 3
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["repository là gì", "working tree git", "staging area git", "commit là gì", "git cơ bản", "học git"]
+publishedAt: "2026-06-03"
+---
+
+## Repository trong Git là gì?
+
+Repository trong Git là thư mục dự án có lịch sử phiên bản được Git theo dõi. Bên trong repo, Git biết file nào đã thay đổi, thay đổi nào được chuẩn bị để commit và lịch sử commit trước đó ra sao. Hiểu repo, working tree, staging và commit giúp bạn dùng Git đúng từ đầu.
+
+Một repo không chỉ là thư mục code. Nó còn có thư mục ẩn `.git`, nơi Git lưu metadata, branch, commit object, cấu hình local và nhiều thông tin nội bộ khác.
+
+## Tạo repository đầu tiên
+
+Bạn có thể tạo repo mới bằng `git init` trong một thư mục.
+
+```bash
+mkdir git-concepts
+cd git-concepts
+git init
+```
+
+Sau khi chạy, Git tạo thư mục `.git`. Bạn không cần sửa trực tiếp thư mục này. Hầu hết thao tác nên đi qua lệnh Git.
+
+Tạo file đầu tiên:
+
+```bash
+echo "# Git Concepts" > README.md
+git status
+```
+
+`git status` sẽ báo file `README.md` là untracked, nghĩa là file tồn tại trong working tree nhưng Git chưa theo dõi trong lịch sử.
+
+## Working tree là gì?
+
+Working tree là trạng thái file hiện tại trong thư mục làm việc của bạn. Khi bạn sửa code, tạo file mới hoặc xóa file, các thay đổi đó xuất hiện trong working tree.
+
+Ví dụ:
+
+```bash
+echo "Git giúp lưu lịch sử code." >> README.md
+git status
+```
+
+Lúc này Git nhìn thấy `README.md` đã thay đổi. Nhưng thay đổi đó chưa chắc sẽ được commit. Bạn cần đưa thay đổi vào staging area.
+
+## Staging area là gì?
+
+Staging area là vùng chuẩn bị commit. Nó giúp bạn chọn chính xác thay đổi nào sẽ đi vào commit tiếp theo. Đây là điểm khác biệt quan trọng giữa Git và cách lưu file thông thường.
+
+Đưa file vào staging:
+
+```bash
+git add README.md
+git status
+```
+
+Nếu bạn sửa thêm file sau khi đã `git add`, phần đã add nằm trong staging, phần sửa mới vẫn ở working tree. Điều này cho phép bạn tạo commit có phạm vi gọn, không gom mọi thứ một cách vô thức.
+
+## Commit là gì?
+
+Commit là ảnh chụp có ý nghĩa của staging area tại một thời điểm. Mỗi commit có mã hash, tác giả, thời gian, message và liên kết đến commit trước đó.
+
+Tạo commit:
+
+```bash
+git commit -m "Add Git concepts README"
+```
+
+Xem lịch sử:
+
+```bash
+git log --oneline
+```
+
+Commit message nên nói rõ mục đích, ví dụ `Add Git concepts README`, không nên viết mơ hồ như `update` hoặc `fix` nếu không có ngữ cảnh.
+
+## Luồng cơ bản của Git
+
+Luồng quan trọng nhất khi học Git là:
+
+- Working tree: bạn sửa file.
+- Staging area: bạn chọn thay đổi bằng `git add`.
+- Repository history: bạn lưu thay đổi bằng `git commit`.
+
+Bạn có thể nhớ ngắn gọn:
+
+```text
+edit file -> git add -> git commit
+```
+
+Trong doanh nghiệp, luồng này vẫn giữ nguyên. Điểm khác là bạn sẽ làm trên branch riêng, kiểm tra diff kỹ hơn, tạo pull request và để người khác review trước khi merge.
+
+## Những lỗi thường gặp với staging và commit
+
+- Chạy `git commit` khi chưa `git add`, dẫn đến không có gì được commit.
+- `git add .` quá nhanh và commit cả file không liên quan.
+- Commit nhiều thay đổi khác mục đích vào cùng một commit.
+- Sửa file sau khi add nhưng không kiểm tra lại status, khiến commit thiếu phần mới sửa.
+- Không đọc message của `git status`, dù Git đã giải thích bước tiếp theo khá rõ.
+
+## Bài tập thực hành
+
+Trong repo `git-concepts`, tạo hai file:
+
+```bash
+echo "Ghi chú bài học" > notes.txt
+echo "console.log('hello git')" > app.js
+git status
+```
+
+Chỉ commit `notes.txt`, để `app.js` chưa commit:
+
+```bash
+git add notes.txt
+git commit -m "Add learning notes"
+git status
+```
+
+Mục tiêu là hiểu staging area giúp bạn chọn một phần thay đổi, không bắt buộc commit tất cả file cùng lúc.
+
+## Câu hỏi thường gặp về repository và commit
+
+### Có thể có nhiều repository trong máy không?
+
+Có. Mỗi project thường là một repository riêng. Bạn có thể có nhiều repo cá nhân, repo công ty và repo học tập trên cùng một máy.
+
+### Commit có giống save file không?
+
+Không hoàn toàn. Save file chỉ lưu nội dung hiện tại vào ổ đĩa. Commit lưu một mốc lịch sử có message, tác giả và khả năng so sánh, quay lại hoặc chia sẻ.
+
+### Có nên commit sau mỗi dòng code không?
+
+Không. Hãy commit sau một thay đổi nhỏ nhưng có ý nghĩa, ví dụ thêm một tính năng nhỏ, sửa một bug rõ ràng hoặc cập nhật tài liệu.
+
+## Tóm tắt
+
+Bạn đã hiểu repository, working tree, staging area và commit. Bài tiếp theo sẽ đi vào bộ lệnh dùng hằng ngày nhất: `git status`, `git add` và `git commit`.

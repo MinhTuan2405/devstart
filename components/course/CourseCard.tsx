@@ -47,6 +47,12 @@ const courseColors: Record<string, { bg: string; border: string; iconBg: string;
     iconBg: 'bg-cyan-100',
     btn: 'bg-cyan-600 hover:bg-cyan-700 shadow-cyan-600/25',
   },
+  git: {
+    bg: 'from-lime-50 to-white',
+    border: 'border-lime-100 hover:border-lime-300',
+    iconBg: 'bg-lime-100',
+    btn: 'bg-lime-600 hover:bg-lime-700 shadow-lime-600/25',
+  },
 }
 
 export default function CourseCard({

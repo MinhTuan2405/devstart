@@ -1,0 +1,161 @@
+---
+title: "Remote repository: clone, fetch, pull và push trong Git"
+description: "Học cách làm việc với remote repository qua git clone, git remote, git fetch, git pull và git push."
+slug: "remote-clone-fetch-pull-push"
+course: "git"
+order: 8
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["git remote", "git clone", "git fetch", "git pull", "git push", "remote repository", "github gitlab"]
+publishedAt: "2026-06-03"
+---
+
+## Remote repository là gì?
+
+Remote repository là bản repository được lưu trên server như GitHub, GitLab, Bitbucket hoặc Azure DevOps. Local repo nằm trên máy bạn, remote repo là nơi team chia sẻ code, tạo pull request, review và bảo vệ branch chính. Muốn làm việc nhóm, bạn cần biết clone, fetch, pull và push.
+
+Điểm quan trọng: Git là distributed version control. Mỗi máy có lịch sử local riêng, còn remote là điểm đồng bộ chung của team.
+
+## Clone repository về máy
+
+`git clone` tải remote repository về máy và tự cấu hình remote mặc định tên `origin`.
+
+```bash
+git clone git@github.com:team/project.git
+cd project
+git status
+```
+
+Nếu dùng HTTPS:
+
+```bash
+git clone https://github.com/team/project.git
+```
+
+Sau khi clone, kiểm tra remote:
+
+```bash
+git remote -v
+```
+
+Bạn sẽ thấy URL dùng để fetch và push. Trong hầu hết project, `origin` là remote chính.
+
+## Fetch để lấy thông tin mới từ remote
+
+`git fetch` tải commit, branch và tag mới từ remote về local metadata, nhưng không tự merge vào branch đang làm.
+
+```bash
+git fetch origin
+```
+
+Sau fetch, bạn có thể xem branch remote:
+
+```bash
+git branch -r
+```
+
+`fetch` an toàn vì nó không tự thay đổi working tree của bạn. Khi muốn kiểm tra remote có gì trước khi cập nhật branch, hãy dùng fetch.
+
+## Pull để cập nhật branch local
+
+`git pull` thường tương đương `git fetch` rồi merge hoặc rebase vào branch hiện tại, tùy cấu hình.
+
+```bash
+git pull origin main
+```
+
+Nếu bạn đang ở branch feature và muốn cập nhật từ main, nhiều team làm như sau:
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+Hoặc nếu team dùng rebase:
+
+```bash
+git fetch origin
+git rebase origin/main
+```
+
+Đừng chạy `git pull` một cách máy móc khi không biết mình đang ở branch nào. Hãy kiểm tra `git status` trước.
+
+## Push branch lên remote
+
+Sau khi commit local, bạn cần push branch lên remote để người khác thấy và tạo pull request.
+
+```bash
+git push -u origin feature/profile-page
+```
+
+`-u` thiết lập upstream để các lần sau bạn có thể chạy ngắn gọn:
+
+```bash
+git push
+```
+
+Nếu push bị từ chối vì remote có commit mới, bạn cần fetch hoặc pull trước, giải quyết conflict nếu có, rồi push lại.
+
+## Origin, upstream và fork cần hiểu thế nào?
+
+Trong project công ty, bạn thường push trực tiếp vào remote `origin` của team nếu có quyền. Trong open source, bạn hay fork repo, khi đó:
+
+- `origin`: fork của bạn.
+- `upstream`: repo gốc.
+
+Cấu hình upstream:
+
+```bash
+git remote add upstream git@github.com:original/project.git
+git fetch upstream
+```
+
+Khái niệm này giúp bạn không push nhầm vào repo gốc hoặc cập nhật nhầm nguồn.
+
+## Những lỗi thường gặp với remote
+
+- Nhầm local branch với remote branch.
+- Pull khi working tree đang bẩn, gây conflict khó đọc.
+- Push branch sai tên hoặc sai remote.
+- Không dùng `-u`, sau đó không hiểu vì sao `git push` báo thiếu upstream.
+- Dùng force push khi chưa hiểu tác động đến người khác.
+
+## Bài tập thực hành
+
+Tạo một repo trống trên GitHub hoặc GitLab, sau đó kết nối repo local với remote.
+
+```bash
+git remote add origin git@github.com:your-name/git-practice.git
+git branch -M main
+git push -u origin main
+```
+
+Tạo branch mới và push:
+
+```bash
+git switch -c feature/remote-practice
+echo "remote practice" > remote.txt
+git add remote.txt
+git commit -m "Add remote practice note"
+git push -u origin feature/remote-practice
+```
+
+Mục tiêu là hiểu local commit chỉ có trên máy bạn cho đến khi push lên remote.
+
+## Câu hỏi thường gặp về remote Git
+
+### git fetch khác git pull thế nào?
+
+`git fetch` chỉ tải thông tin mới từ remote. `git pull` tải rồi cập nhật branch hiện tại bằng merge hoặc rebase.
+
+### Có thể có nhiều remote trong một repo không?
+
+Có. Repo open source thường có `origin` và `upstream`. Repo công ty đôi khi có remote mirror hoặc remote của nhiều môi trường.
+
+### Push có tự merge vào main không?
+
+Không nếu bạn push vào branch riêng. Merge vào main thường diễn ra qua pull request hoặc quyền maintainer.
+
+## Tóm tắt
+
+Remote repository là nơi team đồng bộ code. Bạn đã biết clone, fetch, pull, push và upstream. Bài tiếp theo sẽ học pull request và code review, quy trình biến branch của bạn thành thay đổi được chấp nhận trong team.

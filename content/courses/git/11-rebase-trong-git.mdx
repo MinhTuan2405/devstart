@@ -1,0 +1,165 @@
+---
+title: "Rebase trong Git: Khi nào dùng rebase thay vì merge"
+description: "Giải thích git rebase, rebase vs merge, cách cập nhật branch feature và quy tắc an toàn khi rebase trong team."
+slug: "rebase-trong-git"
+course: "git"
+order: 11
+duration: "26 phút"
+difficulty: "Trung bình"
+keywords: ["git rebase", "rebase trong git", "rebase vs merge", "git rebase origin main", "lịch sử git sạch", "git nâng cao"]
+publishedAt: "2026-06-03"
+---
+
+## Rebase trong Git là gì?
+
+Rebase trong Git là thao tác chuyển các commit của branch hiện tại lên một base commit mới. Thay vì tạo merge commit, rebase viết lại vị trí commit để lịch sử nhìn tuyến tính hơn. Rebase hữu ích khi cập nhật feature branch với `main`, nhưng cần dùng cẩn thận vì nó viết lại lịch sử commit.
+
+Nếu merge giống như nối hai nhánh bằng một commit merge, rebase giống như nhấc các commit của bạn lên đầu branch mới nhất.
+
+## Rebase khác gì merge?
+
+Giả sử bạn tạo branch feature từ `main`, sau đó `main` có commit mới. Bạn có hai cách cập nhật branch feature.
+
+Dùng merge:
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+Dùng rebase:
+
+```bash
+git fetch origin
+git rebase origin/main
+```
+
+Merge giữ nguyên lịch sử tách nhánh và có thể tạo merge commit. Rebase làm branch feature như thể nó được tạo từ `main` mới nhất. Kết quả thường gọn hơn, nhưng hash commit của branch feature sẽ thay đổi.
+
+## Khi nào nên dùng rebase?
+
+Rebase phù hợp khi bạn đang làm branch cá nhân và muốn cập nhật branch đó với `main` trước khi mở hoặc cập nhật pull request.
+
+Ví dụ:
+
+```bash
+git switch feature/profile-page
+git fetch origin
+git rebase origin/main
+```
+
+Sau rebase, nếu có conflict, Git sẽ dừng lại để bạn xử lý. Khi xử lý xong file conflict:
+
+```bash
+git add app/profile.tsx
+git rebase --continue
+```
+
+Nếu muốn hủy rebase:
+
+```bash
+git rebase --abort
+```
+
+## Quy tắc vàng khi rebase
+
+Quy tắc quan trọng: không rebase branch public mà người khác đang dựa vào, trừ khi team đã thống nhất. Vì rebase đổi hash commit, người khác có thể gặp lịch sử lệch và phải xử lý phức tạp.
+
+Rebase an toàn hơn khi:
+
+- Branch chỉ có bạn làm.
+- Branch chưa merge.
+- Bạn hiểu conflict đang xử lý.
+- Team cho phép force push an toàn bằng `--force-with-lease` khi cần cập nhật PR.
+
+Nếu sau rebase cần push lại branch đã push trước đó, dùng:
+
+```bash
+git push --force-with-lease
+```
+
+`--force-with-lease` an toàn hơn `--force` vì nó kiểm tra remote có thay đổi mới mà bạn chưa biết hay không.
+
+## Interactive rebase để dọn commit
+
+Interactive rebase cho phép sửa, gộp, đổi thứ tự hoặc đổi message commit trước khi merge. Ví dụ chỉnh 3 commit gần nhất:
+
+```bash
+git rebase -i HEAD~3
+```
+
+Bạn có thể thấy các dòng như:
+
+```text
+pick a1b2c3d Add profile form
+pick b2c3d4e Fix typo
+pick c3d4e5f Update validation
+```
+
+Trong editor, bạn có thể đổi `pick` thành `squash` để gộp commit. Đây là kỹ thuật hữu ích để PR sạch hơn, nhưng không nên lạm dụng nếu team dùng squash merge sẵn.
+
+## Rebase trong pull request
+
+Một số team yêu cầu rebase branch với `main` trước khi merge để tránh merge commit. Một số team lại không muốn developer rebase và thích merge commit để giữ lịch sử thật. Hãy đọc quy ước repo.
+
+Khi PR bị conflict với main, bạn có thể cập nhật bằng rebase:
+
+```bash
+git switch feature/profile-page
+git fetch origin
+git rebase origin/main
+```
+
+Sau đó xử lý conflict, chạy test, push lại bằng `--force-with-lease` nếu branch remote cần cập nhật.
+
+## Những lỗi thường gặp với rebase
+
+- Rebase branch chung khiến teammate bị lệch lịch sử.
+- Dùng `--force` thay vì `--force-with-lease`.
+- Rebase khi working tree đang có thay đổi chưa commit hoặc chưa stash.
+- Xử lý conflict vội vàng và bỏ mất code từ `main`.
+- Interactive rebase quá nhiều commit mà không hiểu từng commit làm gì.
+
+## Bài tập thực hành
+
+Tạo branch feature, tạo commit trên `main`, rồi rebase branch feature lên `main` mới.
+
+```bash
+git switch main
+git switch -c feature/rebase-practice
+echo "feature work" > feature.txt
+git add feature.txt
+git commit -m "Add feature practice"
+```
+
+Tạo commit mới trên `main`, rồi rebase:
+
+```bash
+git switch main
+echo "main update" > main.txt
+git add main.txt
+git commit -m "Add main update"
+git switch feature/rebase-practice
+git rebase main
+git log --oneline --graph
+```
+
+Mục tiêu là quan sát lịch sử branch feature được đặt lại trên commit mới của `main`.
+
+## Câu hỏi thường gặp về git rebase
+
+### Rebase có nguy hiểm không?
+
+Rebase không nguy hiểm nếu dùng trên branch cá nhân và hiểu rằng nó viết lại lịch sử. Nó nguy hiểm khi áp dụng lên branch nhiều người đang dùng.
+
+### Nên dùng rebase hay merge?
+
+Tùy workflow. Dùng merge nếu muốn giữ lịch sử tách nhánh rõ ràng. Dùng rebase nếu muốn lịch sử tuyến tính và branch là của riêng bạn.
+
+### Rebase có làm mất commit không?
+
+Thông thường không, nhưng xử lý sai conflict hoặc abort nhầm có thể gây rối. Nếu lỡ mất dấu commit, `git reflog` có thể giúp tìm lại.
+
+## Tóm tắt
+
+Rebase giúp cập nhật branch và giữ lịch sử gọn, nhưng cần tôn trọng quy tắc không viết lại lịch sử branch chung. Bài tiếp theo sẽ học cách undo an toàn bằng `restore`, `reset` và `revert`.

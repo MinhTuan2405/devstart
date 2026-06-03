@@ -1,0 +1,158 @@
+---
+title: "git diff, git log và git show: Đọc thay đổi trong Git"
+description: "Học cách dùng git diff, git log và git show để xem thay đổi, đọc lịch sử commit và review code trước khi commit."
+slug: "git-diff-log-show"
+course: "git"
+order: 5
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["git diff", "git log", "git show", "xem lịch sử git", "đọc diff git", "review code git"]
+publishedAt: "2026-06-03"
+---
+
+## Vì sao cần đọc thay đổi trong Git?
+
+Đọc thay đổi trong Git là kỹ năng giúp bạn biết chính xác code đã sửa gì trước khi commit, review pull request hoặc tìm nguyên nhân bug. `git diff`, `git log` và `git show` giúp bạn nhìn vào nội dung thay đổi thay vì chỉ tin rằng mình nhớ đã sửa đúng.
+
+Trong doanh nghiệp, nhiều lỗi không đến từ việc thiếu lệnh Git, mà đến từ việc không đọc diff trước khi gửi code cho người khác review.
+
+## Dùng git diff để xem thay đổi chưa staged
+
+`git diff` hiển thị khác biệt giữa working tree hiện tại và phiên bản gần nhất Git biết.
+
+```bash
+git diff
+```
+
+Ví dụ diff đơn giản:
+
+```diff
+-console.log("hello")
++console.log("hello git")
+```
+
+Dòng bắt đầu bằng `-` là nội dung bị xóa. Dòng bắt đầu bằng `+` là nội dung được thêm. Khi đọc diff, hãy kiểm tra cả phần thêm và phần xóa, vì bug có thể nằm ở chỗ bạn vô tình bỏ mất logic cũ.
+
+## Dùng git diff --staged trước khi commit
+
+Sau khi `git add`, `git diff` mặc định không hiện phần đã staged. Lúc này hãy dùng:
+
+```bash
+git diff --staged
+```
+
+Đây là bước nên làm trước mọi commit quan trọng. Nếu staged diff không đúng, hãy gỡ file khỏi staging:
+
+```bash
+git restore --staged README.md
+```
+
+Bạn cũng có thể xem diff của một file cụ thể:
+
+```bash
+git diff -- app.js
+git diff --staged -- app.js
+```
+
+## Dùng git log để đọc lịch sử commit
+
+`git log` cho biết lịch sử commit. Dạng ngắn gọn thường dễ đọc hơn:
+
+```bash
+git log --oneline
+```
+
+Trong repo có nhiều branch, lệnh sau rất hữu ích:
+
+```bash
+git log --oneline --decorate --graph --all
+```
+
+Nó hiển thị lịch sử dạng cây, giúp bạn thấy branch nào tách ra, commit nào đã merge và HEAD đang trỏ ở đâu.
+
+## Dùng git show để xem một commit cụ thể
+
+Khi muốn biết một commit đã sửa gì, dùng `git show` với hash commit.
+
+```bash
+git show a8f31c2
+```
+
+Nếu chỉ muốn xem thông tin ngắn:
+
+```bash
+git show --stat a8f31c2
+```
+
+`git show` rất hữu ích khi bạn review lịch sử, kiểm tra commit gây lỗi hoặc đọc cách một teammate giải quyết vấn đề trước đó.
+
+## Quy trình review thay đổi trước khi commit
+
+Một quy trình đơn giản:
+
+- Chạy `git status` để biết file thay đổi.
+- Chạy `git diff` để đọc phần chưa staged.
+- Chạy `git add` cho đúng file.
+- Chạy `git diff --staged` để kiểm tra commit sắp tạo.
+- Commit với message rõ ràng.
+
+Lệnh mẫu:
+
+```bash
+git status
+git diff
+git add app.js
+git diff --staged
+git commit -m "Fix greeting message"
+```
+
+Quy trình này nghe chậm lúc đầu, nhưng về lâu dài tiết kiệm rất nhiều thời gian review và sửa lỗi.
+
+## Những lỗi thường gặp khi đọc diff và log
+
+- Chỉ nhìn tên file thay đổi, không đọc nội dung diff.
+- Không phân biệt diff chưa staged và diff đã staged.
+- Không dùng `--stat` khi muốn xem tổng quan commit lớn.
+- Không đọc lịch sử trước khi sửa code cũ, dẫn đến lặp lại bug đã từng được xử lý.
+- Thấy diff quá lớn nhưng vẫn commit một lần thay vì tách nhỏ.
+
+## Bài tập thực hành
+
+Tạo file `message.txt`, commit lần đầu, sau đó sửa nội dung và đọc diff.
+
+```bash
+echo "Hello" > message.txt
+git add message.txt
+git commit -m "Add message"
+echo "Hello Git" > message.txt
+git diff
+```
+
+Tiếp theo stage thay đổi và xem lại:
+
+```bash
+git add message.txt
+git diff --staged
+git commit -m "Update message"
+git log --oneline
+```
+
+Mục tiêu là hiểu diff ở từng giai đoạn và biết cách xem commit đã tạo.
+
+## Câu hỏi thường gặp về git diff và git log
+
+### git diff không hiện gì là sao?
+
+Có thể bạn chưa sửa file, hoặc thay đổi đã được đưa vào staging. Hãy chạy `git status`, nếu file đang staged thì dùng `git diff --staged`.
+
+### Có cần đọc diff cho commit nhỏ không?
+
+Nên đọc. Commit nhỏ đọc rất nhanh và giúp bạn phát hiện lỗi đánh máy, file thừa hoặc thay đổi ngoài ý muốn.
+
+### git log dài quá thì làm sao?
+
+Dùng `git log --oneline` để xem ngắn gọn. Nếu cần xem lịch sử theo file, dùng `git log -- path/to/file`.
+
+## Tóm tắt
+
+Bạn đã biết dùng `git diff`, `git log` và `git show` để đọc thay đổi và lịch sử. Bài tiếp theo sẽ học branch, công cụ giúp bạn làm nhiều tính năng song song mà không phá code chính.

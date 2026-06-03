@@ -1,0 +1,162 @@
+---
+title: "Git tag, release và versioning trong dự án phần mềm"
+description: "Học git tag, annotated tag, release và semantic versioning để đánh dấu phiên bản sản phẩm trong Git."
+slug: "tag-release-versioning"
+course: "git"
+order: 14
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["git tag", "git release", "semantic versioning", "versioning git", "annotated tag", "release trong git"]
+publishedAt: "2026-06-03"
+---
+
+## Git tag dùng để làm gì?
+
+Git tag dùng để đánh dấu một commit quan trọng, thường là phiên bản release như `v1.0.0` hoặc `v2.3.1`. Trong dự án phần mềm, tag giúp team biết commit nào đã được phát hành, dễ rollback, tạo changelog và liên kết với artifact build.
+
+Branch di chuyển khi có commit mới. Tag thường đứng yên ở một commit cụ thể. Vì vậy tag phù hợp để đánh dấu mốc release.
+
+## Tạo lightweight tag và annotated tag
+
+Lightweight tag giống như nhãn đơn giản:
+
+```bash
+git tag v1.0.0
+```
+
+Annotated tag có message, tác giả và metadata rõ hơn:
+
+```bash
+git tag -a v1.0.0 -m "Release version 1.0.0"
+```
+
+Trong doanh nghiệp, annotated tag thường được ưu tiên cho release chính thức vì rõ thông tin hơn.
+
+Xem danh sách tag:
+
+```bash
+git tag
+```
+
+Xem chi tiết tag:
+
+```bash
+git show v1.0.0
+```
+
+## Push tag lên remote
+
+Tạo tag local chưa đủ. Bạn cần push tag lên remote để CI/CD hoặc teammate thấy.
+
+```bash
+git push origin v1.0.0
+```
+
+Push toàn bộ tag:
+
+```bash
+git push origin --tags
+```
+
+Hãy cẩn thận với `--tags` nếu repo có nhiều tag local không cần thiết. Với release thật, tốt hơn là push đúng tag cần phát hành.
+
+## Semantic versioning là gì?
+
+Semantic versioning thường có dạng `MAJOR.MINOR.PATCH`, ví dụ `2.4.1`.
+
+- `MAJOR`: thay đổi lớn, có thể phá tương thích.
+- `MINOR`: thêm tính năng nhưng vẫn tương thích.
+- `PATCH`: sửa lỗi nhỏ, không phá tương thích.
+
+Ví dụ:
+
+```text
+v1.0.0: release đầu tiên
+v1.1.0: thêm tính năng mới
+v1.1.1: sửa bug
+v2.0.0: thay đổi API lớn
+```
+
+Không phải team nào cũng dùng semantic versioning nghiêm ngặt, nhưng hiểu nó giúp bạn đọc release note và tag dễ hơn.
+
+## Release trên GitHub hoặc GitLab
+
+Tag là dữ liệu Git. Release trên GitHub/GitLab thường là lớp thông tin phía platform, gồm tag, mô tả, changelog, asset build và link tải.
+
+Một quy trình release đơn giản:
+
+- Merge PR vào `main`.
+- CI pass.
+- Tạo tag `v1.2.0` từ commit release.
+- Push tag lên remote.
+- CI/CD build artifact hoặc deploy.
+- Viết release note.
+
+Lệnh mẫu:
+
+```bash
+git switch main
+git pull origin main
+git tag -a v1.2.0 -m "Release version 1.2.0"
+git push origin v1.2.0
+```
+
+## Xóa tag khi tạo nhầm
+
+Xóa tag local:
+
+```bash
+git tag -d v1.2.0
+```
+
+Xóa tag trên remote:
+
+```bash
+git push origin :refs/tags/v1.2.0
+```
+
+Chỉ xóa tag remote nếu tag tạo nhầm và team đã thống nhất. Tag release là mốc quan trọng, xóa hoặc đổi tag tùy tiện có thể làm CI/CD, artifact hoặc audit bị lệch.
+
+## Những lỗi thường gặp với tag và release
+
+- Tạo tag nhưng quên push lên remote.
+- Tag sai commit vì chưa pull `main` mới nhất.
+- Dùng version không nhất quán giữa tag, package và release note.
+- Xóa hoặc tạo lại tag release mà không báo team.
+- Không ghi release note nên người dùng không biết thay đổi gì.
+
+## Bài tập thực hành
+
+Tạo một tag thử nghiệm cho commit hiện tại:
+
+```bash
+git log --oneline -1
+git tag -a v0.1.0 -m "Practice release 0.1.0"
+git show v0.1.0
+```
+
+Nếu không muốn giữ tag:
+
+```bash
+git tag -d v0.1.0
+```
+
+Mục tiêu là hiểu tag trỏ vào commit và không tự di chuyển như branch.
+
+## Câu hỏi thường gặp về git tag
+
+### Tag có giống branch không?
+
+Không. Branch di chuyển khi có commit mới. Tag thường cố định ở một commit để đánh dấu mốc.
+
+### Có nên tag mọi commit không?
+
+Không. Tag nên dùng cho mốc quan trọng như release, milestone hoặc phiên bản cần truy vết.
+
+### Có cần push tag riêng không?
+
+Có. `git push` thông thường không luôn push tag. Hãy dùng `git push origin tag-name`.
+
+## Tóm tắt
+
+Git tag giúp đánh dấu commit release, còn versioning giúp team hiểu ý nghĩa từng phiên bản. Bài tiếp theo sẽ học `.gitignore`, Git LFS và cách tránh đưa file không phù hợp vào repository.

@@ -1,0 +1,163 @@
+---
+title: "git status, git add và git commit: Bộ lệnh Git cơ bản"
+description: "Học cách dùng git status, git add và git commit để lưu thay đổi rõ ràng, an toàn và đúng phạm vi."
+slug: "git-status-add-commit"
+course: "git"
+order: 4
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["git status", "git add", "git commit", "git cơ bản", "cách dùng git", "học git cho người mới"]
+publishedAt: "2026-06-03"
+---
+
+## git status, git add và git commit dùng để làm gì?
+
+`git status`, `git add` và `git commit` là bộ lệnh Git cơ bản nhất. `git status` cho biết repo đang thay đổi gì, `git add` chọn thay đổi đưa vào staging, còn `git commit` lưu staging thành một mốc lịch sử. Đây là vòng lặp bạn sẽ dùng mỗi ngày.
+
+Người mới thường muốn học nhiều lệnh Git cùng lúc, nhưng nếu chưa chắc ba lệnh này, các phần branch, merge, pull request sẽ dễ gây rối.
+
+## Luôn bắt đầu bằng git status
+
+`git status` là lệnh kiểm tra an toàn trước khi làm bất cứ việc gì. Nó cho biết branch hiện tại, file nào mới, file nào đã sửa, file nào đã staged.
+
+```bash
+git status
+```
+
+Kết quả mẫu:
+
+```text
+On branch main
+Changes not staged for commit:
+  modified:   README.md
+
+Untracked files:
+  app.js
+```
+
+Khi đi làm, thói quen đọc `git status` giúp bạn tránh commit nhầm file, tránh đè thay đổi của người khác và hiểu repo đang ở trạng thái nào.
+
+## Dùng git add để chọn thay đổi
+
+`git add` đưa thay đổi vào staging area. Bạn có thể add từng file:
+
+```bash
+git add README.md
+```
+
+Hoặc add nhiều file:
+
+```bash
+git add README.md app.js
+```
+
+`git add .` đưa toàn bộ thay đổi trong thư mục hiện tại vào staging. Lệnh này tiện nhưng dễ nguy hiểm nếu có file không liên quan hoặc file chứa secret.
+
+```bash
+git add .
+git status
+```
+
+Trước khi commit, hãy đọc lại status để biết chính xác file nào sẽ được commit.
+
+## Dùng git commit để lưu mốc thay đổi
+
+Commit nên có message rõ ràng. Message tốt nói thay đổi nhằm mục đích gì.
+
+```bash
+git commit -m "Add product list page"
+```
+
+Một số message tốt:
+
+- `Add login validation`
+- `Fix cart total calculation`
+- `Update onboarding copy`
+
+Message yếu:
+
+- `update`
+- `fix bug`
+- `final`
+
+Trong doanh nghiệp, commit message rõ giúp reviewer, teammate và chính bạn hiểu lịch sử sau vài tháng.
+
+## Commit theo phạm vi nhỏ
+
+Một commit tốt thường giải quyết một mục đích. Đừng gom sửa UI, đổi API, cập nhật docs và refactor lớn vào cùng một commit nếu chúng không liên quan.
+
+Ví dụ bạn sửa hai phần khác nhau:
+
+```bash
+git add app/login.tsx
+git commit -m "Fix login error message"
+
+git add docs/auth.md
+git commit -m "Document auth error handling"
+```
+
+Cách này giúp pull request dễ review hơn và nếu cần revert, bạn chỉ revert đúng thay đổi.
+
+## Xem staged diff trước khi commit
+
+Trước khi commit, bạn nên xem nội dung đã staged:
+
+```bash
+git diff --staged
+```
+
+Nếu thấy file không liên quan, bỏ khỏi staging:
+
+```bash
+git restore --staged path/to/file
+```
+
+Đây là kỹ năng nhỏ nhưng rất quan trọng. Nhiều lỗi Git trong team đến từ việc commit nhầm file cấu hình, log, build output hoặc thay đổi đang thử nghiệm.
+
+## Những lỗi thường gặp với git add và commit
+
+- Chạy `git add .` mà không kiểm tra diff.
+- Commit file `.env` hoặc token vì chưa có `.gitignore`.
+- Message quá chung chung, không giúp người khác hiểu thay đổi.
+- Commit cả thay đổi của task khác.
+- Quên staged diff nên commit thiếu hoặc thừa nội dung.
+
+## Bài tập thực hành
+
+Trong một repo thử nghiệm, tạo ba file:
+
+```bash
+echo "Home page" > home.txt
+echo "Login page" > login.txt
+echo "Debug secret" > debug.log
+git status
+```
+
+Chỉ commit `home.txt` và `login.txt`, không commit `debug.log`:
+
+```bash
+git add home.txt login.txt
+git diff --staged
+git commit -m "Add page notes"
+git status
+```
+
+Mục tiêu là luyện thói quen chọn đúng file và xem staged diff trước khi commit.
+
+## Câu hỏi thường gặp về git status, add và commit
+
+### Khi nào nên dùng git add .?
+
+Chỉ nên dùng khi bạn đã chắc mọi thay đổi trong thư mục đều thuộc cùng một task. Nếu không chắc, hãy add từng file hoặc xem diff trước.
+
+### Có thể sửa commit message sau khi commit không?
+
+Có thể sửa commit gần nhất bằng amend, nhưng không nên làm tùy tiện nếu commit đã push và người khác đã dựa vào đó. Khóa học sẽ nói kỹ hơn ở bài undo.
+
+### Bao lâu nên commit một lần?
+
+Hãy commit khi có một thay đổi nhỏ có ý nghĩa và chạy được. Đừng chờ đến cuối ngày mới commit toàn bộ mọi thứ.
+
+## Tóm tắt
+
+`git status`, `git add` và `git commit` là vòng lặp nền tảng của Git. Bạn đã biết cách kiểm tra trạng thái, chọn thay đổi, xem staged diff và commit đúng phạm vi. Bài tiếp theo sẽ học cách đọc thay đổi bằng `git diff`, `git log` và `git show`.
