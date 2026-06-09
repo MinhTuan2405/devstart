@@ -1,0 +1,150 @@
+---
+title: "Libraries trong Apps Script để tái sử dụng code"
+description: "Học cách dùng Apps Script libraries, tách helper dùng chung và lưu ý khi chia sẻ thư viện nội bộ."
+slug: "libraries-tai-su-dung-code-apps-script"
+course: "apps-script"
+order: 39
+duration: "21 phút"
+difficulty: "Khó"
+keywords: ["Apps Script libraries", "library Apps Script", "tái sử dụng code Apps Script", "helper Apps Script", "shared library Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Library trong Apps Script là một Apps Script project được project khác thêm vào để dùng lại function, helper hoặc logic chung. Bạn nên tạo library khi nhiều automation cùng cần một cách format dữ liệu, ghi log, trả JSON, gọi API nội bộ hoặc xử lý lỗi giống nhau.
+
+## Library trong Apps Script giải quyết vấn đề gì?
+
+Khi mới học, copy paste helper giữa các project có vẻ nhanh. Nhưng sau vài tháng, bạn sẽ có nhiều bản `jsonResponse`, nhiều bản `formatDate`, nhiều cách log lỗi và không biết bản nào đúng. Library giúp gom logic dùng chung vào một project có version, rồi các project khác gọi qua một identifier.
+
+Mental model nên nhớ: library giống dependency nội bộ. Nó có source code riêng, version riêng và quyền chia sẻ riêng. Project sử dụng library không copy code tại thời điểm chạy, mà tham chiếu đến một version của library. Vì vậy sửa library chưa chắc làm project khác đổi ngay nếu project đó vẫn ghim version cũ.
+
+Library phù hợp với code ổn định, có khả năng tái sử dụng. Không nên tách library quá sớm khi chỉ có một project nhỏ, vì bạn sẽ tăng độ phức tạp deploy, debug và phân quyền.
+
+## Tạo helper trong project library
+
+Giả sử bạn tạo Apps Script project tên `DevUtils`. Trong project này, các function muốn project khác gọi nên nằm ở global scope. Ví dụ helper format tiền, tạo JSON response và ghi log lỗi.
+
+```javascript
+function formatVnd(amount) {
+  const number = Number(amount || 0);
+  return number.toLocaleString('vi-VN') + ' VND';
+}
+
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function logError(jobName, error) {
+  Logger.log(JSON.stringify({
+    job: jobName,
+    message: error.message,
+    stack: error.stack || '',
+    time: new Date().toISOString(),
+  }));
+}
+```
+
+Sau khi code ổn, tạo version cho library. Apps Script sẽ cho bạn Script ID. Project khác thêm library bằng Script ID, chọn version và đặt identifier, ví dụ `DevUtils`.
+
+## Dùng library trong project khác
+
+Khi đã thêm library với identifier `DevUtils`, bạn gọi function bằng `DevUtils.functionName`. Ví dụ web app nhỏ dùng helper JSON và format tiền.
+
+```javascript
+function doGet(e) {
+  try {
+    const amount = e.parameter.amount || 1250000;
+
+    return DevUtils.jsonResponse({
+      ok: true,
+      amount: Number(amount),
+      formatted: DevUtils.formatVnd(amount),
+    });
+  } catch (error) {
+    DevUtils.logError('doGet', error);
+    return DevUtils.jsonResponse({ ok: false, message: error.message });
+  }
+}
+```
+
+Điểm cần nhớ là code trong project chính không thấy trực tiếp biến cục bộ bên trong library. Chỉ function global được expose theo identifier. Nếu helper phụ chỉ dùng nội bộ library, bạn vẫn có thể để global nhưng nên đặt tên rõ hoặc quy ước prefix để tránh người khác dùng nhầm.
+
+## Versioning của library
+
+Library nên có version rõ như một package nhỏ. Khi bạn sửa bug trong `formatVnd`, tạo version mới, rồi project sử dụng phải cập nhật lên version đó nếu muốn nhận thay đổi. Đây là lợi thế vì bạn có thể rollout từ từ, nhưng cũng là nguồn lỗi nếu quên cập nhật.
+
+Ví dụ quy trình an toàn:
+
+- Sửa code trong library.
+- Chạy function test trong library project.
+- Tạo version mới với mô tả `Fix formatVnd for empty amount`.
+- Mở project sử dụng library và cập nhật version.
+- Test project sử dụng bằng dữ liệu thật hoặc dữ liệu mẫu.
+
+Đừng bật chế độ development mode cho project production nếu bạn chưa hiểu tác động. Development mode có thể dùng code mới nhất của library, tiện khi debug nhưng không ổn định cho release.
+
+## Những gì nên và không nên đưa vào library
+
+Nên đưa vào library các helper ít phụ thuộc project cụ thể: format dữ liệu, validate email, tạo JSON output, retry UrlFetch, ghi log chuẩn, wrapper API nội bộ. Không nên đưa vào library các secret, ID spreadsheet production, hoặc logic business chỉ dùng một lần.
+
+Nếu helper cần cấu hình, hãy để project sử dụng truyền vào. Ví dụ `sendAdminAlert(adminEmail, subject, body)` tốt hơn là library tự đọc một property tên cố định mà mọi project phải dùng.
+
+```javascript
+function sendAdminAlert(adminEmail, jobName, message) {
+  if (!adminEmail) {
+    throw new Error('Admin email is required');
+  }
+
+  MailApp.sendEmail({
+    to: adminEmail,
+    subject: 'Apps Script alert: ' + jobName,
+    body: message,
+  });
+}
+```
+
+Helper này có thể tái sử dụng vì nó không hardcode email, sheet name hoặc project ID.
+
+## Hiệu năng và debug khi dùng library
+
+Library có thể làm code gọn hơn nhưng cũng làm debug khó hơn. Khi lỗi xảy ra bên trong library, stack trace có thể khiến người mới khó lần theo. Hãy đặt tên function rõ, log context đủ và viết ví dụ sử dụng cho team.
+
+Quá nhiều library cũng có thể làm project nặng và khó quản lý dependency. Nếu một helper chỉ có 5 dòng và chỉ dùng ở một project, để trong project chính có thể tốt hơn.
+
+## Lỗi thường gặp với Apps Script libraries
+
+- Sửa library nhưng quên tạo version mới.
+- Project sử dụng library chưa cập nhật version.
+- Dùng development mode trong production làm code thay đổi ngoài ý muốn.
+- Đặt identifier mơ hồ như `Lib1` khiến code khó đọc.
+- Đưa secret hoặc ID production vào library.
+- Function cần gọi không nằm ở global scope.
+- Chia sẻ library thiếu quyền nên người khác trong team không chạy được.
+
+## Bài tập thực hành
+
+Tạo project library `DevUtils` có ba function `formatVnd`, `jsonResponse`, `validateEmail`. Tạo version đầu tiên, copy Script ID, thêm vào một project web app khác với identifier `DevUtils`. Viết `doPost(e)` nhận `{ email, amount }`, dùng library để validate email, format amount và trả JSON. Sau đó sửa `formatVnd`, tạo version mới và cập nhật project sử dụng.
+
+## Câu hỏi thường gặp về Apps Script libraries
+
+### Library có tự cập nhật khi tôi sửa code không?
+
+Không với project đang ghim version cụ thể. Bạn cần tạo version mới trong library và cập nhật version ở project sử dụng. Development mode là ngoại lệ nhưng không nên dùng bừa trong production.
+
+### Có nên đưa secret vào library không?
+
+Không. Secret nên nằm ở project sử dụng, Script Properties, hoặc hệ thống quản lý secret phù hợp. Library nên nhận cấu hình qua tham số.
+
+### Library có làm script chậm không?
+
+Có thể có overhead, nhưng thường không đáng kể với helper nhỏ. Vấn đề lớn hơn là debug, versioning và dependency management.
+
+### Có thể dùng library với clasp và git không?
+
+Có. Bạn có thể quản lý source library bằng clasp/git như project Apps Script bình thường, rồi phát hành version để project khác dùng.
+
+## Tóm tắt và bước tiếp theo
+
+Apps Script libraries giúp tái sử dụng code và chuẩn hóa helper giữa nhiều project, nhưng chỉ nên dùng khi nhu cầu chia sẻ rõ ràng. Hãy quản lý version, tránh secret và viết API helper ổn định. Bài tiếp theo sẽ chuyển sang `clasp`, công cụ command line giúp bạn phát triển Apps Script local và quản lý code bằng git chuyên nghiệp hơn.

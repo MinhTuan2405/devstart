@@ -1,0 +1,218 @@
+---
+title: "Dự án cuối khóa: AI Workspace Assistant bằng Apps Script"
+description: "Xây dựng AI Workspace Assistant với Sheets knowledge base, Gmail draft, Docs summary, web app chat và monitoring."
+slug: "du-an-ai-workspace-assistant"
+course: "ai-apps-script"
+order: 38
+duration: "32 phút"
+difficulty: "Khó"
+keywords: ["dự án AI Apps Script", "AI Workspace Assistant", "Apps Script AI capstone", "Google Workspace AI assistant", "Gemini Apps Script project"]
+publishedAt: "2026-06-09"
+---
+
+## AI Workspace Assistant là gì?
+
+AI Workspace Assistant là dự án cuối khóa dùng Apps Script để tạo trợ lý nội bộ cho Google Workspace: hỏi đáp knowledge base trong Sheets, tóm tắt Google Docs, tạo Gmail draft, chat qua web app và ghi usage log. Dự án này tổng hợp AI client, prompt, RAG, tool-use, HtmlService, monitoring và review bảo mật.
+
+Mục tiêu không phải xây chatbot “làm mọi thứ”. Mục tiêu là một assistant nhỏ nhưng an toàn, đo được và dễ rollback. Bản v1 nên làm tốt một việc: trả lời câu hỏi từ knowledge base. Sau đó mới thêm tool tạo draft email hoặc tóm tắt Docs.
+
+## Mental model: assistant có lõi và tool mở rộng
+
+Hãy chia dự án thành lõi và tool. Lõi gồm config, AI client, monitoring, web app và RAG. Tool là các hành động có side effect như tạo Gmail draft, tạo Docs summary hoặc ghi Sheets. Tool phải có allowlist và validation riêng.
+
+Kiến trúc tối thiểu:
+
+- `Knowledge`: sheet chứa knowledge base.
+- `AiUsageLog`: sheet ghi request, model, duration, status.
+- `QaLog`: sheet ghi câu hỏi, câu trả lời và source IDs.
+- `aiClient.js`: gọi Gemini/OpenAI/Vertex/proxy qua interface chung.
+- `rag.js`: retrieval từ Sheets và prompt Q&A.
+- `tools.js`: tool allowlist và validators.
+- `webapp.js`: `doGet`, chat handler và `google.script.run`.
+- `gmail.js`: tạo draft, không gửi email thật.
+- `docs.js`: tóm tắt Docs hoặc tạo summary doc.
+- `monitoring.js`: wrapper metrics và error log.
+
+Nếu đang học một mình, bạn có thể để tất cả trong vài file. Nhưng vẫn nên giữ ranh giới logic trong function name.
+
+## Sheet schema cho bản v1
+
+Tạo 3 sheet trước khi viết nhiều code. Schema rõ giúp AI prompt và code dễ review hơn.
+
+```text
+Knowledge: Id, Title, Content, Tags, UpdatedAt, Owner
+AiUsageLog: Timestamp, JobName, Provider, Model, PromptVersion, Status, DurationMs, InputChars, OutputChars, Error
+QaLog: Timestamp, UserEmail, Question, Answer, SourceIds, Feedback
+```
+
+Bản v1 chỉ cần `Knowledge`, `AiUsageLog` và `QaLog`. Đừng thêm quá nhiều sheet khi chưa có luồng chính chạy ổn.
+
+## Entry point hỏi đáp knowledge base
+
+Entry point này nối RAG và monitoring. Nó validate input, tìm nguồn, tạo prompt và gọi AI bằng wrapper metrics.
+
+```javascript
+function answerWorkspaceQuestion(question) {
+  const text = String(question || '').trim();
+  if (!text) throw new Error('Question is required');
+  if (text.length > 1000) throw new Error('Question is too long');
+
+  const docs = searchKnowledgeByKeyword(text);
+  if (docs.length === 0) {
+    return 'Khong tim thay nguon lien quan trong Knowledge sheet.';
+  }
+
+  const prompt = buildRagPrompt(text, docs);
+  const answer = generateAiTextWithMetrics(prompt, {
+    jobName: 'workspace_qa',
+    promptVersion: 'workspace_qa_v1',
+    temperature: 0,
+  });
+
+  logWorkspaceQa(text, answer, docs);
+  return answer;
+}
+```
+
+Nếu dùng web app, HTML gọi function này qua `google.script.run`. API key vẫn nằm trong server Apps Script hoặc proxy, không nằm trong HTML.
+
+## Tool router cho hành động mở rộng
+
+Khi Q&A ổn định, bạn có thể thêm tool-use. Bắt đầu bằng tool an toàn: tạo Gmail draft, không gửi email thật.
+
+```javascript
+function routeWorkspaceTool(command) {
+  const allowedTools = ['create_follow_up_draft', 'summarize_doc', 'answer_only'];
+  if (!allowedTools.includes(command.tool)) {
+    throw new Error('Tool not allowed: ' + command.tool);
+  }
+
+  if (command.tool === 'create_follow_up_draft') {
+    return createFollowUpDraft(command.args || {});
+  }
+
+  if (command.tool === 'summarize_doc') {
+    return createSummaryDoc(command.args.documentId);
+  }
+
+  return { ok: true, text: command.args && command.args.message ? command.args.message : '' };
+}
+```
+
+Router không nên có tool xóa file, gửi email thật hoặc chia sẻ Drive trong bản đầu. Nếu sau này thêm, hãy yêu cầu confirmation và audit log riêng.
+
+## Tool tạo Gmail draft
+
+Tool này có side effect nhưng tương đối an toàn vì chỉ tạo draft. Người dùng vẫn phải mở Gmail review trước khi gửi.
+
+```javascript
+function createFollowUpDraft(args) {
+  const email = String(args.email || '').trim();
+  const subject = String(args.subject || 'Follow up').slice(0, 150);
+  const message = String(args.message || '').trim();
+
+  if (!email.includes('@')) throw new Error('Invalid email');
+  if (!message || message.length < 20) throw new Error('Missing draft message');
+
+  GmailApp.createDraft(email, subject, message);
+  logToolCall('create_follow_up_draft', 'success', email);
+  return { ok: true, email: email, subject: subject };
+}
+```
+
+Với production, bạn có thể giới hạn domain người nhận, thêm `DRY_RUN`, hoặc yêu cầu người dùng xác nhận command trước khi gọi tool.
+
+## Web app chat tối thiểu
+
+Phần HTML có thể dùng lại từ bài HtmlService. Server chỉ cần expose một function rõ ràng.
+
+```javascript
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('AI Workspace Assistant');
+}
+
+function askWorkspaceAssistant(question) {
+  try {
+    return answerWorkspaceQuestion(question);
+  } catch (error) {
+    console.error({ message: 'Assistant failed', error: error.message });
+    throw new Error('Assistant failed: ' + error.message);
+  }
+}
+```
+
+Trong HTML, luôn có `withFailureHandler`, disable button khi xử lý và giới hạn input. Nếu deploy nội bộ, test kỹ quyền `Execute as` và `Who has access`.
+
+## Roadmap triển khai từng bước
+
+- Bước 1: Setup config và AI client, xác nhận `generateAiText` chạy với prompt ngắn.
+- Bước 2: Tạo sheet `Knowledge`, nhập 10-20 dòng FAQ chất lượng.
+- Bước 3: Xây RAG keyword search và `answerWorkspaceQuestion`.
+- Bước 4: Tạo HtmlService web app chat nội bộ.
+- Bước 5: Thêm `AiUsageLog` và `QaLog`.
+- Bước 6: Lấy feedback người dùng, sửa knowledge base và prompt.
+- Bước 7: Thêm Gmail draft tool với confirmation hoặc dry run.
+- Bước 8: Thêm Docs summary nếu có nhu cầu thật.
+- Bước 9: Review bảo mật, quota, trigger và deploy bằng clasp version.
+
+## Tiêu chí hoàn thành
+
+- Không có API key trong source code hoặc HTML.
+- Có giới hạn input web app.
+- Có usage log cho AI request.
+- Có source IDs trong câu trả lời RAG.
+- Có validation output AI nếu dùng JSON/tool-use.
+- Gmail tool chỉ tạo draft, không gửi thật.
+- Có `DRY_RUN` hoặc confirmation cho hành động nhạy cảm.
+- Có README hoặc Google Docs hướng dẫn deploy, rollback và owner.
+
+## Monitoring và quality cho capstone
+
+Sau khi assistant chạy, hãy đo 2 tuần trước khi mở rộng. Các chỉ số nên xem:
+
+- Số câu hỏi mỗi ngày.
+- Tỷ lệ câu hỏi không tìm thấy nguồn.
+- Số câu trả lời bị người dùng đánh dấu sai.
+- Thời gian trung bình mỗi request.
+- Chi phí ước tính theo job.
+- Số draft được tạo và số draft được gửi sau review.
+
+Nếu tỷ lệ “không tìm thấy” cao, vấn đề có thể là knowledge base thiếu hoặc retrieval keyword yếu. Đừng vội đổi model trước khi sửa dữ liệu nguồn.
+
+## Lỗi thường gặp trong capstone
+
+- Làm quá nhiều tool ngay từ đầu, chưa có Q&A ổn định.
+- Deploy public trước khi có guardrails.
+- Không tách AI client và business logic.
+- Không log chi phí hoặc số request.
+- Không có rollback hoặc version.
+- Knowledge base quá dài, cũ hoặc không có owner.
+- Tin câu trả lời RAG không source.
+- Cho assistant gửi email thật thay vì tạo draft.
+
+## Bài tập thực hành
+
+Xây bản v1 chỉ có web app Q&A từ sheet `Knowledge`. Sau khi chạy ổn, thêm `AiUsageLog`, `QaLog` và nút feedback đơn giản trong sheet. Tiếp theo thêm Gmail draft tool nhưng yêu cầu confirmation thủ công. Cuối cùng dùng prompt AI review code trước deploy và ghi lại các finding cần sửa.
+
+## Câu hỏi thường gặp về dự án cuối khóa
+
+### Có nên dùng khóa này cho production ngay không?
+
+Không nên nếu chưa review bảo mật, quota, auth, dữ liệu và monitoring. Hãy bắt đầu nội bộ với nhóm nhỏ, đo chất lượng rồi mới mở rộng.
+
+### Có thể thay Sheets knowledge base bằng Drive không?
+
+Có. Sheets dễ học và dễ review từng dòng. Drive phù hợp tài liệu dài hơn. Với dữ liệu lớn, bạn cần chunking, embeddings hoặc search service tốt hơn.
+
+### Nên chọn Gemini, OpenAI, Vertex hay proxy?
+
+Chọn theo ràng buộc thật. Prototype nhỏ có thể dùng một provider trực tiếp. Doanh nghiệp cần IAM có thể chọn Vertex. Nhiều user, nhiều app hoặc cần rate limit nên cân nhắc proxy.
+
+### Bước tiếp theo sau capstone là gì?
+
+Chọn một workflow thật trong công việc, đo baseline thời gian hiện tại, triển khai assistant nhỏ và theo dõi chất lượng trong 2 tuần. Sau đó mới quyết định mở rộng tool hoặc chuyển sang backend mạnh hơn.
+
+## Tóm tắt và hướng đi tiếp
+
+Bạn đã học cách dùng AI để phát triển Apps Script, tích hợp model, bảo mật secret, xử lý JSON, xây web app, RAG, tool-use, agent workflow, CI/CD và monitoring. Từ đây, hãy xây AI automation nhỏ nhưng an toàn, đo được, có source, có review và dễ rollback trước khi mở rộng thành hệ thống lớn hơn.

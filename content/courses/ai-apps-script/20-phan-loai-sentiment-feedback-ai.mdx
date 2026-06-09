@@ -1,0 +1,169 @@
+---
+title: "Phân loại sentiment feedback bằng AI Apps Script"
+description: "Học cách dùng AI để phân loại sentiment, tag phản hồi khách hàng và ghi kết quả vào Google Sheets."
+slug: "phan-loai-sentiment-feedback-ai"
+course: "ai-apps-script"
+order: 20
+duration: "23 phút"
+difficulty: "Trung bình"
+keywords: ["sentiment AI Apps Script", "phân loại feedback Google Sheets", "AI classify feedback", "Apps Script sentiment analysis", "Google Sheets AI classification"]
+publishedAt: "2026-06-09"
+---
+
+## Phân loại sentiment bằng AI Apps Script là gì?
+
+Phân loại sentiment feedback bằng AI Apps Script là quy trình đọc phản hồi khách hàng từ Google Sheets, gửi từng phản hồi cho model AI, nhận lại nhãn có cấu trúc như `positive`, `neutral`, `negative`, rồi ghi kết quả vào đúng dòng. Cách làm tốt không chỉ hỏi AI “cảm xúc là gì”, mà còn giới hạn nhãn, validate JSON và lưu trạng thái xử lý.
+
+Use case này rất thực tế: đội support muốn biết tuần này khách phàn nàn nhiều về lỗi hay thanh toán; đội sản phẩm muốn gom request tính năng; founder muốn đọc nhanh 500 dòng feedback sau một chiến dịch. AI giúp phân loại nhanh, còn Apps Script giúp đưa kết quả trở lại nơi team đang làm việc là Sheets.
+
+## Mental model: từ một dòng feedback đến dữ liệu có thể báo cáo
+
+Hãy nghĩ mỗi dòng feedback là một job nhỏ. Job đi qua 5 bước: đọc message, chuẩn hóa input, gọi AI với schema cố định, kiểm tra output, ghi lại `Sentiment`, `Tag`, `Confidence`, `Status` và `Error`. Nếu một bước lỗi, bạn không dừng toàn bộ job; bạn đánh dấu dòng đó là `error` để chạy lại sau.
+
+Sheet nên có schema rõ ràng:
+
+- `Message`: phản hồi gốc từ khách hàng.
+- `Sentiment`: `positive`, `neutral` hoặc `negative`.
+- `Tag`: nhóm vấn đề như `billing`, `bug`, `feature`, `support`, `other`.
+- `Confidence`: mức tự tin từ 0 đến 1 nếu AI cung cấp.
+- `Status`: `pending`, `done`, `error`.
+- `Error`: thông báo lỗi ngắn, không chứa secret.
+
+Điểm quan trọng là AI chỉ được phép chọn trong danh sách nhãn bạn định nghĩa. Nếu để AI tự nghĩ tag, hôm nay nó có thể trả `payment`, ngày mai trả `billing_issue`, làm dashboard rất khó tổng hợp.
+
+## Cú pháp prompt phân loại có schema
+
+Prompt cho classification nên ngắn, cụ thể và yêu cầu JSON hợp lệ. Temperature nên thấp để kết quả ổn định hơn.
+
+```javascript
+function buildFeedbackClassifyPrompt(message) {
+  const safeMessage = String(message || '').slice(0, 2000);
+
+  return [
+    'Classify one customer feedback message.',
+    'Return valid JSON only. Do not use markdown.',
+    'Schema: {"sentiment":"positive|neutral|negative","tag":"billing|bug|feature|support|other","confidence":0.0,"reason":"short reason"}',
+    'Allowed tags: billing, bug, feature, support, other.',
+    'Message:',
+    safeMessage,
+  ].join('\n');
+}
+```
+
+`safeMessage` giới hạn độ dài để tránh prompt quá lớn và giảm chi phí. Schema yêu cầu `reason` ngắn để người review hiểu vì sao AI chọn nhãn đó, nhưng không dùng reason làm dữ liệu báo cáo chính. Các cột báo cáo chính vẫn là sentiment và tag.
+
+## Validate output trước khi ghi vào Sheets
+
+AI đôi khi trả thêm markdown fence, giải thích hoặc JSON thiếu field. Vì vậy cần parser riêng thay vì `JSON.parse` trực tiếp ở mọi nơi.
+
+```javascript
+function parseFeedbackClassification(rawText) {
+  const cleaned = String(rawText || '')
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```$/i, '')
+    .trim();
+
+  const data = JSON.parse(cleaned);
+  const sentiments = ['positive', 'neutral', 'negative'];
+  const tags = ['billing', 'bug', 'feature', 'support', 'other'];
+
+  if (!sentiments.includes(data.sentiment)) {
+    throw new Error('Invalid sentiment: ' + data.sentiment);
+  }
+
+  if (!tags.includes(data.tag)) {
+    throw new Error('Invalid tag: ' + data.tag);
+  }
+
+  const confidence = Number(data.confidence);
+  if (Number.isNaN(confidence) || confidence < 0 || confidence > 1) {
+    throw new Error('Invalid confidence: ' + data.confidence);
+  }
+
+  return {
+    sentiment: data.sentiment,
+    tag: data.tag,
+    confidence,
+    reason: String(data.reason || '').slice(0, 300),
+  };
+}
+```
+
+Parser này là phần nên test kỹ nhất. Bạn có thể tạo response giả để kiểm tra các trường hợp: JSON hợp lệ, JSON bọc trong markdown, thiếu `tag`, confidence là chuỗi, hoặc tag ngoài allowlist.
+
+## Ví dụ thực tế: xử lý tối đa 20 feedback pending
+
+Function dưới đây đọc sheet `Feedback`, bỏ qua dòng đã xử lý, gọi AI từng dòng và ghi kết quả. Với dữ liệu lớn, bạn nên batch read và batch write nhiều hơn, nhưng ví dụ này ưu tiên dễ hiểu và an toàn.
+
+```javascript
+function classifyPendingFeedbackRows() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Feedback');
+  if (!sheet) throw new Error('Missing Feedback sheet');
+
+  const rows = sheet.getDataRange().getValues();
+  const limit = 20;
+  let processed = 0;
+
+  for (let i = 1; i < rows.length && processed < limit; i++) {
+    const rowNumber = i + 1;
+    const message = rows[i][0];
+    const status = rows[i][4];
+
+    if (!message || status === 'done') continue;
+
+    try {
+      const raw = generateAiText(buildFeedbackClassifyPrompt(message), { temperature: 0 });
+      const result = parseFeedbackClassification(raw);
+      sheet.getRange(rowNumber, 2, 1, 5).setValues([[
+        result.sentiment,
+        result.tag,
+        result.confidence,
+        'done',
+        '',
+      ]]);
+    } catch (error) {
+      sheet.getRange(rowNumber, 5, 1, 2).setValues([['error', error.message]]);
+    }
+
+    processed++;
+  }
+}
+```
+
+Trong bài toán thật, bạn có thể thêm cột `ProcessedAt`, `PromptVersion` và `Reviewer`. Khi prompt thay đổi, lưu prompt version giúp bạn biết dữ liệu cũ và mới có thể không hoàn toàn so sánh được.
+
+## Lỗi thường gặp khi phân loại feedback
+
+- Không giới hạn nhãn được phép, khiến dữ liệu phân mảnh và dashboard sai.
+- Tin output AI ngay mà không validate JSON, dẫn đến lỗi ở giữa job.
+- Gọi lại AI cho dòng đã `done`, vừa tốn tiền vừa làm kết quả thay đổi.
+- Log toàn bộ message nhạy cảm vào execution log hoặc error log.
+- Dùng temperature cao cho tác vụ phân loại cần tính nhất quán.
+- Không lấy mẫu review thủ công nên không biết AI đang phân loại sai ở đâu.
+
+## Bài tập thực hành
+
+Tạo sheet `Feedback` với 10 dòng message thật hoặc giả, trong đó có một dòng trống, một dòng rất dài và một dòng vừa khen vừa chê. Viết job xử lý tối đa 5 dòng `pending`, ghi `Sentiment`, `Tag`, `Confidence`, `Status`, `Error`. Sau đó tự review 5 kết quả và ghi nhận nhãn nào cần điều chỉnh trong taxonomy.
+
+## Câu hỏi thường gặp về sentiment AI
+
+### Có cần dùng Cloud Natural Language API không?
+
+Không bắt buộc. LLM đủ linh hoạt để phân loại sentiment kèm tag nghiệp vụ, nhất là khi bạn cần hiểu ngữ cảnh. API chuyên biệt có thể ổn định hơn cho bài toán sentiment chuẩn, nhưng thường kém linh hoạt hơn khi cần taxonomy riêng.
+
+### Có nên để AI tự tạo tag mới không?
+
+Không nên ở giai đoạn đầu. Hãy dùng danh sách tag cố định để dữ liệu nhất quán. Nếu thấy nhiều dòng rơi vào `other`, hãy review thủ công rồi cập nhật taxonomy có kiểm soát.
+
+### Làm sao đo chất lượng phân loại?
+
+Lấy mẫu ngẫu nhiên mỗi tuần, để người review gắn nhãn chuẩn, rồi so sánh với nhãn AI. Theo dõi tỷ lệ đúng theo từng tag, không chỉ tỷ lệ đúng tổng thể, vì tag hiếm thường dễ bị bỏ qua.
+
+### Có nên phân loại theo batch nhiều dòng một lần không?
+
+Batch giúp giảm số request nhưng khó map kết quả về đúng dòng và khó xử lý lỗi từng dòng. Người mới nên xử lý từng dòng trước, sau khi ổn mới thiết kế batch JSON có `rowId` rõ ràng.
+
+## Tóm tắt và bước tiếp theo
+
+Sentiment AI Apps Script biến feedback thô trong Google Sheets thành dữ liệu có thể lọc, đếm và ưu tiên. Bài này nhấn mạnh schema, validate output và status để tránh automation chạy sai âm thầm. Bài tiếp theo chuyển sang Gmail: dùng AI tạo draft email an toàn để con người review trước khi gửi.

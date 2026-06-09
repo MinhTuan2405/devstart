@@ -1,0 +1,154 @@
+---
+title: "Email HTML và template trong Apps Script"
+description: "Học cách tạo email HTML, chèn dữ liệu động và gửi nội dung đẹp hơn bằng Apps Script."
+slug: "email-html-template-apps-script"
+course: "apps-script"
+order: 22
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["email HTML Apps Script", "htmlBody Apps Script", "template email Apps Script", "GmailApp HTML email", "MailApp HTML email"]
+publishedAt: "2026-06-09"
+---
+
+Email HTML trong Apps Script là email có nội dung định dạng bằng HTML và được gửi qua `htmlBody`. Nó giúp email có tiêu đề, đoạn văn, link, nút và bố cục dễ đọc hơn email text thuần. Khi dùng đúng, email tự động trông chuyên nghiệp hơn nhưng vẫn cần đơn giản, an toàn và có bản text fallback.
+
+## Email HTML trong Apps Script là gì?
+
+Ở bài trước, bạn đã gửi email text bằng `MailApp`. Text email phù hợp cho thông báo ngắn, nhưng khi cần gửi báo cáo, xác nhận đăng ký, link dashboard hoặc hướng dẫn thao tác, HTML giúp nội dung dễ quét hơn. Trong Apps Script, bạn không cần thư viện ngoài. Chỉ cần truyền thêm `htmlBody` trong object options của `MailApp.sendEmail()` hoặc `GmailApp.sendEmail()`.
+
+Mô hình tư duy là: `body` là nội dung text dự phòng, `htmlBody` là nội dung chính có định dạng. Một số client hoặc hệ thống bảo mật có thể không hiển thị HTML như bạn mong muốn, nên `body` vẫn cần rõ ý.
+
+## Gửi email HTML đơn giản
+
+Ví dụ đầu tiên dùng chuỗi HTML ngắn. Đây là cách dễ học nhất trước khi tách thành template riêng.
+
+```javascript
+function sendHtmlEmail() {
+  const html = '<div style="font-family: Arial, sans-serif; line-height: 1.6;">'
+    + '<h2>New report is ready</h2>'
+    + '<p>Your automated report has been generated.</p>'
+    + '<p><a href="https://example.com/report">Open report</a></p>'
+    + '</div>';
+
+  MailApp.sendEmail({
+    to: 'user@example.com',
+    subject: 'Report is ready',
+    body: 'Your report is ready: https://example.com/report',
+    htmlBody: html,
+  });
+}
+```
+
+Nếu quên `htmlBody`, người nhận có thể thấy HTML như text bình thường. Nếu quên `body`, email vẫn có thể hiển thị trong Gmail, nhưng không tốt cho fallback và khả năng đọc ở môi trường khác.
+
+## Tạo template bằng function riêng
+
+Khi email có dữ liệu động, hãy tách phần tạo HTML thành function. Function gửi email chỉ lo người nhận và trạng thái, còn function template lo nội dung.
+
+```javascript
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function buildReportEmail(name, reportUrl) {
+  return `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+      <h2>Hello ${escapeHtml(name)}</h2>
+      <p>Your weekly report is ready.</p>
+      <p>
+        <a href="${escapeHtml(reportUrl)}" style="background: #1a73e8; color: #fff; padding: 10px 14px; text-decoration: none; border-radius: 4px;">
+          Open report
+        </a>
+      </p>
+    </div>
+  `;
+}
+```
+
+Hàm `escapeHtml` rất quan trọng nếu dữ liệu đến từ người dùng hoặc Sheets. Nếu tên người dùng chứa ký tự `<` hoặc `&`, HTML có thể vỡ hoặc tạo nội dung không mong muốn. Với link, bạn vẫn cần kiểm tra nguồn dữ liệu trước khi gửi.
+
+## Gửi email HTML từ Google Sheets
+
+Ví dụ thực tế: sheet `Users` có cột `Name`, `Email`, `ReportUrl`, `Status`, `SentAt`. Script gửi email HTML cho dòng `ready`, sau đó cập nhật trạng thái.
+
+```javascript
+function sendReportEmails() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Users');
+  const rows = sheet.getDataRange().getValues().slice(1);
+
+  rows.forEach(function(row, index) {
+    const sheetRow = index + 2;
+    const name = row[0];
+    const email = row[1];
+    const reportUrl = row[2];
+    const status = row[3];
+
+    if (status !== 'ready' || !email || !reportUrl) return;
+
+    const html = buildReportEmail(name, reportUrl);
+
+    MailApp.sendEmail({
+      to: email,
+      subject: 'Your report is ready',
+      body: 'Your report is ready: ' + reportUrl,
+      htmlBody: html,
+    });
+
+    sheet.getRange(sheetRow, 4).setValue('sent');
+    sheet.getRange(sheetRow, 5).setValue(new Date());
+  });
+}
+```
+
+Đây là workflow rất thường gặp: dữ liệu từ Sheets, template tạo nội dung, `MailApp` gửi, sheet ghi trạng thái. Nếu email lỗi giữa chừng, bạn vẫn biết dòng nào chưa chuyển sang `sent`.
+
+## Nguyên tắc viết email HTML an toàn
+
+- Giữ HTML đơn giản, dùng inline style cơ bản vì email client hỗ trợ CSS không đồng nhất.
+- Không nhúng JavaScript trong email; phần lớn email client sẽ chặn.
+- Luôn có `body` text fallback.
+- Escape dữ liệu động trước khi đưa vào HTML.
+- Kiểm tra link và email người nhận trước khi gửi.
+- Gửi thử cho chính bạn và xem trên Gmail trước khi gửi danh sách thật.
+
+Email không phải website. Những thứ đẹp trên trình duyệt có thể hiển thị khác trong Gmail, Outlook hoặc mobile client. Hãy ưu tiên rõ ràng hơn phức tạp.
+
+## Lỗi thường gặp với email HTML
+
+- Quên truyền `htmlBody`, khiến HTML hiển thị như chữ.
+- Dùng dấu nháy lẫn lộn làm vỡ chuỗi HTML.
+- Chèn dữ liệu từ Sheets mà không escape.
+- Thiết kế email quá phức tạp với CSS layout khó hỗ trợ.
+- Không có cột `Status`, dẫn tới gửi lặp.
+- Không có `body` fallback.
+- Gửi link sai hoặc link yêu cầu quyền mà người nhận không có.
+
+## Bài tập thực hành
+
+Tạo sheet `Users` có cột `Name`, `Email`, `ReportUrl`, `Status`, `SentAt`. Viết `buildReportEmail(name, reportUrl)` trả HTML có tiêu đề, đoạn mô tả và nút mở báo cáo. Viết `sendReportEmails()` đọc từng dòng `ready`, gửi email HTML, sau đó ghi `sent` và thời gian gửi.
+
+## Câu hỏi thường gặp về email HTML
+
+### Có thể dùng CSS trong email không?
+
+Có, nhưng nên dùng inline style đơn giản. Nhiều email client không hỗ trợ đầy đủ CSS hiện đại như flexbox phức tạp hoặc script.
+
+### Có thể dùng file HTML riêng không?
+
+Có. Với dự án lớn, bạn có thể dùng `HtmlService` template hoặc file HTML riêng trong Apps Script. Khi mới học, function tạo HTML là đủ để hiểu luồng.
+
+### htmlBody có cần body không?
+
+Nên có. `body` là bản text fallback, giúp email vẫn có nội dung rõ ràng nếu HTML không được hiển thị.
+
+### Có nên cá nhân hóa email HTML không?
+
+Có, nhưng hãy kiểm tra và escape dữ liệu cá nhân hóa. Đừng đưa dữ liệu nhạy cảm vào email nếu người nhận không thật sự cần.
+
+## Tóm tắt và chuyển tiếp
+
+Email HTML giúp thông báo tự động rõ ràng và chuyên nghiệp hơn. Hãy tách template, có text fallback, escape dữ liệu động và ghi trạng thái đã gửi. Bài tiếp theo sẽ học `DriveApp`, service giúp bạn quản lý file và thư mục để tạo đầu ra như báo cáo, tài liệu hoặc file đính kèm.

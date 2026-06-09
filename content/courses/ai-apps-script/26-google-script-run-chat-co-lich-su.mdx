@@ -1,0 +1,184 @@
+---
+title: "google.script.run cho chat AI có lịch sử hội thoại"
+description: "Học cách truyền lịch sử hội thoại giữa HTML client và Apps Script server khi xây AI chat app."
+slug: "google-script-run-chat-co-lich-su"
+course: "ai-apps-script"
+order: 26
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["google.script.run AI chat", "Apps Script chat history", "HtmlService AI conversation", "client server AI Apps Script", "AI chat Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Chat AI có lịch sử cần xử lý gì?
+
+Chat AI có lịch sử cần gửi một phần các lượt hỏi đáp trước đó cho model để câu trả lời mới hiểu ngữ cảnh. Trong Apps Script HtmlService, lịch sử có thể được giữ tạm ở client và truyền lên server bằng `google.script.run`, hoặc lưu server bằng CacheService, PropertiesService hay Sheets tùy nhu cầu audit.
+
+Nếu không có history, người dùng hỏi “vậy bước tiếp theo là gì?” thì AI không biết “vậy” đang nói về việc nào. Nhưng nếu gửi toàn bộ lịch sử từ đầu phiên, prompt sẽ dài, tốn tiền và dễ chứa dữ liệu nhạy cảm. Vì vậy bài này tập trung vào schema message, giới hạn số lượt và nơi lưu phù hợp.
+
+## Mental model: message list có role
+
+Một cuộc hội thoại nên được lưu dưới dạng danh sách message. Mỗi message có `role` và `text`. Role phổ biến là `user` cho người hỏi và `assistant` cho AI trả lời. Một số provider hỗ trợ `system`, nhưng với pattern prompt thủ công trong Apps Script, bạn có thể đưa instruction hệ thống vào đầu prompt.
+
+Schema đơn giản:
+
+- `role`: `user` hoặc `assistant`.
+- `text`: nội dung đã cắt độ dài.
+- `createdAt`: tùy chọn, hữu ích khi log.
+
+Bạn không cần gửi UI state, button state hoặc HTML lên server. Server chỉ cần history đã chuẩn hóa và câu hỏi mới.
+
+## Client giữ lịch sử tạm thời
+
+Với prototype, giữ history trong biến JavaScript phía HTML là đủ. Khi reload trang, history mất; đây là hành vi chấp nhận được nếu bạn chưa cần audit.
+
+```html
+<script>
+var history = [];
+
+function askAi() {
+  var input = document.getElementById('question');
+  var question = input.value.trim();
+  if (!question) return;
+
+  history.push({ role: 'user', text: question });
+  renderChat();
+  input.value = '';
+
+  google.script.run
+    .withSuccessHandler(function(answer) {
+      history.push({ role: 'assistant', text: answer });
+      history = history.slice(-10);
+      renderChat();
+    })
+    .withFailureHandler(function(error) {
+      history.push({ role: 'assistant', text: 'Error: ' + error.message });
+      renderChat();
+    })
+    .answerWithHistory(history);
+}
+</script>
+```
+
+`history.slice(-10)` giữ 10 message gần nhất, tức khoảng 5 lượt hỏi đáp. Với chatbot nội bộ nhỏ, đây thường là mức đủ để giữ ngữ cảnh ngắn hạn.
+
+## Render chat đơn giản trong HTML
+
+Không dùng `innerHTML` với text người dùng nếu chưa escape, vì có thể tạo rủi ro XSS. Dùng `textContent` an toàn hơn.
+
+```html
+<div id="chat"></div>
+<textarea id="question" rows="4"></textarea>
+<button onclick="askAi()">Send</button>
+<button onclick="clearChat()">Clear chat</button>
+
+<script>
+function renderChat() {
+  var chat = document.getElementById('chat');
+  chat.textContent = '';
+
+  history.forEach(function(message) {
+    var line = document.createElement('pre');
+    line.textContent = message.role + ': ' + message.text;
+    chat.appendChild(line);
+  });
+}
+
+function clearChat() {
+  history = [];
+  renderChat();
+}
+</script>
+```
+
+Nút `Clear chat` là guardrail người dùng cần thấy rõ. Nếu cuộc chat chứa thông tin nhạy cảm, họ phải có cách xóa lịch sử phía client.
+
+## Server tạo prompt từ lịch sử đã sanitize
+
+Server không nên tin history client gửi lên. Hãy lọc role, cắt text và giới hạn số message một lần nữa.
+
+```javascript
+function answerWithHistory(history) {
+  const safeHistory = (Array.isArray(history) ? history : [])
+    .filter(function(item) {
+      return item && ['user', 'assistant'].includes(item.role);
+    })
+    .slice(-10)
+    .map(function(item) {
+      return {
+        role: item.role,
+        text: String(item.text || '').slice(0, 1500),
+      };
+    });
+
+  const transcript = safeHistory
+    .map(function(item) { return item.role + ': ' + item.text; })
+    .join('\n');
+
+  const prompt = [
+    'Continue this conversation in Vietnamese.',
+    'Be practical and concise.',
+    'Conversation:',
+    transcript,
+  ].join('\n');
+
+  return generateAiText(prompt, { temperature: 0.3 });
+}
+```
+
+Nếu request cuối cùng không có message `user`, bạn nên throw lỗi. Bản ví dụ giữ đơn giản nhưng production cần kiểm tra chặt hơn.
+
+## Lưu lịch sử server khi nào?
+
+Lưu server hữu ích khi cần audit, analytics hoặc cho người dùng quay lại xem cuộc hội thoại. Với Apps Script, lựa chọn phổ biến là Sheets cho log lâu dài, CacheService cho phiên ngắn và PropertiesService cho cấu hình nhỏ. Không dùng PropertiesService để lưu lịch sử dài vì giới hạn dung lượng và không phù hợp dữ liệu nhiều dòng.
+
+```javascript
+function saveChatLog(userEmail, role, text) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('ChatLog');
+  if (!sheet) return;
+
+  sheet.appendRow([
+    new Date(),
+    userEmail || 'unknown',
+    role,
+    String(text || '').slice(0, 2000),
+  ]);
+}
+```
+
+Nếu log nội dung chat, hãy hạn chế quyền xem sheet `ChatLog`. Lịch sử chat thường chứa câu hỏi thật của người dùng, có thể nhạy cảm hơn bạn nghĩ.
+
+## Lỗi thường gặp với chat history
+
+- Gửi toàn bộ lịch sử quá dài, làm tăng chi phí và giảm chất lượng.
+- Không phân biệt role `user` và `assistant`, khiến transcript khó hiểu.
+- Lưu lịch sử nhạy cảm trong sheet ai cũng xem được.
+- Không có nút xóa lịch sử.
+- Không giới hạn input từng câu hỏi và số lượt chat.
+- Dùng `innerHTML` để render text người dùng mà không escape.
+
+## Bài tập thực hành
+
+Nâng cấp web app chat bài trước để giữ 10 message gần nhất ở client. Thêm nút `Clear chat`, dùng `textContent` để render, và server phải sanitize history trước khi tạo prompt. Nếu muốn nâng cao, ghi log chỉ gồm thời gian, user, role và độ dài text, không ghi toàn bộ nội dung.
+
+## Câu hỏi thường gặp về chat history
+
+### Có cần lưu history trong Sheets không?
+
+Không cho prototype. Chỉ lưu nếu cần audit, analytics hoặc người dùng quay lại xem lịch sử. Nếu lưu, hãy giới hạn quyền và cân nhắc không lưu dữ liệu nhạy cảm.
+
+### Có gửi history cho AI mỗi lần không?
+
+Thông thường có, nhưng chỉ gửi một phần gần nhất hoặc summary của lịch sử dài. Gửi mọi thứ từ đầu phiên là cách nhanh nhất để tăng chi phí.
+
+### Có thể dùng CacheService không?
+
+Có, nếu muốn lưu tạm history theo user trong thời gian ngắn. CacheService phù hợp cho trạng thái tạm, không phù hợp làm audit log lâu dài.
+
+### Nên giới hạn bao nhiêu lượt chat?
+
+Bắt đầu với 5 lượt hỏi đáp gần nhất. Sau đó đo chất lượng và chi phí. Nếu người dùng cần ngữ cảnh dài, hãy tóm tắt history cũ thay vì gửi nguyên văn.
+
+## Tóm tắt và bước tiếp theo
+
+Chat có lịch sử cần schema message rõ ràng, giới hạn độ dài và quyết định nơi lưu phù hợp. Bài tiếp theo chuyển từ web app người dùng mở trực tiếp sang AI webhook bằng `doPost`, để hệ thống bên ngoài có thể gọi Apps Script như một endpoint.

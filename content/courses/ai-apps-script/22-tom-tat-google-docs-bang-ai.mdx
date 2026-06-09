@@ -1,0 +1,169 @@
+---
+title: "Tóm tắt Google Docs bằng AI Apps Script"
+description: "Học cách đọc nội dung Google Docs, gọi AI tóm tắt và ghi kết quả vào Docs hoặc Sheets bằng Apps Script."
+slug: "tom-tat-google-docs-bang-ai"
+course: "ai-apps-script"
+order: 22
+duration: "23 phút"
+difficulty: "Trung bình"
+keywords: ["tóm tắt Google Docs bằng AI", "DocumentApp AI", "Apps Script Docs AI", "AI summary Google Docs", "Google Workspace AI"]
+publishedAt: "2026-06-09"
+---
+
+## Tóm tắt Google Docs bằng AI như thế nào?
+
+Tóm tắt Google Docs bằng AI Apps Script là cách dùng `DocumentApp` đọc nội dung tài liệu, tạo prompt yêu cầu summary có cấu trúc, gọi AI, rồi ghi kết quả vào Docs mới hoặc Google Sheets. Cách làm đúng cần xử lý tài liệu dài, kiểm soát dữ liệu nhạy cảm và lưu link summary để người dùng kiểm tra lại nguồn.
+
+Use case thường gặp là tóm tắt biên bản họp, tài liệu yêu cầu sản phẩm, ghi chú phỏng vấn khách hàng, proposal dài hoặc báo cáo tuần. Nếu chỉ copy toàn bộ Docs đưa vào AI, bạn có thể gặp giới hạn context, chi phí cao và rủi ro gửi dữ liệu không cần thiết.
+
+## Mental model: đọc, cắt, tóm tắt, tổng hợp
+
+Với tài liệu ngắn, bạn có thể đọc toàn bộ text rồi gọi AI một lần. Với tài liệu dài, hãy chia thành đoạn, tóm tắt từng đoạn, sau đó tóm tắt lại các summary nhỏ thành một summary cuối. Đây là pattern “map-reduce” đơn giản: map từng chunk thành summary, reduce nhiều summary thành kết quả cuối.
+
+Bạn cũng nên xác định output trước khi gọi AI. Một summary hữu ích thường gồm:
+
+- 5 ý chính.
+- Quyết định đã được nhắc đến.
+- Action items, owner và deadline nếu có.
+- Rủi ro hoặc câu hỏi còn mở.
+- Trích dẫn ngắn hoặc nguồn để người đọc kiểm tra lại.
+
+Nếu tài liệu chứa dữ liệu nhạy cảm, hãy cân nhắc tóm tắt nội bộ bằng model/provider được phép, hoặc loại bỏ phần không cần thiết trước khi gửi.
+
+## Đọc text từ Google Docs bằng DocumentApp
+
+`DocumentApp.openById(documentId)` mở tài liệu nếu tài khoản chạy script có quyền. `getBody().getText()` lấy text thuần, không giữ định dạng, bảng hoặc comment.
+
+```javascript
+function readDocumentText(documentId) {
+  if (!documentId) throw new Error('Missing documentId');
+
+  const doc = DocumentApp.openById(documentId);
+  const text = doc.getBody().getText();
+
+  if (!text || text.trim().length < 20) {
+    throw new Error('Document has too little text');
+  }
+
+  return {
+    title: doc.getName(),
+    text: text.trim(),
+    url: doc.getUrl(),
+  };
+}
+```
+
+Function trả cả title và URL để bạn ghi log hoặc đưa vào summary doc. Nếu chỉ trả text, sau này rất khó biết summary đến từ tài liệu nào.
+
+## Chia tài liệu dài thành chunk
+
+Trong bài học cơ bản, chia theo số ký tự là đủ để hiểu ý tưởng. Production tốt hơn nên chia theo heading hoặc paragraph để tránh cắt ngang câu quan trọng.
+
+```javascript
+function chunkText(text, maxChars) {
+  const chunks = [];
+  let current = '';
+  const paragraphs = String(text).split(/\n+/);
+
+  paragraphs.forEach(function(paragraph) {
+    if ((current + '\n' + paragraph).length > maxChars && current) {
+      chunks.push(current.trim());
+      current = paragraph;
+    } else {
+      current += '\n' + paragraph;
+    }
+  });
+
+  if (current.trim()) chunks.push(current.trim());
+  return chunks;
+}
+```
+
+`maxChars` có thể bắt đầu ở mức 8.000 đến 12.000 ký tự tùy provider và model. Không nên cố nhồi mọi thứ vào một prompt vì summary dễ mất trọng tâm.
+
+## Tạo prompt tóm tắt có format rõ ràng
+
+Prompt nên yêu cầu AI trả format ổn định, không chỉ “hãy tóm tắt”. Với tài liệu họp, action items quan trọng hơn văn phong hay.
+
+```javascript
+function buildDocSummaryPrompt(title, text) {
+  return [
+    'Summarize this Google Docs content in Vietnamese.',
+    'Return these sections: Main points, Decisions, Action items, Risks, Open questions.',
+    'If owner or deadline is missing, write "not specified".',
+    'Do not invent details that are not in the document.',
+    'Document title: ' + title,
+    'Content:',
+    String(text).slice(0, 12000),
+  ].join('\n');
+}
+```
+
+Điểm đáng chú ý là câu “Do not invent details”. Nó không loại bỏ hoàn toàn hallucination, nhưng giúp model hiểu rằng thiếu thông tin thì phải nói thiếu, không tự điền.
+
+## Ví dụ thực tế: tạo Docs summary mới và ghi log
+
+Function dưới đây tóm tắt từng chunk, tổng hợp lại, tạo Google Docs mới và ghi URL vào sheet `DocSummaries`.
+
+```javascript
+function createSummaryDoc(sourceDocumentId) {
+  const source = readDocumentText(sourceDocumentId);
+  const chunks = chunkText(source.text, 10000);
+
+  const chunkSummaries = chunks.map(function(chunk, index) {
+    const prompt = buildDocSummaryPrompt(source.title + ' part ' + (index + 1), chunk);
+    return generateAiText(prompt, { temperature: 0.2 });
+  });
+
+  const finalPrompt = buildDocSummaryPrompt(
+    source.title + ' final summary',
+    chunkSummaries.join('\n\n')
+  );
+  const finalSummary = generateAiText(finalPrompt, { temperature: 0.2 });
+
+  const summaryDoc = DocumentApp.create('AI Summary - ' + source.title);
+  summaryDoc.getBody().appendParagraph('Source: ' + source.url);
+  summaryDoc.getBody().appendParagraph(finalSummary);
+  summaryDoc.saveAndClose();
+
+  logDocSummary(source.title, source.url, summaryDoc.getUrl(), chunks.length);
+  return summaryDoc.getUrl();
+}
+```
+
+Bạn cần thêm helper `logDocSummary` để lưu lịch sử. Log không cần chứa toàn bộ nội dung tài liệu; chỉ cần title, source URL, summary URL, số chunk và thời gian.
+
+## Lỗi thường gặp khi tóm tắt Docs
+
+- Gửi toàn bộ tài liệu nhạy cảm cho AI mà không kiểm duyệt.
+- Không xử lý tài liệu dài, dẫn đến prompt bị cắt hoặc response kém chất lượng.
+- Không lưu link tài liệu nguồn và summary, làm mất khả năng audit.
+- Không kiểm tra quyền mở document trước khi chạy hàng loạt.
+- Prompt quá mơ hồ, khiến summary thiếu action items hoặc bịa deadline.
+- Tưởng `getText()` giữ nguyên bảng, comment và formatting trong Docs.
+
+## Bài tập thực hành
+
+Tạo một Google Docs dài 1-2 trang về biên bản họp. Viết function nhận `documentId`, tạo summary gồm 5 ý chính, action items và câu hỏi còn mở. Ghi source URL, summary URL, số chunk và thời gian vào sheet `DocSummaries`. Test thêm một document gần như rỗng để kiểm tra error handling.
+
+## Câu hỏi thường gặp về Docs AI
+
+### Có thể tóm tắt nhiều Docs trong Drive không?
+
+Có. Bạn có thể kết hợp `DriveApp` để tìm file và `DocumentApp` để đọc, nhưng nên giới hạn số file mỗi lần chạy và ghi trạng thái từng file. Đừng chạy toàn bộ Drive ngay từ đầu.
+
+### Có thể giữ nguyên định dạng Google Docs không?
+
+`getText()` chỉ lấy text thuần. Nếu cần giữ heading, bảng hoặc style, bạn phải đọc cấu trúc body chi tiết hơn. Với bài học này, text thuần là đủ để tạo summary.
+
+### Có nên dùng AI cho tài liệu nội bộ nhạy cảm không?
+
+Chỉ nên dùng khi chính sách dữ liệu và provider cho phép. Nếu chưa chắc, hãy ẩn danh dữ liệu, giảm nội dung gửi đi hoặc dùng môi trường AI được tổ chức phê duyệt.
+
+### Summary có thay thế việc đọc tài liệu gốc không?
+
+Không. Summary giúp định hướng nhanh, nhưng quyết định quan trọng vẫn cần mở tài liệu gốc. Vì vậy summary nên luôn có source URL.
+
+## Tóm tắt và bước tiếp theo
+
+DocumentApp kết hợp AI giúp biến tài liệu dài thành summary có cấu trúc, nhưng bạn cần chia chunk, kiểm soát dữ liệu và lưu source. Bài tiếp theo sẽ mở rộng từ tóm tắt một tài liệu sang hỏi đáp trên Google Drive, bước đầu của RAG trong Workspace.

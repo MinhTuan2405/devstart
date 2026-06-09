@@ -1,0 +1,169 @@
+---
+title: "Logger, console và debug trong Apps Script"
+description: "Học cách dùng Logger, console, Execution log và try catch để debug lỗi trong Apps Script."
+slug: "logger-console-debug-apps-script"
+course: "apps-script"
+order: 5
+duration: "17 phút"
+difficulty: "Dễ"
+keywords: ["debug Apps Script", "Logger Apps Script", "console.log Apps Script", "Execution log Apps Script", "try catch Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Debug Apps Script bắt đầu từ đâu?
+
+Debug Apps Script bắt đầu bằng việc ghi log rõ ràng, chạy từng function nhỏ và đọc lỗi trong Execution log. Khi automation chưa đúng, log giúp bạn biết dữ liệu đang là gì, script dừng ở đâu và lỗi đến từ service, quyền truy cập hay logic JavaScript.
+
+Người mới thường muốn sửa lỗi bằng cách nhìn code thật lâu. Cách hiệu quả hơn là đặt câu hỏi cụ thể: function có chạy không, biến đang có giá trị gì, sheet có tồn tại không, range có đúng kích thước không, lỗi xảy ra ở dòng nào. Logging và debug giúp bạn trả lời từng câu hỏi đó.
+
+## Dùng Logger và console
+
+`Logger.log()` phù hợp cho người mới vì dễ xem trong Apps Script editor. `console.log()` cũng dùng được và hữu ích hơn khi bạn muốn log object hoặc xem log trong Google Cloud Logging ở dự án nâng cao.
+
+```javascript
+function debugBasicValues() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const name = sheet.getName();
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+
+  Logger.log('Sheet: ' + name);
+  Logger.log('Last row: ' + lastRow);
+  Logger.log('Last column: ' + lastColumn);
+  console.log({ name, lastRow, lastColumn });
+}
+```
+
+Khi log object, `console.log({ name, lastRow })` thường dễ đọc hơn nối chuỗi dài. Khi log thông tin đơn giản, `Logger.log()` là đủ. Dù dùng cách nào, log nên có nhãn rõ ràng, không nên chỉ log `value` vì sau vài dòng bạn sẽ không biết giá trị đó là gì.
+
+## Mô hình debug từng bước
+
+Một quy trình debug tốt trong Apps Script thường gồm bốn bước:
+
+- Xác nhận function đúng đang được chạy.
+- Xác nhận dữ liệu đầu vào, ví dụ tên sheet, số dòng, số cột.
+- Xác nhận logic trung gian, ví dụ số dòng sau khi lọc.
+- Xác nhận hành động cuối, ví dụ đã ghi bao nhiêu dòng hoặc gửi email cho ai.
+
+Ví dụ đọc sheet an toàn và log từng bước:
+
+```javascript
+function debugOrdersSheet() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getSheetByName('Orders');
+
+  if (!sheet) {
+    Logger.log('Sheet Orders not found');
+    return;
+  }
+
+  const lastRow = sheet.getLastRow();
+  Logger.log('Orders last row: ' + lastRow);
+
+  if (lastRow < 2) {
+    Logger.log('No order data');
+    return;
+  }
+
+  const rows = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+  Logger.log('Rows loaded: ' + rows.length);
+}
+```
+
+Ví dụ này không chỉ tránh lỗi sheet `null`, mà còn cho bạn biết dữ liệu đang rỗng hay đã được đọc thành công.
+
+## Dùng try catch để bắt lỗi có ngữ cảnh
+
+Không phải lỗi nào cũng nên để script dừng mà không có thông tin. Với tác vụ gửi email, gọi API hoặc xử lý nhiều dòng, bạn nên dùng `try catch` để ghi rõ ngữ cảnh lỗi. Sau khi log, thường nên `throw error` để lần chạy vẫn được đánh dấu thất bại.
+
+```javascript
+function safeSendEmail() {
+  const email = 'user@example.com';
+
+  try {
+    GmailApp.sendEmail(email, 'Test message', 'This is a test');
+    Logger.log('Email sent to: ' + email);
+  } catch (error) {
+    Logger.log('Failed to send email to: ' + email);
+    Logger.log('Error: ' + error.message);
+    throw error;
+  }
+}
+```
+
+Nếu bạn bắt lỗi nhưng không `throw`, automation có thể thất bại âm thầm. Điều này nguy hiểm trong workflow thật vì người dùng tưởng script đã chạy xong trong khi email chưa gửi hoặc dữ liệu chưa ghi.
+
+## Cách đọc lỗi thường gặp
+
+Một lỗi Apps Script thường có ba phần: thông báo lỗi, tên function đang chạy và dòng code gây lỗi. Ví dụ `Cannot read properties of null` thường nghĩa là bạn đang gọi phương thức trên giá trị `null`, rất hay xảy ra khi `getSheetByName` không tìm thấy sheet.
+
+Lỗi `Cannot read properties of undefined` thường liên quan đến mảng hoặc object, ví dụ đọc `rows[0][2]` khi `rows[0]` không tồn tại. Lỗi authorization thường nhắc đến quyền, scope hoặc yêu cầu cấp quyền. Lỗi quota thường xuất hiện khi gọi service quá nhiều lần hoặc gửi quá nhiều email.
+
+## Debug trigger và dữ liệu sự kiện
+
+Khi function chạy bằng trigger như `onEdit(e)`, dữ liệu đầu vào nằm trong event object `e`. Nếu bạn bấm Run trực tiếp trong editor, `e` không tồn tại, nên function có thể lỗi. Cách test tốt hơn là sửa ô thật trong sheet hoặc tạo function giả lập event cho phần logic riêng.
+
+```javascript
+function onEdit(e) {
+  if (!e) {
+    Logger.log('No event object. Edit the sheet to test onEdit.');
+    return;
+  }
+
+  Logger.log('Edited range: ' + e.range.getA1Notation());
+  Logger.log('New value: ' + e.value);
+}
+```
+
+Đoạn kiểm tra `if (!e)` giúp thông báo rõ ràng cho người mới, thay vì để script lỗi khó hiểu.
+
+## Lỗi thường gặp khi debug
+
+- Log quá ít nên không biết dữ liệu đầu vào là gì.
+- Log quá nhiều trong vòng lặp lớn khiến Execution log khó đọc.
+- Không kiểm tra `lastRow` trước khi đọc dữ liệu nên tạo range sai.
+- Bắt lỗi rồi không `throw`, làm automation thất bại âm thầm.
+- Sửa code nhưng quên lưu trước khi chạy lại.
+- Chỉ test bằng Run trong editor trong khi lỗi thật xảy ra khi trigger chạy.
+
+## Bài tập thực hành
+
+Tạo function đọc sheet hiện tại, log tên sheet, số dòng và số cột. Sau đó cố tình gọi một sheet không tồn tại bằng `getSheetByName('Missing')`, dùng `try catch` hoặc kiểm tra `null` để log thông báo dễ hiểu.
+
+```javascript
+function practiceDebugMissingSheet() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getSheetByName('Missing');
+
+  if (!sheet) {
+    Logger.log('Missing sheet was not found');
+    return;
+  }
+
+  Logger.log(sheet.getLastRow());
+}
+```
+
+Sau khi chạy, đổi tên `Missing` thành tên sheet có thật và chạy lại để thấy sự khác biệt.
+
+## Câu hỏi thường gặp về debug Apps Script
+
+### Logger.log khác console.log thế nào?
+
+`Logger.log()` đơn giản và dễ xem trong editor. `console.log()` phù hợp hơn khi log object có cấu trúc hoặc xem log trong Cloud Logging. Với người mới, có thể dùng cả hai tùy tình huống.
+
+### Có nên dùng debugger không?
+
+Có, nhưng người mới nên bắt đầu với log vì nhanh và dễ hiểu. Khi logic phức tạp, debugger giúp chạy từng dòng và kiểm tra biến tại thời điểm dừng.
+
+### Vì sao lỗi chỉ xảy ra khi chạy bằng trigger?
+
+Trigger có ngữ cảnh khác khi bạn bấm Run thủ công. Simple trigger nhận event object, có giới hạn quyền và thời gian chạy. Hãy log event object và kiểm tra function được trigger gọi.
+
+### Có nên xóa log sau khi code chạy ổn không?
+
+Nên xóa hoặc giảm log quá chi tiết, đặc biệt trong vòng lặp lớn. Tuy nhiên hãy giữ một số log quan trọng ở điểm bắt đầu, kết quả tổng và lỗi để dễ theo dõi khi automation chạy thật.
+
+## Tóm tắt
+
+Debug tốt giúp bạn tiết kiệm rất nhiều thời gian khi automation lớn dần. Bạn đã biết dùng `Logger.log()`, `console.log()`, Execution log, kiểm tra dữ liệu đầu vào và `try catch`. Bài tiếp theo sẽ đi vào service quan trọng nhất với người mới: `SpreadsheetApp` để làm việc với Google Sheets.

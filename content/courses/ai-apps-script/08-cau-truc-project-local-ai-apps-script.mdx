@@ -1,0 +1,167 @@
+---
+title: "Cấu trúc project local cho AI Apps Script"
+description: "Học cách tổ chức file config, AI client, Sheets service, jobs và tests để phát triển AI Apps Script rõ ràng."
+slug: "cau-truc-project-local-ai-apps-script"
+course: "ai-apps-script"
+order: 8
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["cấu trúc project Apps Script", "AI Apps Script local", "clasp project structure", "Apps Script file organization", "VS Code Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Cấu trúc project local quan trọng thế nào?
+
+Cấu trúc project rõ giúp bạn và AI hiểu nhanh file nào làm việc gì, function nào là entry point và logic nào có thể test độc lập. Với AI Apps Script, nếu mọi thứ nằm trong một file lớn, AI dễ sửa nhầm function, lặp code gọi model hoặc bỏ sót guardrails bảo mật.
+
+Một project rõ ràng không cần phức tạp. Mục tiêu là chia theo trách nhiệm: cấu hình ở một nơi, gọi AI ở một nơi, prompt ở một nơi, đọc ghi Sheets ở một nơi, job điều phối ở một nơi. Khi có lỗi, bạn biết cần nhìn file nào trước.
+
+## Mental model: entry point mỏng, helper rõ trách nhiệm
+
+Trong Apps Script, function public là function có thể được người dùng chạy trực tiếp, menu gọi, trigger gọi hoặc web app gọi. Function public nên mỏng: nó điều phối các helper, không chứa toàn bộ logic chi tiết.
+
+Ví dụ `runSummarizeFeedbackJob()` nên đọc như một checklist: đọc dữ liệu, tạo prompt, gọi AI, ghi kết quả, log. Các chi tiết như parse header, validate tag, gọi API nằm ở helper khác.
+
+## Cấu trúc đề xuất cho project AI nhỏ
+
+Một project AI Apps Script nhỏ có thể tổ chức như sau:
+
+```text
+src/
+  config.js
+  aiClient.js
+  promptTemplates.js
+  sheetsService.js
+  validators.js
+  jobs.js
+  debug.js
+appsscript.json
+.clasp.json
+```
+
+Nếu bạn không dùng thư mục `src`, vẫn có thể đặt các file ở root. Điều quan trọng là tên file nói rõ trách nhiệm. `aiClient.js` không nên đọc sheet. `sheetsService.js` không nên biết endpoint AI. `promptTemplates.js` không nên ghi dữ liệu.
+
+## Ví dụ entry point rõ ràng
+
+Function entry point nên gọi helper theo luồng dễ đọc. Khi AI review code, nó sẽ hiểu workflow mà không cần đọc từng dòng chi tiết ngay lập tức.
+
+```javascript
+function runSummarizeFeedbackJob() {
+  const config = getRequiredAiConfig();
+  const rows = readPendingFeedbackRows(config.maxRowsPerRun);
+
+  if (rows.length === 0) {
+    console.log({ message: 'No pending feedback' });
+    return;
+  }
+
+  const prompt = buildFeedbackSummaryPrompt(rows);
+  const summary = generateAiText(prompt, { temperature: 0.2 });
+  writeSummaryReport(rows.length, summary, config.dryRun);
+}
+```
+
+Function này không cho thấy toàn bộ implementation, nhưng cho thấy ranh giới: config, read, prompt, AI, write. Đây là kiểu code AI assistant có thể sửa an toàn hơn.
+
+## Prompt template nằm riêng
+
+Prompt là tài sản quan trọng của dự án AI. Nó ảnh hưởng trực tiếp đến chất lượng output, nên không nên nằm lẫn trong function đọc ghi Sheets.
+
+```javascript
+function buildFeedbackSummaryPrompt(rows) {
+  const lines = rows.map(function (row, index) {
+    return (index + 1) + '. ' + row.message;
+  }).join('\n');
+
+  return [
+    'Summarize these customer feedback messages in Vietnamese.',
+    'Return 5 concise bullet points.',
+    'Do not include personal data.',
+    '',
+    lines,
+  ].join('\n');
+}
+```
+
+Khi prompt nằm riêng, bạn có thể test prompt bằng dữ liệu mẫu, version prompt và yêu cầu AI cải thiện prompt mà không chạm vào logic Sheets.
+
+## Service đọc Sheets nên trả object, không trả row thô
+
+`getValues()` trả mảng hai chiều, nhưng code nghiệp vụ đọc `row[3]` rất dễ nhầm. Hãy map thành object càng sớm càng tốt.
+
+```javascript
+function toFeedbackItem(row, rowNumber) {
+  return {
+    rowNumber: rowNumber,
+    customer: String(row[0] || ''),
+    message: String(row[1] || ''),
+    status: String(row[2] || ''),
+  };
+}
+
+function isPendingFeedback(item) {
+  return item.status === 'pending' && item.message.length > 0;
+}
+```
+
+Object có tên field rõ ràng giúp AI ít nhầm cột hơn và giúp test pure function dễ hơn.
+
+## Prompt cho AI khi làm việc với project structure
+
+Khi yêu cầu AI sửa code, hãy chỉ rõ file và ranh giới:
+
+```text
+Chỉ sửa file aiClient.js.
+Không thay đổi public function trong jobs.js.
+Giữ interface generateAiText(prompt, options) như cũ.
+Thêm xử lý status code và JSON parse error.
+Không thêm logic đọc Google Sheets vào aiClient.js.
+```
+
+Ràng buộc file giúp AI không lan sang phần không liên quan. Đây là cách làm việc quan trọng khi project đã có nhiều helper.
+
+## Quy ước đặt tên function
+
+- Function public bắt đầu bằng động từ rõ: `run`, `onOpen`, `doPost`, `AI_SUMMARY`.
+- Function đọc dữ liệu bắt đầu bằng `read` hoặc `get`.
+- Function ghi dữ liệu bắt đầu bằng `write` hoặc `update`.
+- Function tạo prompt bắt đầu bằng `build...Prompt`.
+- Function validate bắt đầu bằng `validate`, `parse` hoặc `assert`.
+
+Quy ước này giúp cả người đọc và AI đoán đúng trách nhiệm. Bạn không cần framework lớn để có code dễ bảo trì.
+
+## Lỗi thường gặp khi tổ chức project
+
+- File `Code.js` quá lớn chứa mọi thứ.
+- Entry point vừa đọc sheet, gọi AI, gửi email, parse JSON và update data trong một function dài.
+- Prompt template nằm rải rác trong nhiều file.
+- `aiClient` biết quá nhiều về nghiệp vụ Sheets.
+- Không có file debug để test thủ công.
+- Không ghi rõ function nào là public entry point.
+- AI được phép sửa toàn project khi chỉ cần sửa một helper.
+
+## Bài tập thực hành
+
+Thiết kế cấu trúc file cho project đọc feedback từ Sheets, tóm tắt bằng AI và ghi báo cáo vào sheet `Report`. Viết tên function chính cho từng file, chưa cần code đầy đủ. Sau đó yêu cầu AI review cấu trúc và chỉ ra rủi ro nếu prompt, API client và Sheets logic bị trộn vào cùng một file.
+
+## Câu hỏi thường gặp về cấu trúc project
+
+### Có cần thư mục src không?
+
+Không bắt buộc. Thư mục `src` giúp project local gọn hơn khi dùng clasp, nhưng Apps Script vẫn chạy các file được push. Quan trọng nhất là chia file theo trách nhiệm.
+
+### Có nên tách promptTemplates.js không?
+
+Có. Prompt thay đổi thường xuyên và cần review riêng. Đặt prompt ở file riêng giúp test và version dễ hơn.
+
+### Function public là gì?
+
+Là function được menu, trigger, web app, custom function hoặc người dùng chạy trực tiếp. Đổi tên function public có thể làm trigger hoặc công thức sheet hỏng.
+
+### Có nên tạo validators.js không?
+
+Có nếu project dùng JSON output hoặc enum như sentiment, tag, priority. Validator riêng giúp tránh ghi dữ liệu AI sai vào Sheets.
+
+## Tóm tắt và bước tiếp theo
+
+Cấu trúc project rõ giúp AI-assisted development an toàn hơn. Entry point nên mỏng, helper nên rõ trách nhiệm, prompt nên tách riêng và dữ liệu Sheets nên được map thành object. Bài tiếp theo sẽ học JSDoc và type hints để AI hiểu dữ liệu Apps Script chính xác hơn.

@@ -1,0 +1,198 @@
+---
+title: "Tóm tắt dữ liệu Google Sheets bằng AI Apps Script"
+description: "Học cách đọc dữ liệu Sheets, tạo prompt tóm tắt theo batch và ghi kết quả AI trở lại Google Sheets."
+slug: "tom-tat-du-lieu-sheets-bang-ai"
+course: "ai-apps-script"
+order: 19
+duration: "23 phút"
+difficulty: "Trung bình"
+keywords: ["tóm tắt Google Sheets bằng AI", "AI Sheets Apps Script", "summarize Sheets Apps Script", "Gemini Google Sheets", "AI automation Sheets"]
+publishedAt: "2026-06-09"
+---
+
+## Tóm tắt dữ liệu Sheets bằng AI như thế nào?
+
+Để tóm tắt dữ liệu Google Sheets bằng AI, bạn đọc dữ liệu bằng `getValues()`, lọc các dòng cần xử lý, tạo prompt theo batch nhỏ, gọi AI một lần cho nhóm dữ liệu, rồi ghi summary vào sheet báo cáo hoặc cột kết quả. Không nên gửi toàn bộ spreadsheet nếu chỉ cần vài cột.
+
+Đây là use case thực tế vì nhiều team lưu feedback, ticket, ghi chú bán hàng hoặc câu trả lời form trong Sheets. AI có thể giúp biến nhiều dòng text rời rạc thành insight ngắn: vấn đề lặp lại, yêu cầu tính năng, cảm xúc khách hàng hoặc việc cần ưu tiên.
+
+## Mental model: đọc, lọc, tóm tắt, ghi trạng thái
+
+Workflow tóm tắt tốt nên đi theo luồng:
+
+- Đọc sheet bằng batch `getValues()`.
+- Map row thành object có `rowNumber`.
+- Lọc dòng `Status = pending` và message không rỗng.
+- Giới hạn số dòng mỗi lần chạy.
+- Build prompt chỉ chứa dữ liệu cần tóm tắt.
+- Gọi AI bằng wrapper.
+- Ghi summary vào sheet `Report`.
+- Cập nhật status các dòng đã xử lý.
+
+Luồng này khác custom function ở bài trước: bạn chủ động điều khiển số dòng, trạng thái, log và retry.
+
+## Đọc feedback cần tóm tắt
+
+Giả sử sheet `Feedback` có cột `Customer`, `Message`, `Status`, `ProcessedAt`, `Error`. Function đọc dữ liệu nên giữ `rowNumber` để ghi trạng thái đúng dòng.
+
+```javascript
+function readPendingFeedback(maxRows) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Feedback');
+  if (!sheet) throw new Error('Missing sheet: Feedback');
+
+  const values = sheet.getDataRange().getValues();
+  const rows = values.slice(1).map(function (row, index) {
+    return {
+      rowNumber: index + 2,
+      customer: String(row[0] || ''),
+      message: String(row[1] || ''),
+      status: String(row[2] || '').toLowerCase(),
+    };
+  });
+
+  return rows.filter(function (item) {
+    return item.status === 'pending' && item.message;
+  }).slice(0, maxRows || 20);
+}
+```
+
+Ở bước tóm tắt insight, thường không cần gửi tên khách hàng cho AI. Bạn có thể giữ `customer` trong object để debug nội bộ, nhưng prompt chỉ dùng `message`.
+
+## Tạo prompt tóm tắt batch
+
+Batch prompt giúp giảm số lần gọi AI. Tuy nhiên batch quá lớn làm prompt dài và summary dễ thiếu ý, nên hãy bắt đầu với 10 đến 20 dòng.
+
+```javascript
+function buildFeedbackSummaryPrompt(items) {
+  const lines = items.map(function (item, index) {
+    return (index + 1) + '. ' + String(item.message).slice(0, 500);
+  }).join('\n');
+
+  return [
+    'Summarize the customer feedback messages below in Vietnamese.',
+    'Return exactly 5 concise bullet points about common themes.',
+    'Do not include customer names, emails, or personal identifiers.',
+    'If there are action items, include them in the bullets.',
+    '',
+    lines,
+  ].join('\n');
+}
+```
+
+Prompt này yêu cầu summary tổng hợp, không yêu cầu kết quả riêng từng dòng. Nếu bạn cần summary cho từng dòng, cấu trúc output phải khác và nên dùng JSON có id.
+
+## Ghi tóm tắt vào sheet Report
+
+Sheet `Report` có thể lưu thời gian chạy, số dòng, prompt version và summary. Điều này giúp bạn xem lại lịch sử insight.
+
+```javascript
+function appendSummaryReport(items, summary) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const report = ss.getSheetByName('Report') || ss.insertSheet('Report');
+
+  if (report.getLastRow() === 0) {
+    report.appendRow(['CreatedAt', 'ItemCount', 'PromptVersion', 'Summary']);
+  }
+
+  report.appendRow([
+    new Date(),
+    items.length,
+    'feedback-summary-v1',
+    summary,
+  ]);
+}
+```
+
+Tách function ghi report giúp job chính dễ đọc và dễ test từng phần.
+
+## Job tóm tắt hoàn chỉnh
+
+Job chính sẽ đọc pending feedback, build prompt, gọi AI, ghi report và cập nhật trạng thái.
+
+```javascript
+function summarizeFeedbackJob() {
+  const maxRows = Number(PropertiesService.getScriptProperties().getProperty('MAX_ROWS_PER_RUN') || 20);
+  const items = readPendingFeedback(maxRows);
+
+  if (items.length === 0) {
+    console.log({ message: 'No pending feedback to summarize' });
+    return;
+  }
+
+  const prompt = buildFeedbackSummaryPrompt(items);
+  const summary = generateAiText(prompt, { temperature: 0.2 }).trim();
+
+  if (!summary) throw new Error('AI summary is empty');
+
+  appendSummaryReport(items, summary);
+  markFeedbackRowsDone(items);
+
+  console.log({
+    message: 'Feedback summary completed',
+    itemCount: items.length,
+  });
+}
+```
+
+Function `markFeedbackRowsDone` có thể cập nhật cột `Status` và `ProcessedAt` cho từng dòng hoặc batch. Với bài học này, cách đơn giản từng dòng dễ hiểu hơn.
+
+```javascript
+function markFeedbackRowsDone(items) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Feedback');
+  items.forEach(function (item) {
+    sheet.getRange(item.rowNumber, 3).setValue('done');
+    sheet.getRange(item.rowNumber, 4).setValue(new Date());
+    sheet.getRange(item.rowNumber, 5).setValue('');
+  });
+}
+```
+
+Với dữ liệu lớn, bạn có thể tối ưu batch update sau. Trước tiên hãy đảm bảo logic đúng và trạng thái rõ.
+
+## Biến thể thực tế
+
+Bạn có thể áp dụng cùng pattern cho nhiều loại dữ liệu:
+
+- Tóm tắt câu trả lời Google Forms sau một sự kiện.
+- Tóm tắt ticket support theo tuần.
+- Tóm tắt ghi chú sales call thành pain points.
+- Tóm tắt lỗi QA từ sheet bug report.
+- Tóm tắt ý kiến nội bộ từ khảo sát nhân viên.
+
+Điểm chung là chỉ gửi cột cần thiết cho AI và ghi kết quả vào nơi có cấu trúc.
+
+## Lỗi thường gặp khi tóm tắt Sheets
+
+- Gửi quá nhiều dòng trong một prompt.
+- Không lọc cột nhạy cảm như email, phone hoặc internal note.
+- Không giới hạn số dòng mỗi lần chạy.
+- Không lưu trạng thái đã tóm tắt, dẫn đến xử lý lặp.
+- Không validate summary rỗng.
+- Không ghi prompt version nên khó so sánh kết quả sau khi đổi prompt.
+- Dùng custom function cho workflow cần trạng thái batch.
+
+## Bài tập thực hành
+
+Tạo sheet `Feedback` với cột `Customer`, `Message`, `Status`, `ProcessedAt`, `Error` và sheet `Report`. Viết job đọc tối đa 10 feedback `pending`, gọi AI tóm tắt, ghi kết quả vào `Report`, sau đó cập nhật status các dòng đã xử lý. Thêm dry run nếu bạn chưa muốn ghi trạng thái thật.
+
+## Câu hỏi thường gặp về tóm tắt Sheets bằng AI
+
+### Nên tóm tắt từng dòng hay theo batch?
+
+Nếu cần kết quả riêng từng dòng, xử lý từng dòng hoặc yêu cầu JSON có id. Nếu cần insight tổng hợp, batch tiết kiệm request hơn và thường phù hợp hơn.
+
+### Có nên gửi tên khách hàng cho AI không?
+
+Chỉ khi thật sự cần. Với tóm tắt insight, thường chỉ cần nội dung feedback đã ẩn danh. Không gửi email, phone hoặc mã khách hàng nếu không dùng.
+
+### Làm sao tránh xử lý lặp?
+
+Dùng cột `Status`, `ProcessedAt` hoặc `SummaryId`. Chỉ đọc dòng `pending`, và sau khi thành công đổi sang `done`.
+
+### Nếu AI trả summary quá dài thì sao?
+
+Hãy ràng buộc trong prompt, ví dụ đúng 5 bullet ngắn. Bạn cũng có thể cắt summary khi ghi sheet, nhưng tốt hơn là prompt rõ và kiểm tra output rỗng/quá dài.
+
+## Tóm tắt và bước tiếp theo
+
+Tóm tắt Sheets bằng AI là use case thực tế và dễ triển khai nếu bạn đọc dữ liệu theo batch, lọc thông tin nhạy cảm, giới hạn số dòng và ghi trạng thái rõ ràng. Bài tiếp theo sẽ học phân loại sentiment và tag feedback bằng AI.

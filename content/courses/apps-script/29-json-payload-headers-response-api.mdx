@@ -1,0 +1,183 @@
+---
+title: "JSON, payload, headers và response khi gọi API bằng Apps Script"
+description: "Hiểu cách tạo JSON payload, gửi headers, đọc status code và xử lý lỗi API trong Apps Script."
+slug: "json-payload-headers-response-api"
+course: "apps-script"
+order: 29
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["JSON Apps Script", "payload UrlFetchApp", "headers Apps Script", "response code Apps Script", "xử lý API Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Khi Apps Script gọi API, ba thứ quyết định request có đúng hay không là JSON payload, headers và response. JSON là dữ liệu bạn gửi hoặc nhận, headers mô tả cách xác thực và định dạng, còn response code cho biết API thành công hay thất bại. Hiểu ba phần này giúp debug nhanh hơn rất nhiều.
+
+## Vì sao cần hiểu JSON, payload và headers?
+
+Nhiều lỗi API không nằm ở Apps Script mà nằm ở request gửi đi: payload chưa `JSON.stringify`, thiếu `Authorization`, content type không đúng, token hết hạn, hoặc response lỗi nhưng code vẫn parse như thành công. Nếu bạn chỉ nhìn dòng `UrlFetchApp.fetch()` mà không tách từng phần, việc debug rất mù mờ.
+
+Mô hình tư duy nên dùng là “hồ sơ request”. Một request có method, URL, headers, payload. API trả về response có status code và body. Code tốt không chỉ gửi request, mà còn kiểm tra token, xây payload rõ ràng, bật `muteHttpExceptions`, đọc status code, parse body an toàn và log đủ thông tin không nhạy cảm.
+
+## JSON.stringify và JSON.parse
+
+Object JavaScript không tự biến thành JSON khi gửi API dạng JSON. Bạn cần `JSON.stringify()` để chuyển object thành chuỗi. Khi API trả chuỗi JSON, bạn dùng `JSON.parse()` để chuyển lại thành object hoặc mảng.
+
+```javascript
+function jsonBasics() {
+  const task = {
+    title: 'Task from Apps Script',
+    priority: 2,
+    done: false,
+  };
+
+  const jsonText = JSON.stringify(task);
+  Logger.log(jsonText);
+
+  const parsed = JSON.parse(jsonText);
+  Logger.log(parsed.title);
+}
+```
+
+Điểm cần nhớ: JSON không chứa function, không chứa `Date` thật, không chứa undefined. Nếu object có `Date`, khi stringify nó thường thành chuỗi ISO. Khi parse lại, bạn cần tự chuyển về `new Date(value)` nếu cần xử lý như ngày.
+
+## Tạo request có token trong headers
+
+Nhiều API yêu cầu token trong header `Authorization`. Token nên lưu trong PropertiesService, không hardcode trong code. Trước khi gọi API, hãy kiểm tra token có tồn tại.
+
+```javascript
+function callApiWithToken() {
+  const token = PropertiesService.getScriptProperties().getProperty('API_TOKEN');
+
+  if (!token) {
+    throw new Error('Missing API token');
+  }
+
+  const payload = {
+    title: 'Task from Apps Script',
+    priority: 2,
+  };
+
+  const response = UrlFetchApp.fetch('https://api.example.com/tasks', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      Authorization: 'Bearer ' + token,
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+
+  Logger.log('Status: ' + response.getResponseCode());
+  Logger.log('Body: ' + response.getContentText());
+}
+```
+
+Nếu token sai hoặc hết hạn, API thường trả 401 hoặc 403. Nếu format sai, ví dụ thiếu chữ `Bearer`, API cũng có thể từ chối dù token đúng.
+
+## Xử lý response code rõ ràng
+
+Không nên parse JSON ngay lập tức và hy vọng mọi thứ thành công. Trước tiên hãy đọc status code. Nhóm 2xx thường là thành công, 4xx thường là lỗi request hoặc quyền, 5xx thường là lỗi phía server API.
+
+```javascript
+function parseApiResponse(response) {
+  const statusCode = response.getResponseCode();
+  const body = response.getContentText();
+
+  if (statusCode < 200 || statusCode >= 300) {
+    throw new Error('API error ' + statusCode + ': ' + body.slice(0, 500));
+  }
+
+  if (!body) {
+    return null;
+  }
+
+  return JSON.parse(body);
+}
+```
+
+Hàm này giới hạn body lỗi bằng `slice(0, 500)` để log không quá dài. Với dữ liệu nhạy cảm, bạn nên lọc thêm trước khi log.
+
+## Viết helper safeFetchJson tái sử dụng
+
+Khi dự án gọi nhiều API, hãy tạo helper chung để mọi request xử lý lỗi giống nhau.
+
+```javascript
+function safeFetchJson(url, options) {
+  const response = UrlFetchApp.fetch(url, Object.assign({}, options, {
+    muteHttpExceptions: true,
+  }));
+
+  const statusCode = response.getResponseCode();
+  const body = response.getContentText();
+
+  if (statusCode < 200 || statusCode >= 300) {
+    Logger.log('API failed with status ' + statusCode);
+    Logger.log('Body: ' + body.slice(0, 500));
+    throw new Error('API request failed');
+  }
+
+  return body ? JSON.parse(body) : null;
+}
+
+function createTaskWithHelper() {
+  const token = PropertiesService.getScriptProperties().getProperty('API_TOKEN');
+  const task = safeFetchJson('https://api.example.com/tasks', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      Authorization: 'Bearer ' + token,
+    },
+    payload: JSON.stringify({ title: 'New task', priority: 1 }),
+  });
+
+  Logger.log(task.id);
+}
+```
+
+Helper này giúp code nghiệp vụ gọn hơn. Function `createTaskWithHelper` chỉ cần quan tâm tạo task, còn lỗi HTTP đã được xử lý thống nhất.
+
+## Các loại dữ liệu request phổ biến
+
+- JSON: dùng `contentType: 'application/json'` và `JSON.stringify(payload)`.
+- Form data: một số API nhận payload object thay vì JSON string.
+- Query string: tham số nằm trong URL sau dấu `?`, ví dụ `?page=1`.
+- Headers: chứa authorization, accept, custom key hoặc metadata request.
+- File hoặc blob: dùng khi upload, thường phức tạp hơn và cần đọc tài liệu API kỹ.
+
+Khi không chắc API cần loại nào, hãy đọc tài liệu API. Đừng đoán content type vì sai content type là lỗi rất thường gặp.
+
+## Lỗi thường gặp khi xử lý API
+
+- Parse JSON khi response rỗng.
+- Không bật `muteHttpExceptions`, nên không đọc được body lỗi.
+- Gửi token sai format hoặc token rỗng.
+- Dùng content type không khớp với tài liệu API.
+- Log token hoặc secret khi debug.
+- Không giới hạn độ dài body lỗi trong log.
+- Không phân biệt lỗi 400, 401, 403, 429 và 500.
+
+## Bài tập thực hành
+
+Viết function `safeFetchJson(url, options)` như trên, nhưng bổ sung ghi log vào sheet `ApiLog` gồm `Time`, `Url`, `StatusCode`, `BodyPreview` khi request lỗi. Sau đó viết function `createTaskWithHelper()` gửi JSON payload tới một endpoint test. Yêu cầu không log token thật, chỉ log trạng thái token có tồn tại hay không.
+
+## Câu hỏi thường gặp về JSON và API
+
+### JSON.stringify dùng khi nào?
+
+Dùng khi bạn muốn biến object JavaScript thành chuỗi JSON để gửi trong payload cho API nhận JSON.
+
+### JSON.parse dùng khi nào?
+
+Dùng khi API trả chuỗi JSON và bạn muốn biến nó thành object hoặc mảng để xử lý trong Apps Script.
+
+### Có nên log headers không?
+
+Không log token hoặc secret. Nếu cần debug, chỉ log tên header hoặc log rằng token có tồn tại. Với production, log càng ít dữ liệu nhạy cảm càng tốt.
+
+### Response 204 có parse JSON được không?
+
+Không. 204 thường không có body. Code nên xử lý body rỗng và trả `null` thay vì gọi `JSON.parse('')`.
+
+## Tóm tắt và chuyển tiếp
+
+Hiểu JSON, payload, headers và response code giúp bạn gọi API an toàn, dễ debug và dễ tái sử dụng. Hãy stringify payload, kiểm tra token, bật `muteHttpExceptions`, xử lý status code và parse body có điều kiện. Bài tiếp theo sẽ quay lại giao diện người dùng với `HtmlService`, nơi bạn tạo sidebar, dialog và web app đơn giản cho Apps Script.

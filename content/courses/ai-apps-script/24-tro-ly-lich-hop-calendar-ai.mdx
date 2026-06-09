@@ -1,0 +1,164 @@
+---
+title: "Trợ lý lịch họp Google Calendar bằng AI Apps Script"
+description: "Học cách dùng CalendarApp và AI để tạo agenda, tóm tắt lịch họp và gợi ý follow-up."
+slug: "tro-ly-lich-hop-calendar-ai"
+course: "ai-apps-script"
+order: 24
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["Calendar AI Apps Script", "Google Calendar Apps Script AI", "tạo agenda bằng AI", "AI meeting assistant Apps Script", "CalendarApp AI"]
+publishedAt: "2026-06-09"
+---
+
+## Trợ lý Calendar AI làm gì?
+
+Trợ lý lịch họp Google Calendar bằng AI Apps Script đọc sự kiện sắp tới, gom tiêu đề, thời gian, mô tả và thông tin cần thiết, sau đó gọi AI để tạo agenda, câu hỏi chuẩn bị và follow-up gợi ý. Đây là automation hữu ích cho người có nhiều cuộc họp nhưng vẫn cần kiểm soát dữ liệu lịch và trigger gửi email.
+
+Điểm khác biệt của Calendar AI so với tóm tắt Docs là dữ liệu có yếu tố thời gian. Nếu sai timezone, sai ngày hoặc trigger chạy lặp, trợ lý có thể gửi agenda nhầm. Vì vậy bài này tập trung vào cách đọc event đúng khoảng thời gian, format event rõ ràng và gửi output ngắn gọn.
+
+## Mental model: calendar window và event context
+
+Khi làm việc với Calendar, bạn luôn cần xác định “cửa sổ thời gian” trước: hôm nay, ngày mai, tuần này hay 24 giờ tới. Sau đó lấy event trong cửa sổ đó, lọc event không cần thiết, chuẩn hóa thành text, rồi mới gọi AI.
+
+Một event thường có các field:
+
+- `title`: tên cuộc họp.
+- `start` và `end`: thời gian bắt đầu, kết thúc.
+- `description`: mô tả hoặc agenda sẵn có.
+- `location`: địa điểm hoặc link họp.
+- `guestCount`: số khách mời, nếu thật sự cần.
+
+Không mặc định gửi danh sách email khách mời cho AI. Với agenda cá nhân, tiêu đề, thời gian và mô tả thường đủ. Nếu cần phân tích stakeholder, hãy cân nhắc chính sách dữ liệu trước.
+
+## Đọc sự kiện trong ngày bằng CalendarApp
+
+`CalendarApp.getDefaultCalendar()` lấy lịch mặc định của user chạy script. `getEvents(start, end)` lấy event trong khoảng thời gian.
+
+```javascript
+function getTodayEvents() {
+  const calendar = CalendarApp.getDefaultCalendar();
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  return calendar.getEvents(start, end).map(function(event) {
+    return {
+      title: event.getTitle(),
+      start: event.getStartTime(),
+      end: event.getEndTime(),
+      description: event.getDescription(),
+      location: event.getLocation(),
+    };
+  });
+}
+```
+
+Apps Script dùng timezone của project. Hãy kiểm tra `Project Settings` nếu agenda gửi sai ngày. Với team nhiều quốc gia, nên format thời gian kèm timezone.
+
+## Format event trước khi đưa vào prompt
+
+Không nên đưa object JavaScript thẳng vào prompt. Hãy format thành dòng ngắn, nhất quán và loại bỏ dữ liệu không cần thiết.
+
+```javascript
+function formatEventForPrompt(event) {
+  const timezone = Session.getScriptTimeZone();
+  const start = Utilities.formatDate(event.start, timezone, 'yyyy-MM-dd HH:mm');
+  const end = Utilities.formatDate(event.end, timezone, 'HH:mm');
+  const description = String(event.description || 'No description').replace(/<[^>]+>/g, ' ');
+
+  return [
+    'Title: ' + event.title,
+    'Time: ' + start + ' - ' + end,
+    'Location: ' + (event.location || 'Not specified'),
+    'Description: ' + description.slice(0, 1000),
+  ].join('\n');
+}
+```
+
+Mô tả Calendar đôi khi chứa HTML hoặc link dài. Regex trong ví dụ chỉ làm sạch cơ bản; nếu event description phức tạp, bạn cần xử lý kỹ hơn.
+
+## Tạo prompt agenda và follow-up
+
+Prompt nên yêu cầu output có cấu trúc ngắn, vì agenda gửi email dài quá sẽ ít người đọc.
+
+```javascript
+function buildAgendaPrompt(events) {
+  const eventText = events.map(formatEventForPrompt).join('\n\n---\n\n');
+
+  return [
+    'Create a concise Vietnamese meeting preparation brief.',
+    'Return sections: Priority meetings, Preparation questions, Risks, Suggested follow-ups.',
+    'Do not invent participants or decisions.',
+    'Events:',
+    eventText,
+  ].join('\n');
+}
+```
+
+Nếu lịch có hơn 10 event, bạn có thể yêu cầu AI chỉ ưu tiên cuộc họp có mô tả rõ, thời lượng dài hoặc title chứa từ khóa như `review`, `planning`, `customer`, `interview`.
+
+## Ví dụ thực tế: gửi agenda qua email có DRY_RUN
+
+Function dưới đây gửi agenda cho user hiện tại. Trong giai đoạn test, `DRY_RUN` giúp log nội dung thay vì gửi email thật.
+
+```javascript
+function emailTodayAgenda() {
+  const DRY_RUN = true;
+  const events = getTodayEvents();
+
+  if (events.length === 0) {
+    console.log('No events today');
+    return;
+  }
+
+  const agenda = generateAiText(buildAgendaPrompt(events), { temperature: 0.2 });
+  const email = Session.getActiveUser().getEmail();
+  const subject = 'AI meeting agenda for today';
+
+  if (DRY_RUN) {
+    console.log({ email: email, subject: subject, agendaPreview: agenda.slice(0, 500) });
+    return;
+  }
+
+  MailApp.sendEmail(email, subject, agenda);
+}
+```
+
+Khi chuyển sang chạy thật, hãy tạo time-driven trigger một lần, ví dụ 7:30 mỗi sáng. Tránh viết code tự tạo trigger mỗi lần chạy nếu không kiểm tra trigger đã tồn tại.
+
+## Lỗi thường gặp với Calendar AI
+
+- Gửi mô tả event có dữ liệu nhạy cảm không cần thiết.
+- Không kiểm tra timezone, khiến agenda hôm nay thành agenda ngày khác.
+- Email agenda quá dài, thiếu ưu tiên và khó đọc.
+- Không xử lý ngày không có sự kiện.
+- Tạo trigger trùng, dẫn đến gửi nhiều email giống nhau.
+- Để AI tạo hoặc sửa event mà không validate ngày giờ.
+
+## Bài tập thực hành
+
+Viết function gửi agenda AI mỗi sáng cho lịch mặc định. Thêm `DRY_RUN` để log agenda khi test. Sau đó mở rộng function để bỏ qua event có title chứa `Focus time` hoặc `OOO`, và ghi số event đã xử lý vào sheet `CalendarAiLog`.
+
+## Câu hỏi thường gặp về Calendar AI
+
+### Có thể đọc lịch khác không?
+
+Có, dùng `CalendarApp.getCalendarById(calendarId)` nếu tài khoản chạy script có quyền. Với lịch team, hãy lưu `calendarId` trong PropertiesService thay vì hardcode trong nhiều file.
+
+### Có nên gửi danh sách khách mời cho AI không?
+
+Chỉ khi thật sự cần cho use case, ví dụ chuẩn bị stakeholder brief. Với agenda cá nhân, tiêu đề, mô tả và thời gian thường đủ và ít rủi ro dữ liệu hơn.
+
+### Có thể tạo event bằng AI không?
+
+Có, nhưng phải validate ngày giờ, timezone, người tham dự và confirmation. Không nên để AI tự tạo lịch production chỉ từ câu lệnh tự nhiên.
+
+### Làm sao tránh gửi agenda lặp?
+
+Kiểm tra trigger trùng, ghi log ngày đã gửi và chỉ gửi một lần cho mỗi ngày. Bạn có thể dùng `PropertiesService` lưu key như `agenda_sent_2026_06_09`.
+
+## Tóm tắt và bước tiếp theo
+
+Calendar AI giúp chuẩn bị họp tốt hơn nếu bạn kiểm soát cửa sổ thời gian, format event rõ và gửi output ngắn gọn. Bài tiếp theo sẽ tạo web app chat AI bằng HtmlService để người dùng tương tác trực tiếp với Apps Script thay vì chỉ nhận email tự động.

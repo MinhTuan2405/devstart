@@ -1,0 +1,143 @@
+---
+title: "Prompt refactor và debug code Apps Script bằng AI"
+description: "Học cách dùng AI để đọc lỗi, refactor code Apps Script, tối ưu Sheets và giữ hành vi cũ an toàn."
+slug: "prompt-refactor-debug-code-apps-script"
+course: "ai-apps-script"
+order: 5
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["debug Apps Script bằng AI", "refactor Apps Script bằng AI", "prompt debug Apps Script", "AI sửa lỗi Apps Script", "tối ưu Apps Script bằng AI"]
+publishedAt: "2026-06-09"
+---
+
+## Dùng AI debug Apps Script như thế nào?
+
+Để AI debug Apps Script hiệu quả, bạn cần đưa lỗi đầy đủ, đoạn code liên quan, dữ liệu mẫu, cách chạy function và kết quả mong đợi. Đừng chỉ gửi một dòng stack trace, vì AI sẽ phải đoán ngữ cảnh và có thể sửa sai chỗ đang hoạt động tốt.
+
+Debug bằng AI nên đi theo thứ tự: tái hiện lỗi, khoanh vùng nguyên nhân, đề xuất bản sửa tối thiểu, sau đó mới refactor nếu cần. Với Apps Script, điều này đặc biệt quan trọng vì lỗi có thể đến từ sheet không tồn tại, quyền OAuth, trigger chạy dưới user khác, quota, response API hoặc dữ liệu rỗng.
+
+## Prompt debug lỗi nên yêu cầu phân tích trước
+
+Khi gặp lỗi, hãy yêu cầu AI phân tích nguyên nhân có khả năng nhất trước khi sửa code. Prompt tốt nên có stack trace, function entry point, cách chạy và dữ liệu mẫu đã ẩn danh.
+
+```text
+Bạn là senior Apps Script engineer.
+Đây là lỗi: Cannot read properties of null (reading 'getRange')
+
+Function chạy bằng time-driven trigger: runClassifyFeedbackJob
+Code liên quan: [dán function đọc sheet và gọi getRange]
+Sheet thật cần dùng tên: Feedback
+Kỳ vọng: đọc các dòng Status = pending.
+
+Hãy làm theo thứ tự:
+1. Nêu 3 nguyên nhân có khả năng nhất
+2. Cách xác minh từng nguyên nhân trong Apps Script
+3. Bản sửa tối thiểu, không refactor toàn bộ
+4. Test case cần chạy lại
+```
+
+Cụm "bản sửa tối thiểu" rất quan trọng. Nếu lỗi là sheet sai tên, bạn không muốn AI viết lại cả project và thêm nhiều thay đổi không cần thiết.
+
+## Cách chuẩn bị log để AI phân tích
+
+Log tốt không phải log thật nhiều. Log tốt là log đủ ngữ cảnh nhưng không lộ secret hoặc dữ liệu nhạy cảm. Với AI Apps Script, bạn nên log job name, sheet name, số dòng, model, status code và lỗi parse, nhưng không log API key hoặc toàn bộ prompt chứa dữ liệu khách hàng.
+
+```javascript
+function logDebugContext(jobName, sheet, rows) {
+  console.log({
+    jobName: jobName,
+    sheetName: sheet ? sheet.getName() : 'missing-sheet',
+    rowCount: rows ? rows.length : 0,
+    time: new Date().toISOString(),
+  });
+}
+
+function maskForDebug(value) {
+  return String(value || '').slice(0, 80);
+}
+```
+
+Khi gửi log cho AI, hãy cắt ngắn nội dung dài và thay dữ liệu thật bằng dữ liệu mẫu. Nếu lỗi liên quan đến email khách hàng, hãy che email hoặc dùng email giả có cùng format.
+
+## Prompt refactor code chậm trong Google Sheets
+
+Refactor khác debug. Debug sửa lỗi đang xảy ra. Refactor cải thiện cấu trúc, hiệu năng hoặc khả năng bảo trì trong khi giữ hành vi cũ. Với Sheets, mục tiêu refactor phổ biến nhất là giảm số lần gọi `getValue`, `setValue`, `getRange` trong vòng lặp.
+
+```text
+Refactor code Apps Script này để chạy tốt hơn với 5.000 dòng trong Google Sheets.
+
+Ràng buộc:
+- Giữ nguyên hành vi đầu ra
+- Không đổi tên function public runSendReminderJob
+- Giảm số lần gọi getRange, getValue, setValue
+- Dùng getValues và setValues nếu phù hợp
+- Giữ DRY_RUN hiện có
+- Giải thích thay đổi chính và rủi ro còn lại
+```
+
+Sau khi AI trả code, đừng chạy ngay trên sheet thật. Hãy tạo bản copy nhỏ với 5 đến 10 dòng, chạy dry run, so sánh output với phiên bản cũ rồi mới chạy dữ liệu lớn.
+
+## Ví dụ guard khi sửa lỗi sheet thiếu
+
+Một bản sửa tối thiểu thường là thêm kiểm tra rõ ràng, không phải viết lại toàn bộ flow.
+
+```javascript
+function getRequiredSheet(sheetName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) {
+    throw new Error('Missing required sheet: ' + sheetName);
+  }
+  return sheet;
+}
+
+function readFeedbackRows() {
+  const sheet = getRequiredSheet('Feedback');
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) return [];
+  return values.slice(1);
+}
+```
+
+Thông báo lỗi `Missing required sheet: Feedback` tốt hơn nhiều so với `Cannot read properties of null`. Khi AI refactor, hãy ưu tiên lỗi rõ ràng như vậy.
+
+## Khi nào nên cho AI xem toàn bộ project?
+
+Nếu lỗi nằm trong một function độc lập, chỉ gửi function đó, stack trace và dữ liệu mẫu. Nếu lỗi liên quan đến wrapper AI, config, prompt template và job Sheets, hãy gửi các function liên quan theo thứ tự gọi. Không cần gửi toàn bộ project nếu phần còn lại không liên quan.
+
+Với dự án dùng clasp và VS Code, bạn có thể yêu cầu AI review diff thay vì toàn bộ code. Prompt nên nói: "Chỉ đánh giá thay đổi trong diff này, tìm bug và regression, không đề xuất rewrite lớn".
+
+## Lỗi thường gặp khi dùng AI debug
+
+- Gửi thiếu stack trace, line number hoặc tên function đang chạy.
+- Không nói function chạy thủ công, bằng menu, web app hay trigger.
+- Cho AI sửa nhiều vấn đề cùng lúc, khó biết thay đổi nào gây lỗi mới.
+- Không giữ bản code cũ để so sánh.
+- Không test lại edge cases sau khi sửa.
+- Dán API key, token hoặc dữ liệu khách hàng thật vào prompt debug.
+- Chấp nhận refactor lớn khi chỉ cần guard nhỏ.
+
+## Bài tập thực hành
+
+Tạo một lỗi cố ý bằng cách gọi sheet không tồn tại trong function đọc dữ liệu. Ghi lại stack trace, code liên quan và cách chạy. Viết prompt yêu cầu AI phân tích nguyên nhân, đề xuất bản sửa tối thiểu và tạo test case xác minh lỗi đã được sửa.
+
+## Câu hỏi thường gặp về AI debug
+
+### Có nên cho AI xem toàn bộ project không?
+
+Chỉ khi cần. Bắt đầu bằng function liên quan, stack trace, input mẫu và cách tái hiện. Nếu AI cần thêm context, bạn mới bổ sung file khác.
+
+### AI có thể debug trigger không?
+
+Có, nếu bạn nói rõ loại trigger, function entry point, user chạy trigger, thời điểm lỗi và log trong Executions dashboard. Trigger thường lỗi vì quyền, dữ liệu rỗng hoặc assumption khác với chạy thủ công.
+
+### Có nên áp dụng refactor lớn do AI đề xuất không?
+
+Không ngay. Hãy chia nhỏ refactor, test từng phần và giữ hành vi cũ ổn định. Với Apps Script, thay đổi lớn có thể làm hỏng trigger hoặc menu đang dùng.
+
+### Làm sao biết AI sửa đúng?
+
+Bạn cần test case. Ít nhất hãy chạy lại input gây lỗi, input bình thường và input rỗng. Nếu output giống kỳ vọng và log rõ hơn, bản sửa có cơ sở hơn.
+
+## Tóm tắt và bước tiếp theo
+
+AI debug tốt khi bạn cung cấp lỗi, ngữ cảnh, dữ liệu mẫu và giới hạn sửa rõ ràng. Hãy yêu cầu phân tích trước, bản sửa tối thiểu sau, rồi mới refactor. Bài tiếp theo sẽ thiết lập project AI Apps Script có cấu hình an toàn ngay từ đầu.

@@ -1,0 +1,181 @@
+---
+title: "Web app Apps Script với doGet và doPost"
+description: "Học cách tạo web app Apps Script bằng doGet, doPost, HtmlService và ContentService."
+slug: "web-app-doget-dopost-apps-script"
+course: "apps-script"
+order: 32
+duration: "23 phút"
+difficulty: "Trung bình"
+keywords: ["web app Apps Script", "doGet Apps Script", "doPost Apps Script", "HtmlService web app", "ContentService Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Web app Apps Script là một Apps Script project được deploy thành URL và phản hồi request HTTP bằng `doGet(e)` hoặc `doPost(e)`. `doGet` thường dùng để hiển thị trang hoặc trả dữ liệu đọc, còn `doPost` dùng để nhận dữ liệu gửi lên như form, webhook hoặc JSON từ hệ thống khác.
+
+## Web app Apps Script hoạt động như thế nào?
+
+Khi bạn deploy một Apps Script project dưới dạng web app, Google tạo cho bạn URL kết thúc bằng `/exec` cho bản chính thức và thường có URL `/dev` cho bản test. Mỗi lần có request đến URL đó, Apps Script tìm function đặc biệt tương ứng với HTTP method.
+
+Nếu trình duyệt mở URL bằng GET, Apps Script chạy `doGet(e)`. Nếu client gửi POST, Apps Script chạy `doPost(e)`. Cả hai function đều nhận event object `e`, chứa query string, tham số form, path info và body POST nếu có.
+
+Bạn cần phân biệt web app với sidebar/dialog. Sidebar thường chạy bên trong Google Sheets hoặc Docs và dùng `google.script.run`. Web app thì có URL riêng, có thể được mở bằng trình duyệt hoặc gọi từ hệ thống bên ngoài. Web app có thể trả HTML bằng `HtmlService` hoặc trả text/JSON bằng `ContentService`.
+
+## Cú pháp tối thiểu của doGet
+
+`doGet(e)` phải trả về một object output hợp lệ. Nếu bạn muốn hiển thị giao diện, dùng `HtmlService.createHtmlOutput`. Nếu chỉ muốn API text, dùng `ContentService.createTextOutput`.
+
+```javascript
+function doGet(e) {
+  const name = e.parameter.name || 'friend';
+  const html = '<h1>Hello ' + escapeHtml(name) + '</h1>' +
+    '<p>This page is served by Apps Script.</p>';
+
+  return HtmlService.createHtmlOutput(html)
+    .setTitle('Apps Script Web App');
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+```
+
+Nếu URL là `https://script.google.com/.../exec?name=Hoa`, `e.parameter.name` sẽ là `Hoa`. Hàm `escapeHtml` trong ví dụ giúp tránh chèn trực tiếp dữ liệu người dùng vào HTML, đặc biệt khi query có ký tự lạ.
+
+## Dùng HtmlService với file HTML riêng
+
+Với web app thật, bạn nên tách HTML ra file riêng thay vì ghép chuỗi dài trong `.gs`. Cách này dễ đọc, dễ sửa giao diện và có thể dùng template.
+
+```javascript
+function doGet(e) {
+  const template = HtmlService.createTemplateFromFile('Index');
+  template.pageTitle = 'Lead form';
+  template.defaultSource = e.parameter.source || 'direct';
+
+  return template.evaluate()
+    .setTitle('Lead form')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+```
+
+File `Index.html` có thể chứa form và JavaScript client. Nếu form gọi lại Apps Script cùng project, bạn có thể dùng `google.script.run`. Nếu form submit ra endpoint POST, bạn có thể gọi fetch đến URL web app, nhưng cần hiểu giới hạn CORS và deployment.
+
+## Nhận JSON bằng doPost
+
+`doPost(e)` thường dùng khi bạn muốn nhận webhook hoặc form submission. Dữ liệu POST nằm trong `e.postData.contents`. Với JSON, bạn phải tự `JSON.parse` và xử lý lỗi parse.
+
+```javascript
+function doPost(e) {
+  try {
+    const payload = parseJsonBody(e);
+    validateLead(payload);
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Webhook');
+    sheet.appendRow([
+      new Date(),
+      payload.email,
+      payload.event || 'lead.created',
+      payload.source || 'unknown',
+    ]);
+
+    return jsonResponse({ ok: true, received: payload.email });
+  } catch (error) {
+    return jsonResponse({ ok: false, message: error.message });
+  }
+}
+
+function parseJsonBody(e) {
+  if (!e.postData || !e.postData.contents) {
+    throw new Error('Missing request body');
+  }
+  return JSON.parse(e.postData.contents);
+}
+
+function validateLead(data) {
+  if (!data.email) {
+    throw new Error('Email is required');
+  }
+}
+
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+Ví dụ này cố tình trả JSON cả khi lỗi để client bên ngoài luôn nhận format ổn định. Trong dự án thật, bạn cũng nên kiểm tra token hoặc secret để tránh endpoint public bị spam.
+
+## Event object e gồm những gì?
+
+Mental model đơn giản là: GET đọc từ URL, POST đọc từ body. Trong Apps Script web app, object `e` thường có các phần sau:
+
+- `e.parameter`: mỗi key lấy một giá trị đầu tiên, tiện cho query đơn giản.
+- `e.parameters`: mỗi key là một mảng, dùng khi cùng key xuất hiện nhiều lần.
+- `e.queryString`: chuỗi query gốc sau dấu hỏi.
+- `e.postData.contents`: body POST dạng text.
+- `e.postData.type`: content type nếu request gửi lên có khai báo.
+- `e.pathInfo`: phần path bổ sung sau `/exec` hoặc `/dev` trong một số URL.
+
+Không phải field nào cũng luôn tồn tại. Code an toàn nên kiểm tra trước khi đọc sâu, đặc biệt với `e.postData`.
+
+## Ví dụ route nhỏ bằng query action
+
+Apps Script web app không có router như Express. Cách đơn giản là dùng query `action` để điều hướng logic.
+
+```javascript
+function doGet(e) {
+  const action = e.parameter.action || 'home';
+
+  if (action === 'status') {
+    return jsonResponse({ ok: true, service: 'lead-api' });
+  }
+
+  if (action === 'count') {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Webhook');
+    return jsonResponse({ rows: Math.max(sheet.getLastRow() - 1, 0) });
+  }
+
+  return HtmlService.createHtmlOutput('<h1>Lead API</h1><p>Use ?action=status</p>');
+}
+```
+
+Với dự án nhỏ, route bằng `action` đủ rõ. Nếu route bắt đầu nhiều và phức tạp, hãy cân nhắc tách function handler theo tên rõ ràng.
+
+## Lỗi thường gặp với doGet và doPost
+
+- Quên deploy hoặc quên cập nhật deployment sau khi sửa code.
+- Test URL `/dev` rồi gửi cho người không có quyền edit project.
+- Đọc `e.postData.contents` trong `doGet`, dẫn đến lỗi undefined.
+- Không bắt lỗi `JSON.parse`, khiến request hỏng trả về trang lỗi khó đọc.
+- Chọn quyền truy cập public nhưng không kiểm tra secret hoặc token.
+- Dùng tham số có tên reserved như `c` hoặc `sid`, có thể gây lỗi không rõ ràng.
+
+## Bài tập thực hành
+
+Tạo web app có `doGet(e)` trả HTML nếu không có query và trả JSON nếu `?action=status`. Thêm `doPost(e)` nhận JSON `{ email, source }`, validate email, ghi vào sheet `Webhook`, rồi trả `{ ok: true }`. Test bằng browser cho GET và bằng Postman, curl hoặc một công cụ gửi POST cho JSON.
+
+## Câu hỏi thường gặp về web app Apps Script
+
+### doGet và doPost khác gì nhau?
+
+`doGet` xử lý request GET, phù hợp để mở trang, đọc query hoặc trả dữ liệu công khai. `doPost` xử lý request POST, phù hợp để nhận dữ liệu gửi lên và thay đổi trạng thái như ghi sheet.
+
+### Web app có thể vừa trả HTML vừa trả JSON không?
+
+Có. Một project có thể dùng `HtmlService` cho trang chính và `ContentService` cho endpoint JSON. Bạn chỉ cần phân nhánh rõ trong `doGet` hoặc `doPost`.
+
+### Có nên dùng Apps Script làm backend sản phẩm lớn không?
+
+Không nên nếu tải cao hoặc yêu cầu API phức tạp. Apps Script rất tốt cho automation, công cụ nội bộ, prototype và workflow Google Workspace.
+
+### Vì sao doPost của tôi không nhận được dữ liệu?
+
+Hãy kiểm tra method có thật sự là POST không, content type là gì, body có rỗng không và deployment URL có đúng bản `/exec` mới nhất không.
+
+## Tóm tắt và bước tiếp theo
+
+Web app Apps Script xoay quanh `doGet`, `doPost`, `HtmlService` và `ContentService`. Bạn cần hiểu request đi vào function nào, dữ liệu nằm ở đâu trong object `e`, và output phải là HTML hoặc text hợp lệ. Bài tiếp theo sẽ đi sâu vào deploy web app, quyền truy cập và lựa chọn chạy dưới danh tính nào.

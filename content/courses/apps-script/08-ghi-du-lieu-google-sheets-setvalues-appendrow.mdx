@@ -1,0 +1,169 @@
+---
+title: "Ghi dữ liệu Google Sheets bằng appendRow và setValues"
+description: "Học cách ghi một dòng, ghi nhiều dòng và cập nhật dữ liệu Google Sheets hiệu quả bằng Apps Script."
+slug: "ghi-du-lieu-google-sheets-setvalues-appendrow"
+course: "apps-script"
+order: 8
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["appendRow Apps Script", "setValues Apps Script", "ghi dữ liệu Google Sheets Apps Script", "Apps Script Sheets", "cập nhật Google Sheets bằng Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Ghi dữ liệu vào Google Sheets bằng Apps Script như thế nào?
+
+Để ghi dữ liệu vào Google Sheets, bạn có thể dùng `appendRow()` cho một dòng đơn giản hoặc `setValues()` cho nhiều ô cùng lúc. Khi dữ liệu lớn, `setValues()` là lựa chọn tốt hơn vì giảm số lần gọi service và giúp script chạy nhanh hơn.
+
+Đọc dữ liệu giúp automation hiểu tình trạng hiện tại, còn ghi dữ liệu tạo ra kết quả. Bạn có thể ghi log đơn hàng mới, tạo báo cáo, cập nhật trạng thái, điền ngày hoàn thành, hoặc xuất dữ liệu đã xử lý sang một sheet khác.
+
+## Mô hình dữ liệu khi ghi vào Sheets
+
+Khi ghi dữ liệu, hãy luôn nghĩ theo hình dạng của range. Một dòng là mảng một chiều. Nhiều dòng là mảng hai chiều. `appendRow()` nhận một mảng một chiều vì nó thêm đúng một dòng. `setValues()` nhận mảng hai chiều vì nó ghi vào một vùng nhiều ô.
+
+```javascript
+function appendNewLead() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const lead = ['An', 'an@example.com', 'Free trial', new Date()];
+
+  sheet.appendRow(lead);
+}
+```
+
+Mỗi phần tử trong mảng tương ứng với một cột. Phần tử đầu tiên vào cột A, phần tử thứ hai vào cột B. `appendRow()` tự tìm dòng trống tiếp theo ở cuối sheet.
+
+## Ghi nhiều dòng bằng setValues
+
+Khi cần ghi báo cáo nhiều dòng, hãy chuẩn bị mảng hai chiều rồi ghi một lần bằng `setValues()`. Đây là cách nên dùng cho dữ liệu nhiều dòng vì nhanh và ổn định hơn gọi `appendRow()` trong vòng lặp.
+
+```javascript
+function writeWeeklyReport() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Report');
+  const rows = [
+    ['Metric', 'Value'],
+    ['New leads', 24],
+    ['Paid orders', 12],
+    ['Revenue', 5800000],
+  ];
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+}
+```
+
+Điều kiện quan trọng: kích thước mảng phải khớp với kích thước range. Nếu range có 4 dòng 2 cột, mảng cũng phải có 4 dòng và mỗi dòng có 2 phần tử.
+
+## Ghi dữ liệu mới sau dòng cuối
+
+Nếu bạn muốn thêm nhiều dòng mới vào cuối sheet, đừng dùng `appendRow()` hàng trăm lần. Hãy lấy dòng cuối, tạo range bắt đầu từ dòng tiếp theo, rồi `setValues()` một lần.
+
+```javascript
+function appendManyOrders() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Orders');
+  const newRows = [
+    ['A001', 'An', 120000, 'paid'],
+    ['A002', 'Binh', 90000, 'pending'],
+    ['A003', 'Chi', 300000, 'paid'],
+  ];
+
+  const startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 1, newRows.length, newRows[0].length).setValues(newRows);
+}
+```
+
+Pattern này rất hữu ích khi bạn nhận dữ liệu từ API, Google Forms hoặc một sheet khác. Bạn gom dữ liệu thành mảng hai chiều rồi ghi một lần.
+
+## Cập nhật một ô hoặc một cột
+
+Không phải lúc nào cũng cần ghi cả bảng. Nếu chỉ muốn đánh dấu thời gian xử lý, bạn có thể dùng `setValue()` cho một ô. Nếu muốn cập nhật một cột cho nhiều dòng, dùng `setValues()` với mảng hai chiều một cột.
+
+```javascript
+function markRowsAsProcessed() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Orders');
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow < 2) return;
+
+  const processedValues = [];
+  for (let i = 2; i <= lastRow; i++) {
+    processedValues.push(['processed']);
+  }
+
+  sheet.getRange(2, 5, processedValues.length, 1).setValues(processedValues);
+}
+```
+
+Chú ý `processedValues` là mảng hai chiều: mỗi dòng là `['processed']`, không phải chỉ là chuỗi `processed`.
+
+## Ghi công thức vào Sheets
+
+Bạn có thể ghi công thức bằng chuỗi bắt đầu với dấu `=`. Cách này hữu ích khi bạn muốn người dùng vẫn nhìn thấy và chỉnh sửa công thức trong sheet.
+
+```javascript
+function writeFormulaExample() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+
+  sheet.getRange('A1:C1').setValues([['Price', 'Quantity', 'Total']]);
+  sheet.getRange('A2:B2').setValues([[50000, 3]]);
+  sheet.getRange('C2').setValue('=A2*B2');
+}
+```
+
+Nếu cần ghi nhiều công thức, có thể dùng `setFormulas()` hoặc `setValues()` với chuỗi công thức, tùy tình huống.
+
+## Khi nào dùng appendRow và setValues?
+
+- Dùng `appendRow()` khi thêm một dòng riêng lẻ, ví dụ log một sự kiện hoặc tạo một record thủ công.
+- Dùng `setValues()` khi ghi nhiều dòng, nhiều cột hoặc cập nhật báo cáo.
+- Dùng `setValue()` khi chỉ ghi đúng một ô.
+- Tránh gọi `appendRow()` hoặc `setValue()` nhiều lần trong vòng lặp lớn nếu có thể gom dữ liệu.
+
+## Lỗi thường gặp khi ghi dữ liệu
+
+- Mảng truyền vào `setValues()` không phải mảng hai chiều.
+- Số cột trong mảng không khớp với số cột của range.
+- Ghi đè dữ liệu cũ vì chọn sai dòng bắt đầu.
+- Quên kiểm tra sheet có tồn tại trước khi ghi.
+- Ghi từng ô bằng `setValue()` trong vòng lặp lớn khiến script chậm.
+- Dùng `clear()` khi chỉ muốn xóa nội dung, làm mất cả định dạng và validation.
+
+## Bài tập thực hành
+
+Tạo sheet `Report`. Viết function ghi bảng gồm ba cột `Date`, `Metric`, `Value` với ít nhất năm dòng dữ liệu. Sau đó sửa function để xóa nội dung cũ trước khi ghi báo cáo mới, nhưng không xóa định dạng.
+
+```javascript
+function practiceWriteReport() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Report');
+  const rows = [
+    ['Date', 'Metric', 'Value'],
+    [new Date(), 'Leads', 10],
+    [new Date(), 'Orders', 4],
+  ];
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+}
+```
+
+Nâng cao nhẹ: thêm cột `Note` và cập nhật lại range để tránh lỗi lệch số cột.
+
+## Câu hỏi thường gặp về ghi dữ liệu Sheets
+
+### setValue và setValues khác gì nhau?
+
+`setValue()` ghi một ô. `setValues()` ghi một vùng nhiều ô bằng mảng hai chiều. Nếu bạn ghi dữ liệu bảng, gần như luôn cần `setValues()`.
+
+### appendRow có chậm không?
+
+Không đáng kể với vài dòng. Nhưng với nhiều dòng, gom dữ liệu và dùng `setValues()` thường nhanh hơn vì giảm số lần gọi service Google Sheets.
+
+### Có thể ghi công thức không?
+
+Có. Bạn có thể ghi chuỗi bắt đầu bằng `=` vào ô, hoặc dùng `setFormula()` và `setFormulas()`. Hãy đảm bảo công thức dùng đúng dấu phân tách theo locale của sheet.
+
+### Làm sao tránh ghi đè dữ liệu cũ?
+
+Hãy xác định rõ dòng bắt đầu. Nếu thêm mới, dùng `sheet.getLastRow() + 1`. Nếu tạo báo cáo mới, có thể `clearContents()` vùng báo cáo trước rồi ghi lại.
+
+## Tóm tắt
+
+Ghi dữ liệu hiệu quả là nền tảng để xây dựng báo cáo và automation thực tế. Bạn đã biết dùng `appendRow()`, `setValue()`, `setValues()`, ghi nhiều dòng và tránh lỗi kích thước range. Bài tiếp theo sẽ đi sâu hơn vào `Range`, `Sheet` và `Spreadsheet` để quản lý vùng dữ liệu chính xác hơn.

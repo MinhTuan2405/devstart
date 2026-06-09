@@ -1,0 +1,167 @@
+---
+title: "Vertex AI với Apps Script cho tích hợp AI nâng cao"
+description: "Học khi nào dùng Vertex AI trong Apps Script, cách bật dịch vụ nâng cao và lưu ý Google Cloud/IAM."
+slug: "vertex-ai-advanced-service-apps-script"
+course: "ai-apps-script"
+order: 29
+duration: "24 phút"
+difficulty: "Khó"
+keywords: ["Vertex AI Apps Script", "Advanced Google Services Vertex AI", "Gemini Vertex AI Apps Script", "Google Cloud AI Apps Script", "AI doanh nghiệp Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Khi nào dùng Vertex AI với Apps Script?
+
+Vertex AI phù hợp khi dự án AI Apps Script cần quản trị bằng Google Cloud: IAM, billing, audit log, model access, region, policy dữ liệu và kiểm soát theo tổ chức. So với API key đơn giản, Vertex AI nhiều bước setup hơn, nhưng phù hợp hơn cho môi trường doanh nghiệp hoặc team đã chuẩn hóa trên Google Cloud.
+
+Nếu bạn chỉ làm prototype cá nhân, Gemini API hoặc OpenAI API qua key có thể nhanh hơn. Nếu automation đọc tài liệu nội bộ, chạy cho nhiều user, cần phân quyền và theo dõi chi phí theo Cloud project, Vertex AI đáng cân nhắc.
+
+## Mental model: Apps Script gọi Google Cloud bằng OAuth
+
+Apps Script có thể gọi API Google Cloud bằng `UrlFetchApp` và OAuth token từ `ScriptApp.getOAuthToken()`, miễn là project, scope và IAM đúng. Đây không phải “copy API key vào script”, mà là dùng danh tính Google và quyền IAM để truy cập Vertex AI.
+
+Bạn cần hiểu 5 thành phần:
+
+- Google Cloud project liên kết với Apps Script.
+- Vertex AI API đã bật.
+- Billing và quota hợp lệ.
+- IAM role cho user hoặc service identity chạy script.
+- OAuth scope trong manifest nếu cần gọi Cloud Platform API.
+
+Sai một trong các phần này thường dẫn đến lỗi 401, 403 hoặc 404 dù code trông đúng.
+
+## Cấu hình Vertex AI cần chuẩn bị
+
+Lưu project, location và model trong PropertiesService để dễ đổi giữa dev/prod.
+
+```javascript
+function saveVertexConfig() {
+  PropertiesService.getScriptProperties().setProperties({
+    AI_PROVIDER: 'vertex',
+    VERTEX_PROJECT_ID: 'your-project-id',
+    VERTEX_LOCATION: 'us-central1',
+    VERTEX_MODEL: 'gemini-2.5-flash',
+  });
+}
+```
+
+Không hardcode project production trong nhiều function. Khi có môi trường dev và prod, mỗi Apps Script project nên có properties riêng.
+
+## Scope trong appsscript.json
+
+Nếu gọi Google Cloud API qua OAuth token, manifest có thể cần scope Cloud Platform. Hãy chỉ thêm scope cần thiết và để người dùng/admin hiểu quyền đang cấp.
+
+```json
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "exceptionLogging": "STACKDRIVER",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/cloud-platform"
+  ]
+}
+```
+
+Sau khi đổi scope, Apps Script thường yêu cầu authorize lại. Nếu user không có quyền IAM trên Cloud project, authorize thành công vẫn chưa đủ để gọi Vertex AI.
+
+## Gọi Vertex AI endpoint bằng UrlFetchApp
+
+Endpoint cụ thể phụ thuộc API version, region và model. Ví dụ dưới đây minh họa pattern gọi Gemini model qua Vertex AI REST.
+
+```javascript
+function callVertexGeminiText(prompt, options) {
+  const props = PropertiesService.getScriptProperties();
+  const projectId = props.getProperty('VERTEX_PROJECT_ID');
+  const location = props.getProperty('VERTEX_LOCATION') || 'us-central1';
+  const model = props.getProperty('VERTEX_MODEL') || 'gemini-2.5-flash';
+
+  if (!projectId) throw new Error('Missing VERTEX_PROJECT_ID');
+
+  const url = 'https://' + location + '-aiplatform.googleapis.com/v1/projects/' +
+    projectId + '/locations/' + location + '/publishers/google/models/' +
+    model + ':generateContent';
+
+  const payload = {
+    contents: [{ role: 'user', parts: [{ text: String(prompt || '') }] }],
+    generationConfig: {
+      temperature: options && options.temperature !== undefined ? options.temperature : 0.3,
+    },
+  };
+
+  const response = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+
+  return parseVertexGeminiResponse(response);
+}
+```
+
+Nếu nhận lỗi 403, đừng sửa prompt trước. Hãy kiểm tra IAM, project liên kết, billing và API đã bật.
+
+## Parser response Vertex Gemini
+
+Response có thể có nhiều candidate. Parser tối thiểu nên kiểm tra status code và lấy text từ candidate đầu tiên.
+
+```javascript
+function parseVertexGeminiResponse(response) {
+  const code = response.getResponseCode();
+  const body = response.getContentText();
+
+  if (code < 200 || code >= 300) {
+    throw new Error('Vertex AI failed with status ' + code);
+  }
+
+  const data = JSON.parse(body);
+  const parts = data.candidates &&
+    data.candidates[0] &&
+    data.candidates[0].content &&
+    data.candidates[0].content.parts;
+
+  if (!parts || !parts.length) {
+    throw new Error('Vertex AI response did not include text');
+  }
+
+  return parts.map(function(part) { return part.text || ''; }).join('');
+}
+```
+
+Không log toàn bộ body lỗi nếu prompt chứa dữ liệu nội bộ. Log status code, provider, model, job name và request id nếu có là an toàn hơn.
+
+## Lỗi thường gặp với Vertex AI
+
+- Chưa bật Vertex AI API hoặc billing trên Cloud project.
+- Token thiếu scope `cloud-platform` hoặc script chưa authorize lại.
+- Apps Script chưa liên kết đúng standard Google Cloud project.
+- User chạy script không có IAM role phù hợp.
+- Nhầm location hoặc model ID, dẫn đến 404.
+- Dùng project dev nhưng tưởng đang gọi quota/billing của prod.
+
+## Bài tập thực hành
+
+Không cần gọi API thật ngay. Hãy tạo checklist Vertex AI setup cho dự án của bạn gồm: project ID, location, model, Apps Script project liên kết, OAuth scopes, IAM role, billing, môi trường dev/prod và cách log lỗi. Nếu có quyền Cloud, thử gọi một prompt ngắn và ghi status vào sheet `AiUsageLog`.
+
+## Câu hỏi thường gặp về Vertex AI Apps Script
+
+### Vertex AI có khó hơn Gemini API không?
+
+Có nhiều bước setup hơn vì liên quan Google Cloud, IAM và billing. Đổi lại, nó phù hợp hơn khi tổ chức cần governance, audit và kiểm soát quyền theo project.
+
+### Có nên dùng service account key trong Apps Script không?
+
+Không khuyến khích cho production nếu có lựa chọn an toàn hơn. Service account key là secret mạnh, nếu lưu sai chỗ sẽ rất rủi ro. Ưu tiên OAuth/IAM hoặc backend proxy.
+
+### Có cần Vertex AI cho mọi dự án AI Apps Script không?
+
+Không. Project nhỏ, học tập hoặc prototype có thể bắt đầu với Gemini API hoặc provider đơn giản hơn. Vertex AI phù hợp khi yêu cầu vận hành và bảo mật tăng lên.
+
+### Advanced Google Services có bắt buộc không?
+
+Không nhất thiết. Bạn có thể gọi REST bằng `UrlFetchApp` và OAuth token. Điều quan trọng là endpoint, scope, IAM và Cloud project phải đúng.
+
+## Tóm tắt và bước tiếp theo
+
+Vertex AI đưa AI Apps Script vào mô hình quản trị Google Cloud với IAM, billing và audit rõ hơn. Bù lại, setup phức tạp hơn API key. Bài tiếp theo học Cloud Run proxy, một kiến trúc giúp bảo vệ AI key, rate limit và logging tập trung tốt hơn khi Apps Script đi vào production.

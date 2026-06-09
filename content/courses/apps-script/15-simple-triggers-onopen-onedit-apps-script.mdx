@@ -1,0 +1,168 @@
+---
+title: "Simple triggers onOpen và onEdit trong Apps Script"
+description: "Học simple triggers trong Apps Script, gồm onOpen, onEdit và các giới hạn quan trọng khi tự động chạy hàm."
+slug: "simple-triggers-onopen-onedit-apps-script"
+course: "apps-script"
+order: 15
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["simple trigger Apps Script", "onOpen Apps Script", "onEdit Apps Script", "trigger Google Sheets", "Apps Script tự động chạy"]
+publishedAt: "2026-06-09"
+---
+
+## Simple trigger trong Apps Script là gì?
+
+Simple trigger là function có tên đặc biệt được Apps Script tự chạy khi có sự kiện như mở file hoặc chỉnh sửa ô. Hai trigger phổ biến nhất trong Google Sheets là `onOpen(e)` và `onEdit(e)`, giúp automation phản ứng ngay với thao tác của người dùng.
+
+Khác với việc bấm Run thủ công, simple trigger chạy tự động theo ngữ cảnh của file. Bạn chỉ cần đặt đúng tên function trong bound script. Apps Script sẽ gọi function khi sự kiện tương ứng xảy ra. Đây là bước đầu để chuyển từ script thủ công sang automation thật.
+
+## onOpen dùng để chuẩn bị giao diện
+
+`onOpen` chạy khi người dùng mở file spreadsheet. Ứng dụng phổ biến nhất là tạo custom menu, vì menu cần được thêm lại mỗi lần file mở.
+
+```javascript
+function onOpen(e) {
+  SpreadsheetApp.getUi()
+    .createMenu('Tools')
+    .addItem('Update report', 'updateReport')
+    .addToUi();
+}
+
+function updateReport() {
+  SpreadsheetApp.getActiveSheet().getRange('A1').setValue('Updated at ' + new Date());
+}
+```
+
+Trong nhiều project Sheets, `onOpen` là nơi chuẩn bị giao diện cho người dùng: menu, thông báo hướng dẫn hoặc kiểm tra cấu hình nhẹ. Không nên đặt tác vụ nặng trong `onOpen` vì người dùng chỉ đang mở file và chờ giao diện sẵn sàng.
+
+## onEdit dùng để phản ứng khi sửa ô
+
+`onEdit(e)` nhận event object chứa thông tin range được sửa, giá trị mới và một số ngữ cảnh liên quan. Bạn nên dùng `e.range` thay vì `getActiveRange()` vì event object cho biết chính xác ô gây ra sự kiện.
+
+```javascript
+function onEdit(e) {
+  if (!e) return;
+
+  const range = e.range;
+  const sheet = range.getSheet();
+
+  if (sheet.getName() !== 'Tasks') return;
+  if (range.getColumn() !== 3) return;
+  if (range.getRow() === 1) return;
+
+  const status = e.value;
+  if (status === 'done') {
+    sheet.getRange(range.getRow(), 4).setValue(new Date());
+  }
+}
+```
+
+Ví dụ này tự ghi ngày hoàn thành vào cột D khi cột C được đổi thành `done`. Các dòng `return` đầu hàm rất quan trọng: chúng giới hạn trigger chỉ chạy trên sheet `Tasks`, cột Status và không chạy trên header.
+
+## Mô hình event object
+
+Event object là dữ liệu Apps Script truyền vào trigger. Với `onEdit(e)`, bạn thường dùng `e.range`, `e.value`, đôi khi `e.oldValue`. Không phải lúc nào `e.value` cũng tồn tại, ví dụ khi người dùng xóa ô hoặc paste nhiều ô.
+
+```javascript
+function onEdit(e) {
+  if (!e || !e.range) {
+    Logger.log('No edit event');
+    return;
+  }
+
+  Logger.log('Sheet: ' + e.range.getSheet().getName());
+  Logger.log('Cell: ' + e.range.getA1Notation());
+  Logger.log('Value: ' + e.value);
+  Logger.log('Old value: ' + e.oldValue);
+}
+```
+
+Bạn không nên bấm Run trực tiếp function `onEdit` trong editor để test, vì editor không tự tạo event object. Hãy sửa ô thật trong sheet hoặc tách logic sang function khác để test riêng.
+
+## Tách logic để dễ test
+
+Một cách viết tốt là để `onEdit(e)` chỉ kiểm tra sự kiện và gọi function xử lý. Function xử lý nhận tham số rõ ràng, dễ test hơn.
+
+```javascript
+function onEdit(e) {
+  if (!e) return;
+
+  const range = e.range;
+  const sheet = range.getSheet();
+
+  if (sheet.getName() !== 'Tasks') return;
+  if (range.getColumn() !== 3 || range.getRow() === 1) return;
+
+  markCompletedAt(sheet, range.getRow(), e.value);
+}
+
+function markCompletedAt(sheet, row, status) {
+  if (status === 'done') {
+    sheet.getRange(row, 4).setValue(new Date());
+    return;
+  }
+
+  if (status === 'todo' || status === 'doing') {
+    sheet.getRange(row, 4).clearContent();
+  }
+}
+```
+
+Pattern này giúp code dễ đọc hơn: trigger lo kiểm tra sự kiện, function phụ lo nghiệp vụ. Khi logic lớn dần, cách tách này rất quan trọng.
+
+## Giới hạn của simple trigger
+
+Simple trigger tiện nhưng có giới hạn. Nó không phù hợp cho tác vụ cần quyền nâng cao như gửi email đến người khác, có thời gian chạy ngắn hơn, không nên dùng cho logic quá nặng, và có thể không chạy trong một số thay đổi do script tạo ra.
+
+Nếu cần chạy theo giờ, gửi email ổn định, gọi API ngoài hoặc chạy với quyền linh hoạt hơn, bạn sẽ dùng installable trigger. Simple trigger phù hợp cho tác vụ nhẹ, phản hồi nhanh, gần với thao tác người dùng trong file.
+
+## Lỗi thường gặp với simple trigger
+
+- Bấm Run trực tiếp `onEdit` trong editor nhưng không truyền event object.
+- Quên kiểm tra tên sheet và cột nên trigger chạy trên mọi chỉnh sửa.
+- Gửi email trong simple trigger rồi gặp lỗi quyền.
+- Viết logic quá dài khiến trigger chậm.
+- Không xử lý trường hợp người dùng xóa ô, khi `e.value` có thể không như mong đợi.
+- Paste nhiều ô cùng lúc nhưng code chỉ giả định một ô được sửa.
+
+## Bài tập thực hành
+
+Tạo sheet `Tasks` với cột `Task`, `Owner`, `Status`, `CompletedAt`. Viết `onEdit(e)` để khi cột `Status` đổi thành `done`, cột `CompletedAt` cùng dòng được ghi thời gian hiện tại. Nếu status đổi lại thành `todo`, xóa thời gian hoàn thành.
+
+```javascript
+function onEdit(e) {
+  if (!e) return;
+
+  const range = e.range;
+  const sheet = range.getSheet();
+
+  if (sheet.getName() !== 'Tasks') return;
+  if (range.getColumn() !== 3) return;
+
+  Logger.log('Edited status: ' + e.value);
+}
+```
+
+Hoàn thiện bài bằng cách kiểm tra dòng header, ghi `new Date()` vào cột 4 khi status là `done`, và dùng `clearContent()` khi status không còn là `done`.
+
+## Câu hỏi thường gặp về simple trigger
+
+### Có thể đổi tên onEdit không?
+
+Không nếu muốn là simple trigger. Tên function phải đúng là `onEdit`. Nếu muốn tên khác, bạn cần dùng installable trigger hoặc gọi function khác từ trong `onEdit`.
+
+### Vì sao chạy onEdit trong editor bị lỗi?
+
+Vì editor không tự tạo event object `e`. Hãy test bằng cách sửa ô trong sheet thật, hoặc tách logic ra function phụ để gọi thủ công với tham số tự tạo.
+
+### Simple trigger có cần cài đặt không?
+
+Không. Chỉ cần function đúng tên trong bound script phù hợp. Đây là điểm khác installable trigger, loại trigger cần tạo trong UI hoặc bằng code.
+
+### onEdit có chạy khi công thức thay đổi kết quả không?
+
+Thông thường `onEdit` chạy khi người dùng chỉnh sửa ô trực tiếp, không phải mọi thay đổi giá trị do công thức tính lại. Nếu cần theo dõi thay đổi phức tạp, bạn cần thiết kế trigger hoặc kiểm tra dữ liệu theo lịch.
+
+## Tóm tắt
+
+Simple trigger giúp script tự phản ứng với mở file và chỉnh sửa dữ liệu. Bạn đã học `onOpen`, `onEdit`, event object, cách giới hạn trigger theo sheet/cột và những giới hạn quan trọng. Bài tiếp theo sẽ học installable trigger để chạy theo giờ và có quyền linh hoạt hơn.

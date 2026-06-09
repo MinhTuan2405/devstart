@@ -1,0 +1,187 @@
+---
+title: "ContentService trong Apps Script để trả JSON API"
+description: "Học cách dùng ContentService để trả JSON, text và dữ liệu API từ Apps Script web app."
+slug: "contentservice-tra-json-api"
+course: "apps-script"
+order: 34
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["ContentService Apps Script", "trả JSON Apps Script", "Apps Script API", "doGet JSON Apps Script", "TextOutput Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`ContentService` là cách đơn giản để Apps Script web app trả dữ liệu text, đặc biệt là JSON. Khi bạn muốn URL Apps Script hoạt động như một API nhỏ thay vì một trang HTML, hãy trả `TextOutput` bằng `ContentService.createTextOutput(JSON.stringify(data))` và đặt MIME type là JSON.
+
+## ContentService khác HtmlService ở điểm nào?
+
+`HtmlService` tạo trang HTML để người dùng nhìn và tương tác. `ContentService` tạo output dạng text để máy hoặc client JavaScript đọc. Output đó có thể là JSON, plain text, CSV hoặc iCal. Trong khóa học này, use case quan trọng nhất là biến dữ liệu Google Sheets thành một endpoint JSON đơn giản.
+
+Mental model nên nhớ: `doGet` hoặc `doPost` nhận request, code Apps Script xử lý dữ liệu, `ContentService` đóng gói kết quả thành text response. Nếu client mong JSON, server phải trả chuỗi JSON hợp lệ. Trả object JavaScript trực tiếp sẽ không hoạt động vì HTTP response chỉ là text.
+
+ContentService phù hợp cho API nhẹ, tool nội bộ, webhook prototype hoặc endpoint cho automation. Nó không thay thế backend lớn vì có quota, giới hạn thời gian chạy, giới hạn header/status code và một số tình huống CORS cần test kỹ.
+
+## Cú pháp trả JSON cơ bản
+
+Bạn nên tạo helper `jsonResponse` ngay từ đầu để mọi endpoint trả format nhất quán. Helper này nhận object hoặc array, chuyển thành JSON string, rồi đặt `MimeType.JSON`.
+
+```javascript
+function doGet(e) {
+  const result = {
+    ok: true,
+    service: 'inventory-api',
+    time: new Date().toISOString(),
+  };
+
+  return jsonResponse(result);
+}
+
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+Nếu mở URL trên trình duyệt, bạn sẽ thấy JSON text. Nếu gọi bằng `UrlFetchApp`, fetch, Postman hoặc hệ thống ngoài, client sẽ parse JSON đó thành object.
+
+## Trả dữ liệu Google Sheets thành API
+
+Ví dụ phổ biến nhất là sheet `Products` có header ở dòng 1 và dữ liệu ở các dòng tiếp theo. Ta đọc toàn bộ vùng dữ liệu một lần, tách headers, rồi map từng dòng thành object. Cách này dễ mở rộng và tránh gọi `getValue()` nhiều lần.
+
+```javascript
+function doGet(e) {
+  const products = getProducts();
+  const requestedId = e.parameter.id;
+
+  if (requestedId) {
+    const product = products.find(function(item) {
+      return String(item.id) === String(requestedId);
+    });
+
+    return jsonResponse({ ok: true, data: product || null });
+  }
+
+  return jsonResponse({ ok: true, data: products });
+}
+
+function getProducts() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Products');
+  if (!sheet) {
+    throw new Error('Sheet Products not found');
+  }
+
+  const values = sheet.getDataRange().getValues();
+  if (values.length < 2) {
+    return [];
+  }
+
+  const headers = values[0].map(function(header) {
+    return String(header).trim();
+  });
+
+  return values.slice(1).map(function(row) {
+    const item = {};
+    headers.forEach(function(header, index) {
+      item[header] = normalizeCellValue(row[index]);
+    });
+    return item;
+  });
+}
+
+function normalizeCellValue(value) {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  return value;
+}
+```
+
+Ở đây `normalizeCellValue` giúp ngày tháng trở thành chuỗi ISO. Nếu trả Date object trực tiếp, `JSON.stringify` vẫn chuyển được, nhưng bạn nên chủ động format để client dễ xử lý và API ổn định hơn.
+
+## Trả lỗi theo envelope ổn định
+
+Apps Script web app không thuận tiện như framework backend trong việc set status code hoặc header tùy ý. Vì vậy, với API nhẹ, cách thực dụng là luôn trả JSON có field `ok`, `data` và `message`. Client kiểm tra `ok` trước khi dùng dữ liệu.
+
+```javascript
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents || '{}');
+    if (!payload.email) {
+      throw new Error('Email is required');
+    }
+
+    SpreadsheetApp.getActiveSpreadsheet()
+      .getSheetByName('Subscribers')
+      .appendRow([new Date(), payload.email, payload.source || 'api']);
+
+    return jsonResponse({ ok: true, data: { email: payload.email } });
+  } catch (error) {
+    return jsonResponse({ ok: false, message: error.message });
+  }
+}
+```
+
+Đừng trả stack trace hoặc dữ liệu nhạy cảm cho client public. Log chi tiết ở server, nhưng response bên ngoài chỉ nên đủ để client hiểu lỗi.
+
+## Trả CSV hoặc plain text khi cần
+
+Không phải API nào cũng cần JSON. Nếu bạn muốn tải dữ liệu nhỏ dạng CSV, ContentService vẫn dùng được. Tuy nhiên, hãy chú ý escaping dấu phẩy, xuống dòng và dấu ngoặc kép nếu dữ liệu có ký tự đặc biệt.
+
+```javascript
+function exportProductsCsv() {
+  const rows = [
+    ['id', 'name', 'price'],
+    ['p1', 'Keyboard', 450000],
+    ['p2', 'Mouse', 180000],
+  ];
+
+  const csv = rows.map(function(row) {
+    return row.map(csvCell).join(',');
+  }).join('\n');
+
+  return ContentService
+    .createTextOutput(csv)
+    .setMimeType(ContentService.MimeType.CSV);
+}
+
+function csvCell(value) {
+  return '"' + String(value).replace(/"/g, '""') + '"';
+}
+```
+
+Với dữ liệu lớn hoặc export phức tạp, bạn nên cân nhắc tạo file trong Drive thay vì trả trực tiếp qua web app.
+
+## Lỗi thường gặp với ContentService
+
+- Quên `JSON.stringify`, khiến response không phải JSON hợp lệ.
+- Không set `ContentService.MimeType.JSON`, làm client khó nhận diện kiểu dữ liệu.
+- Không xử lý sheet rỗng trước khi lấy header.
+- Trả Date, number dạng tiền tệ hoặc dữ liệu locale mà client không hiểu rõ.
+- Expose sheet nội bộ qua URL public không có token.
+- Kỳ vọng ContentService có đầy đủ khả năng set status code, CORS header như backend framework.
+
+## Bài tập thực hành
+
+Tạo sheet `Products` có cột `id`, `name`, `price`, `active`. Viết `doGet(e)` trả `{ ok: true, data: [...] }`. Nếu URL có `?id=p1`, chỉ trả một sản phẩm. Nếu có `?active=true`, chỉ trả sản phẩm đang active. Thêm `try catch` để mọi lỗi đều trả `{ ok: false, message }`.
+
+## Câu hỏi thường gặp về ContentService
+
+### ContentService có chỉ dùng để trả JSON không?
+
+Không. Nó trả text output, nên có thể dùng cho JSON, CSV, plain text hoặc một số format text khác. JSON chỉ là use case phổ biến nhất khi làm API.
+
+### Có gọi ContentService API từ website bên ngoài được không?
+
+Có thể, nhưng cần test CORS, redirect của Apps Script web app và quyền truy cập deployment. Với form đơn giản, đôi khi gửi POST từ server backend khác ổn định hơn gửi trực tiếp từ browser.
+
+### Có thể trả status code 404 hoặc 500 không?
+
+ContentService không linh hoạt như Express hoặc Cloud Functions. Với Apps Script API nhẹ, thường dùng JSON envelope như `{ ok: false, message: 'Not found' }` để client tự xử lý.
+
+### Dữ liệu Google Sheets có an toàn khi trả qua API không?
+
+Chỉ an toàn nếu bạn kiểm soát quyền truy cập, token, dữ liệu được trả và logging. Đừng deploy public endpoint đọc toàn bộ sheet nhạy cảm.
+
+## Tóm tắt và bước tiếp theo
+
+`ContentService` biến Apps Script thành API text/JSON nhỏ gọn. Hãy luôn stringify dữ liệu, đặt MIME type, chuẩn hóa lỗi và bảo vệ endpoint nếu có dữ liệu thật. Bài tiếp theo sẽ đi vào authorization scopes và OAuth, nền tảng để hiểu vì sao script cần xin quyền khi dùng Sheets, Gmail, Drive hoặc API nâng cao.

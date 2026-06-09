@@ -1,0 +1,200 @@
+---
+title: "google.script.run để giao tiếp client-server trong Apps Script"
+description: "Học cách dùng google.script.run để gọi function Apps Script từ HTML sidebar, dialog hoặc web app."
+slug: "google-script-run-client-server"
+course: "apps-script"
+order: 31
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["google.script.run", "client server Apps Script", "HtmlService communication", "Apps Script sidebar form", "gọi function từ HTML Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`google.script.run` là cách chuẩn để HTML trong Apps Script gọi function `.gs` ở phía server. HTML chỉ lo giao diện, còn server mới được dùng `SpreadsheetApp`, `GmailApp`, `DriveApp` và các service Google. Điểm quan trọng nhất: lời gọi này là bất đồng bộ, nên bạn phải xử lý kết quả bằng success handler và lỗi bằng failure handler.
+
+## google.script.run là gì trong mô hình client-server?
+
+Khi bạn tạo sidebar, dialog hoặc web app bằng `HtmlService`, phần HTML chạy trong trình duyệt của người dùng. Nó có DOM, button, input và JavaScript client, nhưng không có quyền gọi trực tiếp `SpreadsheetApp.getActiveSpreadsheet()` hay `MailApp.sendEmail()`. Các service đó chỉ tồn tại ở Apps Script server.
+
+`google.script.run` là cầu nối giữa hai phía. Client gửi dữ liệu có thể serialize được, ví dụ string, number, boolean, array hoặc object đơn giản. Server nhận dữ liệu trong một function global, xử lý với quyền của Apps Script project, rồi trả kết quả về client. Vì request đi qua môi trường Apps Script nên nó không trả về ngay lập tức như function JavaScript bình thường.
+
+Mô hình tư duy nên nhớ là: giao diện thu thập dữ liệu, `google.script.run` gửi request, function `.gs` xử lý, handler trên client cập nhật lại giao diện. Nếu bạn đặt logic sau lời gọi như code đồng bộ, giao diện sẽ chạy sai thứ tự.
+
+## Cú pháp cơ bản của google.script.run
+
+Cú pháp thường dùng là chain nhiều phương thức trước khi gọi function server. `withSuccessHandler` nhận dữ liệu server trả về. `withFailureHandler` nhận object lỗi nếu function server throw error hoặc gặp lỗi quyền.
+
+```html
+<button onclick="loadStatus()">Load status</button>
+<p id="status"></p>
+
+<script>
+function loadStatus() {
+  document.getElementById('status').textContent = 'Loading...';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      document.getElementById('status').textContent = result.message;
+    })
+    .withFailureHandler(function(error) {
+      document.getElementById('status').textContent = 'Error: ' + error.message;
+    })
+    .getServerStatus();
+}
+</script>
+```
+
+Function được gọi phải nằm ở global scope trong file `.gs`. Nếu function nằm bên trong function khác, hoặc chỉ là biến cục bộ trong module pattern, client sẽ không gọi được.
+
+```javascript
+function getServerStatus() {
+  return {
+    ok: true,
+    message: 'Server is ready at ' + new Date().toISOString(),
+  };
+}
+```
+
+Kết quả trả về nên là dữ liệu đơn giản. Không trả trực tiếp `Sheet`, `Range`, `File`, `Blob` phức tạp hoặc object có method vì client không serialize được các class Apps Script đó.
+
+## Ví dụ thực tế: lưu lead từ sidebar vào Google Sheets
+
+Giả sử bạn có sidebar nhập tên, email và nguồn lead. Client validate nhanh để tránh gửi form rỗng, nhưng server vẫn phải validate lại vì dữ liệu từ client không bao giờ được tin tuyệt đối.
+
+```javascript
+function showLeadSidebar() {
+  const html = HtmlService.createHtmlOutputFromFile('LeadSidebar')
+    .setTitle('Lead tracker');
+
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+function saveLeadFromSidebar(lead) {
+  if (!lead || !lead.name || !lead.email) {
+    throw new Error('Name and email are required');
+  }
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  if (!sheet) {
+    throw new Error('Sheet Leads not found');
+  }
+
+  sheet.appendRow([
+    new Date(),
+    String(lead.name).trim(),
+    String(lead.email).trim().toLowerCase(),
+    lead.source || 'sidebar',
+  ]);
+
+  return {
+    message: 'Lead saved: ' + lead.email,
+    savedAt: new Date().toISOString(),
+  };
+}
+```
+
+File HTML có thể gửi object `lead`, khóa nút trong lúc chờ server, rồi mở lại sau khi hoàn tất. Đây là chi tiết nhỏ nhưng giúp người dùng không bấm lưu nhiều lần.
+
+```html
+<input id="name" placeholder="Name" />
+<input id="email" placeholder="Email" />
+<select id="source">
+  <option value="website">Website</option>
+  <option value="event">Event</option>
+</select>
+<button id="saveButton" onclick="saveLead()">Save lead</button>
+<p id="message"></p>
+
+<script>
+function saveLead() {
+  const button = document.getElementById('saveButton');
+  const message = document.getElementById('message');
+  const lead = {
+    name: document.getElementById('name').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    source: document.getElementById('source').value,
+  };
+
+  if (!lead.name || !lead.email) {
+    message.textContent = 'Please enter name and email';
+    return;
+  }
+
+  button.disabled = true;
+  message.textContent = 'Saving...';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      message.textContent = result.message;
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
+      button.disabled = false;
+    })
+    .withFailureHandler(function(error) {
+      message.textContent = 'Save failed: ' + error.message;
+      button.disabled = false;
+    })
+    .saveLeadFromSidebar(lead);
+}
+</script>
+```
+
+## Dùng withUserObject khi cần giữ context phía client
+
+`withUserObject` không gửi dữ liệu lên server. Nó chỉ truyền thêm một object vào handler phía client, hữu ích khi bạn cần biết nút nào, dòng nào hoặc form nào đã tạo request.
+
+```html
+<script>
+function markRowDone(rowNumber, button) {
+  button.disabled = true;
+
+  google.script.run
+    .withUserObject({ button: button, rowNumber: rowNumber })
+    .withSuccessHandler(function(result, context) {
+      context.button.textContent = 'Done row ' + context.rowNumber;
+    })
+    .withFailureHandler(function(error, context) {
+      context.button.disabled = false;
+      context.button.textContent = 'Retry';
+    })
+    .markLeadAsDone(rowNumber);
+}
+</script>
+```
+
+Hãy dùng tính năng này cho thông tin UI tạm thời. Đừng nhầm nó với dữ liệu business cần server xử lý.
+
+## Lỗi thường gặp với google.script.run
+
+- Tưởng `google.script.run` trả kết quả ngay và viết `const result = google.script.run.someFunction()`.
+- Quên `withFailureHandler`, khiến lỗi chỉ nằm trong console hoặc execution log.
+- Gọi function không nằm ở global scope trong `.gs`.
+- Trả về object Apps Script như `Range` hoặc `Sheet` thay vì object thường.
+- Validate ở client nhưng quên validate lại ở server.
+- Cho người dùng bấm nút nhiều lần, làm append trùng dữ liệu.
+
+## Bài tập thực hành
+
+Tạo sidebar `LeadSidebar.html` có 3 trường `name`, `email`, `source`. Viết `saveLeadFromSidebar(lead)` để kiểm tra dữ liệu, ghi vào sheet `Leads`, trả object `{ message, savedAt }`. Khi lưu thành công, HTML phải xóa input và bật lại nút. Khi lỗi, HTML phải hiển thị thông báo lỗi rõ ràng.
+
+## Câu hỏi thường gặp về google.script.run
+
+### google.script.run có dùng được trong web app không?
+
+Có, nếu trang web app được tạo bằng `HtmlService` trong cùng Apps Script project. Nó không dùng được trong một website bên ngoài chỉ vì bạn copy HTML sang đó.
+
+### Có thể gọi nhiều function server liên tiếp không?
+
+Có, nhưng mỗi lời gọi là bất đồng bộ. Nếu bước sau phụ thuộc kết quả bước trước, hãy gọi bước sau trong success handler hoặc tách thành một function server xử lý trọn quy trình.
+
+### Vì sao server không nhận được object tôi gửi lên?
+
+Thường là object có dữ liệu không serialize được, có field là DOM element, function, class đặc biệt hoặc circular reference. Chỉ gửi object dữ liệu thuần.
+
+### Có cần bảo mật khi chỉ là sidebar nội bộ không?
+
+Có. Sidebar vẫn nhận dữ liệu từ client. Server nên kiểm tra quyền, sheet tồn tại và dữ liệu hợp lệ trước khi ghi hoặc gửi email.
+
+## Tóm tắt và bước tiếp theo
+
+`google.script.run` giúp giao diện Apps Script gọi server an toàn hơn, nhưng bạn phải nhớ ba điều: lời gọi bất đồng bộ, function server phải ở global scope, và dữ liệu trả về phải serialize được. Bài tiếp theo sẽ mở rộng mô hình này thành web app thật với `doGet`, `doPost`, `HtmlService` và `ContentService`.

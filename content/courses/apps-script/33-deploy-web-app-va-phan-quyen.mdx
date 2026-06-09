@@ -1,0 +1,151 @@
+---
+title: "Deploy web app Apps Script và phân quyền chạy"
+description: "Học cách deploy web app Apps Script, chọn execute as, quyền truy cập và test deployment an toàn."
+slug: "deploy-web-app-va-phan-quyen"
+course: "apps-script"
+order: 33
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["deploy Apps Script web app", "Apps Script deployment", "execute as me Apps Script", "web app permissions Apps Script", "test deployment Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Deploy web app Apps Script không chỉ là bấm nút lấy URL. Bạn phải quyết định script chạy dưới quyền ai, ai được truy cập URL, bản nào là bản test và bản nào là bản chính thức. Chọn sai quyền có thể làm người dùng lỗi truy cập hoặc làm endpoint public ghi dữ liệu vào tài khoản của bạn.
+
+## Deploy web app Apps Script gồm những quyết định nào?
+
+Khi vào Deploy và tạo Web app, Apps Script thường yêu cầu ba nhóm thông tin: mô tả deployment, người thực thi script và đối tượng được phép truy cập. Đây là phần quan trọng vì web app có thể đọc ghi Sheets, gửi email, truy cập Drive hoặc gọi API khác.
+
+Mental model nên nhớ là deployment giống một cổng vào cố định. Code trong editor có thể thay đổi liên tục, nhưng URL `/exec` của deployment chính thức chỉ chạy version được gắn với deployment đó. URL `/dev` hoặc test deployment thường chạy code mới nhất, nhưng chỉ người có quyền edit project mới dùng được.
+
+Vì vậy, quy trình an toàn là: viết code, test bằng `/dev`, tạo version, cập nhật deployment chính thức, rồi test lại bằng tài khoản giống người dùng thật.
+
+## Code tối thiểu trước khi deploy
+
+Trước khi nói về quyền, hãy có một web app nhỏ để kiểm tra deployment. Ví dụ sau trả JSON trạng thái, version và thời gian server. Cách này rất hữu ích khi bạn không chắc URL đang trỏ đến bản code nào.
+
+```javascript
+const APP_VERSION = '1.0.0';
+
+function doGet(e) {
+  return jsonResponse({
+    ok: true,
+    app: 'lead-tracker',
+    version: APP_VERSION,
+    time: new Date().toISOString(),
+  });
+}
+
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+Sau khi deploy, mở URL `/exec` và kiểm tra version. Nếu bạn sửa `APP_VERSION` nhưng `/exec` vẫn trả version cũ, nghĩa là deployment chính thức chưa được cập nhật sang version mới.
+
+## Execute as me và execute as user khác nhau thế nào?
+
+Tùy chọn `Execute as` quyết định Apps Script chạy với quyền của ai. Đây là lỗi tư duy phổ biến nhất khi triển khai web app.
+
+- `Execute as me`: script chạy dưới quyền người deploy. Người truy cập không nhất thiết có quyền trực tiếp với spreadsheet hoặc Drive file, nhưng script có thể thao tác tài nguyên mà người deploy truy cập được.
+- `Execute as user accessing the web app`: script chạy dưới quyền người đang truy cập. Người dùng có thể phải cấp quyền OAuth và phải có quyền với tài nguyên cần thao tác.
+
+Nếu web app là form nội bộ ghi vào một Google Sheet trung tâm, `Execute as me` thường dễ vận hành hơn. Nhưng khi đó bạn phải tự kiểm soát ai được phép gửi dữ liệu, vì mọi request hợp lệ đều có thể dùng quyền của bạn để ghi sheet.
+
+## Kiểm tra người dùng và allowlist
+
+Trong một số môi trường Google Workspace, bạn có thể đọc email người dùng đăng nhập bằng `Session.getActiveUser().getEmail()`. Nhưng kết quả phụ thuộc cấu hình domain, loại tài khoản và quyền truy cập web app. Đừng dùng nó làm cơ chế bảo mật duy nhất nếu chưa test kỹ.
+
+```javascript
+function doGet(e) {
+  const email = Session.getActiveUser().getEmail();
+  const allowed = isAllowedUser(email);
+
+  if (!allowed) {
+    return HtmlService.createHtmlOutput('Access denied');
+  }
+
+  return HtmlService.createHtmlOutput('Hello ' + email);
+}
+
+function isAllowedUser(email) {
+  const allowedEmails = ['admin@example.com', 'sales@example.com'];
+  return allowedEmails.indexOf(String(email).toLowerCase()) !== -1;
+}
+```
+
+Với endpoint public hoặc nhận webhook, allowlist email không đủ. Bạn nên dùng secret token trong header hoặc body, vì hệ thống bên ngoài không đăng nhập Google như người dùng trình duyệt.
+
+## Bảo vệ endpoint POST bằng secret đơn giản
+
+Apps Script web app public rất dễ bị gọi thử nếu URL bị lộ. Một lớp bảo vệ tối thiểu là secret lưu trong `PropertiesService`, rồi request phải gửi đúng token. Đây không thay thế hệ thống bảo mật chuyên nghiệp, nhưng tốt hơn nhiều so với endpoint ghi sheet không kiểm tra gì.
+
+```javascript
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents || '{}');
+    assertValidSecret(payload.secret);
+
+    SpreadsheetApp.getActiveSpreadsheet()
+      .getSheetByName('Leads')
+      .appendRow([new Date(), payload.email, payload.source || 'api']);
+
+    return jsonResponse({ ok: true });
+  } catch (error) {
+    return jsonResponse({ ok: false, message: error.message });
+  }
+}
+
+function assertValidSecret(secret) {
+  const expected = PropertiesService.getScriptProperties().getProperty('WEBHOOK_SECRET');
+  if (!expected || secret !== expected) {
+    throw new Error('Invalid secret');
+  }
+}
+```
+
+Secret không nên hardcode trong source nếu project dùng git hoặc chia sẻ với nhiều người. Hãy đặt bằng project property và giới hạn người có quyền edit script.
+
+## Test deployment đúng cách
+
+Một web app nên được test theo ba góc nhìn. Thứ nhất, test trong editor bằng function nhỏ nếu có thể. Thứ hai, test URL `/dev` để kiểm tra code mới nhất. Thứ ba, test URL `/exec` bằng tài khoản giống người dùng thật sau khi cập nhật deployment.
+
+Khi debug quyền, đừng chỉ dùng tài khoản owner. Owner thường có toàn quyền nên không thấy lỗi mà người dùng thật gặp. Hãy mở cửa sổ ẩn danh hoặc đăng nhập tài khoản test để kiểm tra flow cấp quyền, thông báo lỗi và quyền truy cập dữ liệu.
+
+## Lỗi thường gặp khi deploy và phân quyền
+
+- Sửa code nhưng quên tạo version hoặc cập nhật deployment chính thức.
+- Chia sẻ URL `/dev` cho người không có quyền edit project.
+- Chọn `Anyone` cho web app ghi dữ liệu nhưng không có token chống spam.
+- Chọn `Execute as user` rồi người dùng không có quyền truy cập sheet.
+- Chọn `Execute as me` nhưng không validate dữ liệu đầu vào.
+- Không test bằng tài khoản ngoài owner.
+- Nhầm Deployment ID, Script ID và URL deployment.
+
+## Bài tập thực hành
+
+Tạo web app trả JSON `{ ok, version, time }`. Deploy bản test, mở `/dev`, sau đó tạo deployment chính thức và mở `/exec`. Tiếp theo, thêm kiểm tra secret cho `doPost`, lưu secret trong Script Properties, gửi thử request đúng secret và sai secret. Ghi lại sự khác biệt giữa test URL và URL chính thức.
+
+## Câu hỏi thường gặp về deploy Apps Script
+
+### Execute as me có nguy hiểm không?
+
+Có thể nguy hiểm nếu web app public và code ghi dữ liệu, gửi email hoặc truy cập Drive mà không kiểm tra đầu vào. Nó hữu ích cho tool nội bộ, nhưng cần token, allowlist hoặc giới hạn truy cập phù hợp.
+
+### Khi nào nên dùng Execute as user?
+
+Dùng khi hành động phải đại diện cho chính người dùng, ví dụ đọc dữ liệu Drive của họ hoặc yêu cầu audit theo từng user. Đổi lại, người dùng có thể phải cấp quyền OAuth và có quyền với tài nguyên liên quan.
+
+### Có cần tạo version mỗi lần sửa code không?
+
+Khi phát hành chính thức, nên tạo version để có snapshot ổn định và rollback được. Trong giai đoạn thử nghiệm, test deployment hoặc `/dev` thường đủ.
+
+### Vì sao người khác mở web app bị lỗi còn tôi thì không?
+
+Thường do khác quyền truy cập, khác tài khoản đăng nhập, web app đang chạy dưới user, hoặc bạn đang test `/dev` trong khi họ dùng `/exec` cũ.
+
+## Tóm tắt và bước tiếp theo
+
+Deploy web app là quyết định về version, URL, quyền truy cập và danh tính thực thi. Hãy luôn test `/dev`, cập nhật `/exec` có kiểm soát, và kiểm tra bằng tài khoản thật. Bài tiếp theo sẽ tập trung vào `ContentService`, cách trả JSON đúng chuẩn để web app hoạt động như một API nhỏ.

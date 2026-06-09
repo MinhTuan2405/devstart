@@ -1,0 +1,145 @@
+---
+title: "Kết nối Google Forms với Sheets bằng Apps Script"
+description: "Học cách xử lý form submit, đọc namedValues và ghi dữ liệu phản hồi vào Google Sheets bằng Apps Script."
+slug: "ket-noi-google-forms-voi-sheets"
+course: "apps-script"
+order: 27
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["Google Forms Sheets Apps Script", "onFormSubmit Apps Script", "namedValues Apps Script", "xử lý form submit", "Forms automation Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Kết nối Google Forms với Sheets giúp bạn thu thập phản hồi và xử lý tự động ngay khi người dùng submit. Apps Script có thể đọc câu trả lời, gửi email xác nhận, ghi trạng thái, tạo lịch hẹn, tạo tài liệu hoặc chuyển dữ liệu sang hệ thống khác.
+
+## Kết nối Forms với Sheets để làm gì?
+
+Google Forms mạnh ở phần nhập liệu, Google Sheets mạnh ở phần lưu và xem dữ liệu, Apps Script mạnh ở phần tự động hóa. Khi ba phần này đi cùng nhau, bạn có thể xây một workflow hoàn chỉnh: người dùng gửi form đăng ký, phản hồi đi vào sheet, trigger `onFormSubmit` chạy, script gửi email xác nhận và ghi thời gian xử lý.
+
+Mô hình tư duy là: form submit tạo một dòng mới trong response sheet. Installable trigger gọi function xử lý và truyền event object `e`. Nếu trigger gắn với spreadsheet, `e` thường có `namedValues`, `values` và `range`. `namedValues` cho phép đọc theo tên câu hỏi hoặc tên cột; `range` cho biết dòng vừa được thêm.
+
+## Xử lý form submit bằng trigger
+
+Bạn cần tạo installable trigger loại form submit cho function xử lý. Không nên chạy trực tiếp function này trong editor vì khi đó không có event object thật.
+
+```javascript
+function handleFormSubmit(e) {
+  const values = e.namedValues;
+  const name = values['Name'] ? values['Name'][0] : '';
+  const email = values['Email'] ? values['Email'][0] : '';
+  const course = values['Course'] ? values['Course'][0] : '';
+
+  Logger.log(name + ' registered for ' + course + ' with ' + email);
+}
+```
+
+Tên key trong `namedValues` phải khớp với tên câu hỏi hoặc cột trong response sheet. Nếu bạn đổi câu hỏi `Email` thành `Your email`, code cũng cần cập nhật. Với form dùng lâu dài, hãy đặt tên câu hỏi ổn định ngay từ đầu.
+
+## Gửi email xác nhận sau khi submit
+
+Một use case rất phổ biến là gửi email cho người vừa điền form. Code nên kiểm tra email rỗng trước khi gửi và nên dùng nội dung rõ ràng.
+
+```javascript
+function sendConfirmationOnSubmit(e) {
+  const values = e.namedValues;
+  const name = values['Name'] ? values['Name'][0] : '';
+  const email = values['Email'] ? values['Email'][0] : '';
+  const course = values['Course'] ? values['Course'][0] : '';
+
+  if (!email) return;
+
+  MailApp.sendEmail({
+    to: email,
+    subject: 'Registration received',
+    body: 'Hi ' + name + ', we received your registration for ' + course + '.',
+  });
+}
+```
+
+Khi test, hãy submit form thật bằng email của bạn. Đừng chạy function bằng nút Run vì `e` sẽ bị undefined. Nếu cần test logic, hãy tách phần tạo nội dung email thành function riêng nhận `name`, `email`, `course`.
+
+## Ghi trạng thái xử lý vào dòng phản hồi
+
+Nếu trigger gắn với spreadsheet response, `e.range` cho biết dòng mới được thêm. Bạn có thể ghi `ProcessedAt` và `Status` vào các cột đã chuẩn bị sẵn.
+
+```javascript
+function processFormSubmit(e) {
+  const sheet = e.range.getSheet();
+  const row = e.range.getRow();
+  const values = e.namedValues;
+  const email = values['Email'] ? values['Email'][0] : '';
+
+  if (email) {
+    MailApp.sendEmail({
+      to: email,
+      subject: 'Registration received',
+      body: 'Thank you. Your response has been received.',
+    });
+  }
+
+  sheet.getRange(row, 5).setValue(new Date());
+  sheet.getRange(row, 6).setValue('processed');
+}
+```
+
+Trong ví dụ này, giả sử cột 5 là `ProcessedAt`, cột 6 là `Status`. Trong dự án thật, nên tạo sẵn header thay vì luôn ghi vào `getLastColumn() + 1`, vì cách đó có thể tạo cột mới liên tục.
+
+## Tạo trigger bằng code để tránh quên cấu hình
+
+Bạn có thể tạo trigger từ code. Nhớ reset trigger cũ để tránh gửi email xác nhận lặp.
+
+```javascript
+function resetFormSubmitTrigger() {
+  const handler = 'processFormSubmit';
+  const triggers = ScriptApp.getProjectTriggers();
+
+  triggers.forEach(function(trigger) {
+    if (trigger.getHandlerFunction() === handler) {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+
+  ScriptApp.newTrigger(handler)
+    .forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet())
+    .onFormSubmit()
+    .create();
+}
+```
+
+Chạy `resetFormSubmitTrigger()` một lần sau khi đã kết nối form với sheet. Sau đó submit form thật để kiểm tra.
+
+## Lỗi thường gặp khi xử lý form submit
+
+- Chưa tạo installable trigger nên function không chạy.
+- Chạy function trực tiếp trong editor nên `e` bị undefined.
+- Đổi tên câu hỏi nhưng không cập nhật `namedValues`.
+- Tạo nhiều trigger trùng nhau, làm email xác nhận gửi lặp.
+- Không kiểm tra email rỗng.
+- Ghi trạng thái vào sai cột vì response sheet thay đổi cấu trúc.
+- Không xử lý lỗi gửi email, khiến dòng không được đánh dấu rõ ràng.
+
+## Bài tập thực hành
+
+Tạo form đăng ký có câu hỏi `Name`, `Email`, `Course` và kết nối với Google Sheets. Trong response sheet, thêm cột `ProcessedAt` và `Status`. Viết `processFormSubmit(e)` gửi email xác nhận cho người submit, rồi ghi thời gian xử lý và trạng thái `processed`. Viết thêm `resetFormSubmitTrigger()` để đảm bảo chỉ có một trigger cho function này.
+
+## Câu hỏi thường gặp về Forms và Sheets
+
+### onFormSubmit có phải simple trigger không?
+
+Trong thực tế xử lý form submit thường dùng installable trigger để có quyền đầy đủ hơn, đặc biệt khi gửi email hoặc thao tác service cần authorization.
+
+### namedValues có ổn định không?
+
+Ổn định nếu tên câu hỏi hoặc header cột không đổi. Nếu đổi tên câu hỏi, key trong `namedValues` cũng thay đổi.
+
+### Có thể xử lý nhiều form bằng một script không?
+
+Có, nhưng bạn nên lưu form ID, response sheet ID và tách logic theo từng form để tránh nhầm dữ liệu.
+
+### Vì sao email xác nhận bị gửi hai lần?
+
+Thường do bạn tạo nhiều trigger cùng trỏ tới một function. Hãy kiểm tra danh sách trigger và dùng pattern reset trước khi tạo mới.
+
+## Tóm tắt và chuyển tiếp
+
+Forms kết hợp Sheets và Apps Script tạo thành workflow thu thập dữ liệu rất mạnh. Hãy dùng installable trigger, đọc `namedValues` cẩn thận, ghi trạng thái xử lý và reset trigger để tránh trùng. Bài tiếp theo sẽ học `UrlFetchApp`, công cụ giúp Apps Script gọi API bên ngoài sau khi nhận dữ liệu từ form hoặc sheet.

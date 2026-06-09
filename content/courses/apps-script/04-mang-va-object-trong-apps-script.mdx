@@ -1,0 +1,165 @@
+---
+title: "Mảng và object trong Apps Script khi xử lý dữ liệu Sheets"
+description: "Học cách dùng mảng hai chiều và object trong Apps Script để đọc, lọc và biến đổi dữ liệu Google Sheets."
+slug: "mang-va-object-trong-apps-script"
+course: "apps-script"
+order: 4
+duration: "19 phút"
+difficulty: "Dễ"
+keywords: ["mảng trong Apps Script", "object trong Apps Script", "getValues Apps Script", "xử lý dữ liệu Google Sheets", "JavaScript Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao mảng và object quan trọng trong Apps Script?
+
+Mảng và object là hai cấu trúc dữ liệu bạn dùng liên tục khi làm Apps Script với Google Sheets. `getValues()` trả về mảng hai chiều, còn object giúp biến từng dòng thành dữ liệu có tên trường rõ ràng như `email`, `status`, `amount` để code dễ đọc và ít lỗi hơn.
+
+Nếu chỉ xử lý vài ô, bạn có thể chưa thấy tầm quan trọng của mảng và object. Nhưng khi bảng có hàng trăm dòng, bạn không thể viết code kiểu `A2`, `A3`, `A4` mãi. Bạn cần đọc dữ liệu thành mảng, xử lý trong JavaScript, rồi ghi kết quả một lần. Đây là mô hình hiệu quả nhất khi tự động hóa Google Sheets.
+
+## Mảng hai chiều từ Google Sheets
+
+Một sheet giống như bảng gồm dòng và cột. Khi gọi `getValues()` trên một range, Apps Script trả về mảng hai chiều. Mảng ngoài đại diện cho các dòng. Mỗi dòng là một mảng con gồm giá trị các ô trong dòng đó.
+
+```javascript
+function logRowsFromSheet() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const values = sheet.getDataRange().getValues();
+
+  Logger.log(values[0]);
+  Logger.log(values[1][0]);
+}
+```
+
+Nếu sheet có hàng tiêu đề, `values[0]` thường là header. Dữ liệu thật bắt đầu từ `values[1]`. Trong mảng JavaScript, chỉ số bắt đầu từ `0`, nên cột A trong mỗi dòng là `row[0]`, cột B là `row[1]`, cột C là `row[2]`.
+
+Mô hình cần nhớ là: Range trong Sheets dùng dòng/cột bắt đầu từ `1`, còn mảng JavaScript dùng index bắt đầu từ `0`. Nhầm hai hệ này là lỗi rất phổ biến.
+
+## Biến một dòng thành object
+
+Object giúp code dễ hiểu hơn so với nhớ chỉ số cột. Thay vì viết `row[2]` rồi phải nhớ đó là cột plan hay status, bạn chuyển dòng thành object và dùng `customer.plan`, `customer.status`.
+
+```javascript
+function rowToCustomer(row) {
+  return {
+    name: row[0],
+    email: row[1],
+    plan: row[2],
+    status: row[3],
+  };
+}
+
+function logCustomers() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const rows = sheet.getDataRange().getValues().slice(1);
+  const customers = rows.map(rowToCustomer);
+
+  Logger.log(customers[0].email);
+}
+```
+
+Kỹ thuật này rất hữu ích khi bạn gửi email, tạo báo cáo hoặc lọc dữ liệu theo trạng thái. Object cũng giúp giảm lỗi khi logic dài hơn vì tên trường thể hiện ý nghĩa dữ liệu.
+
+## Lọc và biến đổi dữ liệu bằng array methods
+
+Sau khi có mảng dữ liệu, bạn có thể dùng `filter`, `map`, `forEach` và `reduce`. Người mới không cần học tất cả cùng lúc, nhưng nên hiểu ba thao tác cơ bản: lọc dòng cần dùng, biến dòng sang dạng khác, và tính tổng.
+
+```javascript
+function summarizeActiveCustomers() {
+  const rows = SpreadsheetApp.getActiveSheet()
+    .getDataRange()
+    .getValues()
+    .slice(1);
+
+  const activeCustomers = rows
+    .map(rowToCustomer)
+    .filter(customer => customer.status === 'active');
+
+  const emails = activeCustomers.map(customer => customer.email);
+  Logger.log('Active count: ' + activeCustomers.length);
+  Logger.log(emails.join(', '));
+}
+```
+
+Pattern ở đây là đọc một lần, xử lý trong bộ nhớ, rồi chỉ ghi hoặc log kết quả cần thiết. Điều này nhanh hơn nhiều so với việc gọi `getRange()` từng dòng.
+
+## Ví dụ thực tế: tính tổng đơn hàng đã thanh toán
+
+Giả sử sheet có cột `Customer`, `Email`, `Amount`, `Status`. Bạn muốn tính tổng doanh thu của các đơn `paid`.
+
+```javascript
+function rowToOrder(row) {
+  return {
+    customer: row[0],
+    email: row[1],
+    amount: Number(row[2]),
+    status: row[3],
+  };
+}
+
+function calculatePaidRevenue() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const rows = sheet.getDataRange().getValues().slice(1);
+
+  const total = rows
+    .map(rowToOrder)
+    .filter(order => order.status === 'paid')
+    .reduce((sum, order) => sum + order.amount, 0);
+
+  Logger.log('Paid revenue: ' + total);
+}
+```
+
+Điểm cần chú ý là `Number(row[2])`. Dữ liệu tiền trong Sheets thường là số, nhưng đôi khi có thể bị nhập thành chuỗi. Chuyển kiểu rõ ràng giúp phép cộng đáng tin cậy hơn.
+
+## Khi nào dùng mảng, khi nào dùng object?
+
+Mảng phù hợp để biểu diễn danh sách và bảng dữ liệu. Object phù hợp để biểu diễn một thực thể có trường rõ ràng. Trong Apps Script với Sheets, bạn thường kết hợp cả hai: một mảng nhiều object, ví dụ `orders`, `customers`, `tasks`.
+
+Nếu code chỉ đọc một dòng rồi ghi lại ngay, dùng `row[0]` có thể chấp nhận được. Nhưng nếu logic có lọc, tính toán, gửi email, tạo báo cáo hoặc nhiều người bảo trì, hãy chuyển sang object càng sớm càng tốt.
+
+## Lỗi thường gặp với mảng và object
+
+- Quên bỏ hàng tiêu đề nên xử lý header như dữ liệu thật.
+- Nhầm chỉ số mảng bắt đầu từ `0` với dòng/cột Sheets bắt đầu từ `1`.
+- Dữ liệu ô trống trả về chuỗi rỗng nên điều kiện bị sai.
+- Đổi thứ tự cột trong sheet nhưng không cập nhật hàm mapping object.
+- Gọi thuộc tính object sai tên, ví dụ `customer.mail` thay vì `customer.email`.
+- Dùng `map` nhưng không `return`, khiến kết quả là mảng toàn `undefined`.
+
+## Bài tập thực hành
+
+Tạo sheet có cột `Name`, `Email`, `Score`. Viết function đọc dữ liệu, bỏ hàng tiêu đề, biến mỗi dòng thành object `{ name, email, score }`, lọc ra người có `score >= 80` và log danh sách email.
+
+```javascript
+function rowToStudent(row) {
+  return {
+    name: row[0],
+    email: row[1],
+    score: Number(row[2]),
+  };
+}
+```
+
+Gợi ý: dùng `getDataRange().getValues().slice(1)`, sau đó `map`, `filter` và `Logger.log`.
+
+## Câu hỏi thường gặp về mảng trong Apps Script
+
+### getValues trả về gì?
+
+`getValues()` trả về mảng hai chiều. Ví dụ vùng `A1:B2` sẽ thành `[[A1, B1], [A2, B2]]`. Mỗi dòng trong range là một mảng con.
+
+### Có nên đọc từng ô bằng getValue không?
+
+Chỉ nên dùng cho dữ liệu rất nhỏ hoặc một ô cấu hình. Với bảng nhiều dòng, hãy đọc cả vùng bằng `getValues()` để giảm số lần gọi service và tăng tốc script.
+
+### Object có bắt buộc không?
+
+Không bắt buộc, nhưng object giúp code dễ hiểu và giảm lỗi khi logic phức tạp. Đây là thói quen tốt nếu bạn định xây automation có thể bảo trì lâu dài.
+
+### Nếu người dùng đổi thứ tự cột thì sao?
+
+Hàm mapping như `rowToCustomer` sẽ sai nếu thứ tự cột thay đổi. Với dự án nghiêm túc, bạn nên cố định cấu trúc sheet hoặc đọc header để xác định vị trí cột.
+
+## Tóm tắt
+
+Mảng hai chiều là dạng dữ liệu trung tâm khi làm việc với Sheets bằng Apps Script. Object giúp bạn đặt tên cho dữ liệu và viết automation rõ ràng hơn. Bài tiếp theo sẽ học logging và debug để bạn biết cách kiểm tra dữ liệu, đọc lỗi và sửa script nhanh hơn.

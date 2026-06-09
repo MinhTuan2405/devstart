@@ -1,0 +1,166 @@
+---
+title: "Review code Apps Script bằng AI trước khi deploy"
+description: "Học checklist và prompt dùng AI để review Apps Script về bug, quota, bảo mật, trigger và dữ liệu."
+slug: "review-code-apps-script-bang-ai"
+course: "ai-apps-script"
+order: 35
+duration: "22 phút"
+difficulty: "Khó"
+keywords: ["review code Apps Script bằng AI", "AI code review Apps Script", "Apps Script security review", "Apps Script quota review", "AI debug Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao cần review code Apps Script bằng AI?
+
+Review code Apps Script bằng AI giúp phát hiện sớm bug, rủi ro quota, secret leak, trigger lặp, xử lý lỗi kém và automation có side effect nguy hiểm trước khi deploy. Apps Script thường sửa Sheets thật, gửi Gmail thật, tạo Drive file thật và gọi AI API tốn tiền, nên review qua loa rất dễ gây lỗi vận hành.
+
+AI review không thay thế người chịu trách nhiệm, nhưng là lớp kiểm tra nhanh và rẻ. Nó đặc biệt hữu ích khi bạn đưa đúng context: sheet schema, function nào chạy bằng trigger, dữ liệu nhạy cảm ở đâu, hành động nào có chi phí và điều gì không được phép xảy ra.
+
+## Mental model: review theo rủi ro, không theo độ đẹp code
+
+Với Apps Script, code “đẹp” chưa đủ. Bạn cần review theo hành vi khi chạy thật. Một function dùng `setValue` trong vòng lặp có thể vẫn đúng logic nhưng chậm và chạm quota. Một trigger gửi email có thể chạy đúng nhưng gửi lặp vì không có cột status. Một log debug có thể giúp sửa lỗi nhưng làm lộ prompt hoặc API response nhạy cảm.
+
+Hãy chia review thành 6 nhóm:
+
+- Bug logic và edge cases.
+- Quota, batch read/write và timeout.
+- Bảo mật secret và dữ liệu nhạy cảm.
+- Trigger, idempotency và xử lý lặp.
+- Error handling, retry và rollback.
+- Prompt, output validation và chi phí AI.
+
+AI review tốt nhất khi bạn yêu cầu nó tìm lỗi cụ thể, không yêu cầu nó “nhận xét chung”.
+
+## Prompt review code nghiêm khắc
+
+Prompt nên yêu cầu findings có severity, vị trí và cách sửa tối thiểu. Đừng để AI rewrite toàn bộ code nếu không cần.
+
+```text
+You are a strict Google Apps Script reviewer.
+Review the code for bugs, security, quotas, triggers, data handling, AI cost, and rollback risk.
+Prioritize real issues over style comments.
+Return findings in this format:
+- Severity: high|medium|low
+- Function/file:
+- Problem:
+- Why it matters:
+- Minimal fix:
+If there are no findings, say that explicitly and list remaining risks.
+Do not rewrite the whole file unless a minimal patch is needed.
+```
+
+Bạn có thể dùng tiếng Anh trong prompt để model trả format ổn định, rồi yêu cầu phần giải thích bằng tiếng Việt nếu team cần. Điều quan trọng là output phải biến thành action được.
+
+## Đưa context vào prompt review
+
+Code Apps Script thường phụ thuộc sheet schema và trigger. Nếu không đưa context, AI sẽ bỏ sót lỗi quan trọng.
+
+```javascript
+function buildAppsScriptReviewPrompt(code, context) {
+  return [
+    'Review this Google Apps Script code for production risks.',
+    'Focus on bugs, quotas, security, triggers, data, AI calls, and rollback.',
+    'Sheet schema: ' + context.sheetSchema,
+    'Trigger info: ' + context.triggerInfo,
+    'Sensitive data: ' + context.sensitiveData,
+    'Expected behavior: ' + context.expectedBehavior,
+    'Code:',
+    String(code || '').slice(0, 30000),
+  ].join('\n');
+}
+```
+
+Nếu code dài hơn giới hạn prompt, review theo từng module: `aiClient`, `sheetsJob`, `gmailDraft`, `webapp`, rồi review phần orchestration cuối.
+
+## Checklist review thủ công cho Apps Script AI
+
+Checklist giúp AI và người review cùng dùng một tiêu chuẩn.
+
+```javascript
+const REVIEW_CHECKLIST = [
+  'No API keys or tokens in source code',
+  'AI responses are validated before writing to Sheets',
+  'Dry run exists for costly or destructive actions',
+  'Batch read/write is used for large Sheets operations',
+  'Status columns prevent duplicate processing',
+  'Triggers are not created repeatedly',
+  'Errors are logged without sensitive data',
+  'Prompt version is tracked for important workflows',
+  'User-facing email is created as draft before sending',
+  'Quota and timeout risks are documented',
+];
+```
+
+Bạn có thể copy checklist này vào prompt review. Nhưng sau khi AI trả findings, vẫn cần người thật quyết định finding nào cần sửa ngay và finding nào là cải tiến sau.
+
+## Ví dụ lỗi AI review hay bắt được
+
+AI thường phát hiện tốt các pattern phổ biến:
+
+- `setValue` hoặc `appendRow` trong vòng lặp lớn.
+- Không kiểm tra `sheet` null trước khi dùng.
+- Gửi email lặp vì thiếu `Status` hoặc `SentAt`.
+- Log API key, token proxy hoặc prompt chứa dữ liệu khách hàng.
+- Trigger tạo trùng mỗi lần setup chạy.
+- `JSON.parse` output AI mà không strip markdown hoặc validate schema.
+- `UrlFetchApp.fetch` không dùng `muteHttpExceptions`, làm lỗi API khó parse.
+
+Tuy vậy AI có thể báo động giả. Ví dụ nó có thể yêu cầu batch write cho job chỉ xử lý 5 dòng mỗi ngày. Người review cần cân nhắc thực tế.
+
+## Tạo review report có thể theo dõi
+
+Nếu team review nhiều workflow, bạn có thể lưu findings vào sheet `CodeReviewLog`.
+
+```javascript
+function logCodeReviewFinding(reviewId, finding) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CodeReviewLog');
+  if (!sheet) return;
+
+  sheet.appendRow([
+    new Date(),
+    reviewId,
+    finding.severity || 'unknown',
+    finding.functionName || '',
+    finding.problem || '',
+    finding.minimalFix || '',
+    'open',
+  ]);
+}
+```
+
+Không cần automation hóa mọi thứ ngay. Chỉ cần review report có `open`, `fixed`, `accepted_risk` là team đã có kỷ luật vận hành tốt hơn.
+
+## Lỗi thường gặp khi dùng AI review
+
+- Chỉ hỏi “code này ổn không”, khiến AI trả lời chung chung.
+- Không đưa sheet schema, trigger info hoặc dữ liệu nhạy cảm.
+- Không nói function nào chạy thủ công và function nào chạy tự động.
+- Áp dụng mọi đề xuất mà không cân nhắc chi phí sửa.
+- Không chạy test hoặc dry run sau review.
+- Đưa secret thật vào prompt review dùng dịch vụ ngoài.
+
+## Bài tập thực hành
+
+Lấy một function Apps Script đã viết trong các bài trước, ví dụ job phân loại feedback hoặc tạo Gmail draft. Tạo prompt review gồm code, sheet schema, trigger info và checklist. Sau khi nhận findings, phân loại thành 3 nhóm: sửa ngay, chấp nhận rủi ro, cải tiến sau. Chỉ sửa nhóm “sửa ngay” trước.
+
+## Câu hỏi thường gặp về AI code review
+
+### AI review có thay senior engineer không?
+
+Không. AI là lớp hỗ trợ để bắt lỗi phổ biến và buộc bạn suy nghĩ theo checklist. Người chịu trách nhiệm vẫn phải review logic, quyền, dữ liệu thật và tác động vận hành.
+
+### Có nên đưa toàn bộ codebase cho AI không?
+
+Nếu dùng AI local hoặc môi trường được tổ chức phê duyệt thì có thể. Nếu dùng dịch vụ ngoài, hãy cân nhắc secret, dữ liệu khách hàng và chính sách công ty.
+
+### AI có phát hiện mọi lỗi quota không?
+
+Không. Nó chỉ dựa trên code và context bạn cung cấp. Hãy đo execution thật, xem log và kiểm tra giới hạn Apps Script hiện hành.
+
+### Nên review prompt như code không?
+
+Có. Prompt thay đổi có thể làm output, chi phí và rủi ro thay đổi. Prompt quan trọng nên có version, review và test sample.
+
+## Tóm tắt và bước tiếp theo
+
+AI review giúp giảm lỗi trước deploy, đặc biệt với automation có side effect và chi phí AI. Bài tiếp theo học CI/CD với clasp và GitHub Actions để đưa review, versioning và deploy Apps Script vào workflow có kiểm soát hơn.

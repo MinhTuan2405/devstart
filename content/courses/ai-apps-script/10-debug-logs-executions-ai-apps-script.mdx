@@ -1,0 +1,156 @@
+---
+title: "Debug AI Apps Script bằng logs và Executions dashboard"
+description: "Học cách debug AI Apps Script bằng Logger, console, structured logs, executions và error reporting."
+slug: "debug-logs-executions-ai-apps-script"
+course: "ai-apps-script"
+order: 10
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["debug AI Apps Script", "Apps Script Executions", "Cloud Logging Apps Script", "console.log Apps Script", "AI Apps Script logs"]
+publishedAt: "2026-06-09"
+---
+
+## Debug AI Apps Script cần log gì?
+
+Debug AI Apps Script cần log đủ để biết job nào chạy, đọc bao nhiêu dòng, gọi model nào, API trả status gì, parse response ra sao và lỗi xảy ra ở bước nào. Không nên log API key, access token, prompt đầy đủ chứa dữ liệu nhạy cảm hoặc toàn bộ response dài.
+
+AI automation khó debug hơn script thường vì lỗi có thể đến từ nhiều lớp: Sheets sai schema, prompt thiếu rõ ràng, AI API trả lỗi, model trả output sai format, quota hết, trigger chạy dưới ngữ cảnh khác hoặc code bắt lỗi nhưng không throw. Log có cấu trúc giúp bạn phân biệt các lớp này.
+
+## Mental model: log như breadcrumb
+
+Hãy xem log như các breadcrumb trên đường chạy của job. Mỗi breadcrumb trả lời: job đang ở bước nào, đang xử lý bao nhiêu dữ liệu, quyết định chính là gì, và nếu lỗi xảy ra thì lỗi thuộc loại nào.
+
+Một job AI đọc Sheets thường nên log ở các điểm:
+
+- Bắt đầu job: job name, dry run, model.
+- Sau khi đọc sheet: số dòng tổng và số dòng pending.
+- Trước khi gọi AI: loại tác vụ, số item, không log dữ liệu thô.
+- Sau khi gọi AI: status code, thời gian chạy.
+- Sau khi validate: số kết quả hợp lệ hoặc lỗi schema.
+- Kết thúc job: số dòng đã ghi, số lỗi.
+
+## Structured logs với console.log
+
+`console.log` có thể log object, dễ đọc và dễ gửi cho AI phân tích hơn chuỗi dài. Hãy đặt tên field ổn định để khi nhìn log nhiều lần bạn không phải đoán.
+
+```javascript
+function logAiJobStart(jobName, config, rowCount) {
+  console.log({
+    message: 'AI job started',
+    jobName: jobName,
+    provider: config.provider,
+    model: config.model,
+    dryRun: config.dryRun,
+    rowCount: rowCount,
+    time: new Date().toISOString(),
+  });
+}
+```
+
+Đoạn log này không có secret. Nó đủ để biết job đang dùng model nào và có đang dry run hay không.
+
+## Log lỗi API không lộ secret
+
+Khi AI API lỗi, bạn cần status code và body lỗi rút gọn. Không log header authorization, API key hoặc payload đầy đủ nếu payload chứa dữ liệu thật.
+
+```javascript
+function logAiApiError(response, context) {
+  const body = response.getContentText();
+  console.error({
+    message: 'AI API failed',
+    jobName: context.jobName,
+    statusCode: response.getResponseCode(),
+    bodyPreview: body.slice(0, 500),
+    time: new Date().toISOString(),
+  });
+}
+```
+
+`bodyPreview` giúp xem lỗi như quota, invalid key hoặc malformed request mà không đưa response quá dài vào log.
+
+## Đo thời gian gọi AI
+
+Độ trễ rất quan trọng trong Apps Script vì có giới hạn thời gian chạy. Bạn nên đo duration cho request AI và cả job tổng.
+
+```javascript
+function fetchWithTiming(url, options) {
+  const startedAt = Date.now();
+  const response = UrlFetchApp.fetch(url, {
+    ...options,
+    muteHttpExceptions: true,
+  });
+
+  console.log({
+    message: 'AI request completed',
+    statusCode: response.getResponseCode(),
+    durationMs: Date.now() - startedAt,
+  });
+
+  return response;
+}
+```
+
+Nếu request mất quá lâu, bạn có thể giảm batch size, dùng model nhanh hơn hoặc chuyển job sang trigger xử lý từng phần.
+
+## Dùng Executions dashboard
+
+Apps Script Executions dashboard hiển thị từng lần chạy, trạng thái success/failed, thời gian chạy, user, trigger và log. Với trigger hoặc web app, đây là nơi đầu tiên bạn kiểm tra khi người dùng báo lỗi.
+
+Quy trình debug nên là:
+
+- Mở Executions dashboard.
+- Tìm execution failed gần thời điểm lỗi.
+- Xem function entry point và stack trace.
+- Đọc log theo thứ tự thời gian.
+- Xác định lỗi thuộc lớp Sheets, AI API, parser, quota hay quyền.
+- Tái hiện bằng function debug nhỏ nếu có thể.
+
+Nếu execution hiển thị thành công nhưng dữ liệu sai, có thể code đã bắt lỗi rồi không throw, hoặc model trả output sai nhưng bạn không validate.
+
+## Chuẩn bị log để nhờ AI phân tích
+
+Khi gửi log cho AI debug, hãy ẩn dữ liệu nhạy cảm. Bạn có thể gửi:
+
+- Tên job và function entry point.
+- Stack trace.
+- Log object đã cắt ngắn.
+- Dữ liệu mẫu giả lập.
+- Kỳ vọng đúng và kết quả thực tế.
+
+Không gửi API key, email thật, nội dung prompt chứa thông tin khách hàng hoặc toàn bộ sheet.
+
+## Lỗi thường gặp khi debug AI Apps Script
+
+- Log prompt đầy đủ chứa dữ liệu khách hàng.
+- Không log model hoặc provider nên không biết request đi đâu.
+- Không log status code khi API lỗi.
+- Bắt lỗi rồi không `throw`, khiến execution nhìn như thành công.
+- Không phân biệt lỗi parse JSON và lỗi model trả sai schema.
+- Log quá ít, chỉ thấy "failed" mà không biết fail ở bước nào.
+- Log quá nhiều, làm lộ dữ liệu và khó đọc.
+
+## Bài tập thực hành
+
+Thêm `logAiJobStart`, `logAiApiError` và `fetchWithTiming` vào một function gọi API giả. Cố tình dùng endpoint sai hoặc key giả, chạy function, rồi mở Executions dashboard để xác định status code, body preview và thời gian request. Sau đó viết một prompt nhờ AI phân tích lỗi bằng log đã ẩn secret.
+
+## Câu hỏi thường gặp về debug AI Apps Script
+
+### Logger.log hay console.log tốt hơn?
+
+`Logger.log` đủ cho học cơ bản. `console.log` thường tốt hơn cho structured logs và Cloud Logging vì có thể log object rõ ràng.
+
+### Có nên log response AI đầy đủ không?
+
+Không nên nếu dữ liệu nhạy cảm hoặc response dài. Chỉ log bản cắt ngắn, hoặc log loại lỗi và schema field bị thiếu.
+
+### Vì sao execution thành công dù kết quả sai?
+
+Có thể code đã catch lỗi nhưng không throw, hoặc model trả output sai schema nhưng bạn không validate. Thành công về mặt runtime không đồng nghĩa automation đúng.
+
+### Có cần log từng dòng trong sheet không?
+
+Không nên với sheet lớn. Hãy log tổng số dòng, số dòng lỗi và row number của vài lỗi đại diện. Log từng dòng có thể chậm và lộ dữ liệu.
+
+## Tóm tắt và bước tiếp theo
+
+Debug AI Apps Script cần log có cấu trúc, đủ ngữ cảnh và an toàn dữ liệu. Executions dashboard là nơi kiểm tra trigger, lỗi runtime và log theo từng lần chạy. Bài tiếp theo sẽ học cách test pure functions để giảm phụ thuộc vào Apps Script runtime.

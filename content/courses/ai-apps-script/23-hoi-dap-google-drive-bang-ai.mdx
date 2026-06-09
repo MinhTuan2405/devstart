@@ -1,0 +1,154 @@
+---
+title: "Hỏi đáp Google Drive bằng AI Apps Script"
+description: "Học cách tạo trợ lý hỏi đáp đơn giản từ nội dung file Google Drive bằng Apps Script và AI."
+slug: "hoi-dap-google-drive-bang-ai"
+course: "ai-apps-script"
+order: 23
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["Google Drive AI Apps Script", "hỏi đáp Google Drive bằng AI", "DriveApp AI", "RAG Apps Script cơ bản", "AI knowledge base Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Hỏi đáp Google Drive bằng AI là gì?
+
+Hỏi đáp Google Drive bằng AI Apps Script là workflow tìm tài liệu liên quan trong Drive, đọc nội dung bằng `DocumentApp` hoặc `DriveApp`, đưa phần context phù hợp vào prompt và yêu cầu AI trả lời dựa trên tài liệu đó. Đây là phiên bản đơn giản của RAG, giúp bạn xây trợ lý kiến thức nội bộ trước khi học embeddings.
+
+Khác với chat AI thông thường, Drive Q&A không nên để model trả lời bằng kiến thức chung. Nó phải trả lời theo tài liệu mà hệ thống cung cấp. Nếu tài liệu không có thông tin, câu trả lời đúng là “không tìm thấy”, không phải đoán.
+
+## Mental model: retrieval trước, generation sau
+
+RAG có hai nửa: retrieval và generation. Retrieval là bước chọn tài liệu hoặc đoạn văn liên quan. Generation là bước đưa context đã chọn cho AI để tạo câu trả lời. Với Apps Script cơ bản, retrieval có thể là tìm theo tên file, tag, folder hoặc keyword trong sheet index. Khi lên nâng cao, retrieval sẽ dùng embeddings và vector search.
+
+Một flow tối thiểu gồm:
+
+- Người dùng nhập câu hỏi.
+- Script tìm 1-5 tài liệu có khả năng liên quan.
+- Script đọc text từ tài liệu.
+- Script tạo prompt có context và câu hỏi.
+- AI trả lời kèm nguồn.
+- Script ghi câu hỏi, câu trả lời, source URL vào `QaLog`.
+
+Không nên đưa toàn bộ Drive vào prompt. Vừa tốn chi phí, vừa làm model nhiễu và có thể lộ dữ liệu không cần thiết.
+
+## Tìm file Docs trong Drive
+
+Ví dụ đơn giản nhất là tìm file theo tên chính xác hoặc gần chính xác. `DriveApp.getFilesByName` không phải semantic search, nhưng đủ để học cách lấy ID và URL.
+
+```javascript
+function findDocsByName(name) {
+  if (!name) throw new Error('Missing file name');
+
+  const files = DriveApp.getFilesByName(name);
+  const results = [];
+
+  while (files.hasNext()) {
+    const file = files.next();
+    results.push({
+      id: file.getId(),
+      name: file.getName(),
+      url: file.getUrl(),
+      mimeType: file.getMimeType(),
+    });
+  }
+
+  return results;
+}
+```
+
+Nếu team có nhiều file trùng tên, hãy lưu knowledge index trong Sheets: `Title`, `FileId`, `Url`, `Tags`, `UpdatedAt`. Index giúp retrieval rõ ràng hơn và tránh scan Drive quá rộng.
+
+## Đọc nội dung document và tạo source context
+
+Bạn nên đưa source number vào context để AI có thể trích dẫn. Ví dụ `[1] Onboarding FAQ` giúp người dùng biết câu trả lời lấy từ đâu.
+
+```javascript
+function readDocsAsContext(docs) {
+  return docs.map(function(doc, index) {
+    const text = DocumentApp.openById(doc.id).getBody().getText();
+    return [
+      '[' + (index + 1) + '] ' + doc.name,
+      'URL: ' + doc.url,
+      String(text).slice(0, 8000),
+    ].join('\n');
+  }).join('\n\n---\n\n');
+}
+```
+
+Trong production, không nên đọc quá nhiều document trong một lần chạy vì Apps Script có giới hạn thời gian. Bắt đầu với 1-3 file là hợp lý.
+
+## Tạo prompt hỏi đáp có context
+
+Prompt phải nói rõ AI chỉ được dùng context. Bạn cũng nên yêu cầu trích nguồn dạng `[1]`, `[2]` để người đọc kiểm chứng.
+
+```javascript
+function buildDriveQaPrompt(question, contextText) {
+  return [
+    'Answer the question in Vietnamese using only the context below.',
+    'If the context does not contain the answer, say: Khong tim thay trong tai lieu.',
+    'Cite sources with [1], [2] when using information.',
+    'Context:',
+    String(contextText).slice(0, 20000),
+    'Question: ' + question,
+  ].join('\n');
+}
+```
+
+Câu “using only the context” là guardrail quan trọng. Nó không đảm bảo tuyệt đối, nhưng giảm nguy cơ model trả lời bằng kiến thức ngoài tài liệu.
+
+## Ví dụ thực tế: hỏi đáp từ một document đã chọn
+
+Function này phù hợp khi giao diện cho người dùng chọn document trước, sau đó nhập câu hỏi.
+
+```javascript
+function answerQuestionFromDoc(documentId, question) {
+  if (!question || question.length > 1000) {
+    throw new Error('Question is empty or too long');
+  }
+
+  const file = DriveApp.getFileById(documentId);
+  const docs = [{ id: documentId, name: file.getName(), url: file.getUrl() }];
+  const context = readDocsAsContext(docs);
+  const answer = generateAiText(buildDriveQaPrompt(question, context), { temperature: 0 });
+
+  logDriveQa(question, answer, file.getUrl());
+  return answer;
+}
+```
+
+`logDriveQa` nên ghi vào sheet `QaLog`: thời gian, user email, question, answer, source URL và status. Không cần lưu toàn bộ context nếu context chứa dữ liệu nhạy cảm.
+
+## Lỗi thường gặp với Drive Q&A
+
+- Đưa quá nhiều tài liệu không liên quan vào prompt, khiến câu trả lời dài nhưng sai trọng tâm.
+- Không yêu cầu AI nói khi không tìm thấy thông tin, dẫn đến hallucination.
+- Không kiểm soát quyền truy cập file, làm người dùng hỏi được tài liệu họ không nên thấy.
+- Không log source document, khiến câu trả lời không thể audit.
+- Tin câu trả lời không có citation hoặc source.
+- Scan toàn bộ Drive trong mỗi request, dễ chậm và chạm quota.
+
+## Bài tập thực hành
+
+Tạo một Google Docs tên `Internal FAQ` chứa 10 câu hỏi nội bộ. Viết function nhận `documentId` và `question`, đọc nội dung tài liệu, gọi AI trả lời chỉ dựa trên tài liệu, rồi ghi question, answer và document URL vào sheet `QaLog`. Thêm test với câu hỏi không có trong tài liệu và kiểm tra AI có nói không tìm thấy hay không.
+
+## Câu hỏi thường gặp về Drive AI
+
+### Đây có phải RAG đầy đủ không?
+
+Chưa. Đây là context injection đơn giản: bạn tự chọn document rồi đưa text vào prompt. RAG đầy đủ thường có chunking, embeddings, retrieval theo độ liên quan và quản lý source tốt hơn.
+
+### Có thể đọc file PDF không?
+
+Có thể, nhưng phức tạp hơn vì cần trích text từ PDF hoặc dùng OCR. Người mới nên bắt đầu với Google Docs hoặc text file để hiểu flow trước.
+
+### Làm sao giảm hallucination?
+
+Giới hạn context, yêu cầu trả lời theo tài liệu, bắt AI nói “không tìm thấy” khi thiếu thông tin, yêu cầu citation và cho người dùng mở source URL kiểm tra.
+
+### Có nên cho mọi người hỏi toàn bộ Drive không?
+
+Không nên. Hãy bắt đầu với một folder hoặc danh sách file đã duyệt. Drive cá nhân thường có dữ liệu nhạy cảm, file cũ và tài liệu không liên quan.
+
+## Tóm tắt và bước tiếp theo
+
+Drive Q&A là bước đầu để xây knowledge assistant bằng AI Apps Script. Bài này tập trung vào retrieval đơn giản, context có source và prompt chống đoán mò. Bài tiếp theo chuyển sang Google Calendar để tạo agenda và follow-up từ lịch họp.

@@ -1,0 +1,159 @@
+---
+title: "Tạo custom menu trong Google Sheets bằng onOpen"
+description: "Học cách tạo menu tùy chỉnh trong Google Sheets để chạy Apps Script từ giao diện người dùng."
+slug: "custom-menu-onopen-apps-script"
+course: "apps-script"
+order: 12
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["custom menu Apps Script", "onOpen Apps Script", "menu Google Sheets Apps Script", "SpreadsheetApp getUi", "Apps Script UI"]
+publishedAt: "2026-06-09"
+---
+
+## Custom menu trong Apps Script là gì?
+
+Custom menu là menu bạn thêm vào Google Sheets để người dùng chạy function mà không cần mở Apps Script editor. Trong Sheets, menu thường được tạo bằng trigger đơn giản `onOpen()` và `SpreadsheetApp.getUi()`, giúp automation trở thành công cụ dễ dùng hơn.
+
+Nếu project chỉ có bạn dùng, mở editor và bấm Run có thể chấp nhận được. Nhưng khi file được chia sẻ cho đội vận hành, kế toán, tuyển sinh hoặc sales, họ cần một nút rõ ràng trong giao diện Sheets. Custom menu giải quyết đúng nhu cầu đó.
+
+## Mô hình onOpen và UI menu
+
+`onOpen` là function có tên đặc biệt. Khi người dùng mở file Google Sheets, Apps Script tự gọi `onOpen`. Bên trong function này, bạn lấy UI của spreadsheet, tạo menu, thêm item và đưa menu vào giao diện.
+
+```javascript
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('DevStart')
+    .addItem('Create report', 'createReport')
+    .addItem('Format sheet', 'formatHeaderRow')
+    .addToUi();
+}
+
+function createReport() {
+  SpreadsheetApp.getActiveSheet().appendRow(['Report created at', new Date()]);
+}
+
+function formatHeaderRow() {
+  SpreadsheetApp.getActiveSheet().getRange('A1:D1').setFontWeight('bold');
+}
+```
+
+Sau khi lưu code, hãy tải lại file Sheets. Menu `DevStart` sẽ xuất hiện trên thanh menu. Tên function trong `addItem` là chuỗi, không có dấu ngoặc. Nếu viết `createReport()` trong chuỗi, menu sẽ không gọi đúng function.
+
+## Tạo menu rõ ràng cho người dùng cuối
+
+Menu tốt nên dùng ngôn ngữ theo công việc, không dùng tên hàm kỹ thuật. Người dùng muốn thấy `Cập nhật báo cáo`, không nhất thiết muốn thấy `runReportJob`. Code bên dưới dùng tên menu thân thiện nhưng function vẫn đặt bằng tiếng Anh không dấu.
+
+```javascript
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+
+  ui.createMenu('Quan ly bao cao')
+    .addItem('Cap nhat bao cao', 'updateReport')
+    .addItem('Dinh dang bao cao', 'formatReport')
+    .addSeparator()
+    .addItem('Xoa du lieu tam', 'clearTempRows')
+    .addToUi();
+}
+
+function updateReport() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Report');
+  sheet.getRange('A1:B1').setValues([['Updated at', new Date()]]);
+}
+
+function clearTempRows() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Temp');
+  if (!sheet) return;
+  sheet.clearContents();
+}
+```
+
+`addSeparator()` giúp nhóm tác vụ để menu dễ đọc. Nếu menu có quá nhiều item, người dùng sẽ khó chọn đúng. Hãy ưu tiên các hành động thật sự cần chạy thủ công.
+
+## Thêm hộp thoại xác nhận hoặc thông báo
+
+Một function chạy từ menu có thể hiển thị alert để thông báo kết quả. Điều này hữu ích khi tác vụ mất vài giây hoặc có thể xóa dữ liệu.
+
+```javascript
+function clearReportWithConfirm() {
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.alert(
+    'Clear report',
+    'Do you want to clear report content?',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (response !== ui.Button.YES) {
+    ui.alert('Canceled');
+    return;
+  }
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Report');
+  if (sheet) {
+    sheet.clearContents();
+  }
+
+  ui.alert('Report cleared');
+}
+```
+
+Không nên lạm dụng alert cho mọi thao tác nhỏ, nhưng với thao tác xóa hoặc gửi email hàng loạt, xác nhận là cần thiết.
+
+## Quyền chạy function từ menu
+
+Menu được tạo khi mở file, nhưng function trong menu có thể cần quyền riêng. Ví dụ function chỉ format sheet có thể chạy đơn giản, còn function gửi email hoặc tạo file Drive sẽ yêu cầu authorization. Người dùng bấm menu lần đầu có thể thấy màn hình cấp quyền.
+
+Vì vậy, khi chia sẻ file, bạn nên hướng dẫn người dùng chạy một tác vụ kiểm tra hoặc cấp quyền ban đầu. Nếu trong domain Google Workspace, admin có thể có chính sách hạn chế Apps Script, nên cần kiểm tra với quản trị viên khi gặp lỗi quyền.
+
+## Khi nào nên dùng custom menu?
+
+Custom menu hữu ích khi người không biết code cần chạy automation, bạn có nhiều function và muốn đặt tên thân thiện, quy trình cần chạy thủ công theo bước, hoặc bạn muốn giảm việc người dùng mở editor và bấm nhầm function.
+
+Custom menu không thay thế trigger. Nếu tác vụ cần tự chạy theo giờ hoặc khi edit ô, hãy dùng trigger. Nếu tác vụ cần người dùng quyết định thời điểm chạy, custom menu là lựa chọn tốt.
+
+## Lỗi thường gặp với custom menu
+
+- Quên tải lại file sau khi thêm hoặc sửa `onOpen`.
+- Tên function trong menu sai chính tả hoặc có dấu ngoặc.
+- Dùng custom menu trong standalone script không gắn với Sheets.
+- Function được gọi cần quyền nhưng người dùng chưa cấp quyền.
+- Tạo quá nhiều item khiến menu khó dùng.
+- Đổi tên function nhưng quên cập nhật chuỗi trong `addItem`.
+
+## Bài tập thực hành
+
+Tạo menu `Quan ly bao cao` có hai item: `Tao bao cao mau` và `Xoa bao cao`. Viết hai function tương ứng, một function ghi dữ liệu mẫu vào sheet `Report`, một function xóa nội dung từ dòng 2 trở xuống.
+
+```javascript
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Quan ly bao cao')
+    .addItem('Tao bao cao mau', 'createSampleReport')
+    .addItem('Xoa bao cao', 'clearReportData')
+    .addToUi();
+}
+```
+
+Sau khi lưu, tải lại file Sheets và chạy từng item từ menu. Nếu menu không hiện, kiểm tra tên function `onOpen` và chắc chắn script là bound script của file Sheets.
+
+## Câu hỏi thường gặp về onOpen
+
+### onOpen có cần bấm Run không?
+
+Không. Khi file được mở, Apps Script tự gọi `onOpen`. Tuy nhiên bạn có thể bấm Run để kiểm tra lỗi cú pháp hoặc cấp quyền ban đầu nếu function trong menu cần quyền.
+
+### Menu có hiện cho mọi người không?
+
+Menu hiện cho người mở file nếu họ có quyền phù hợp với file và script. Function chạy theo ngữ cảnh quyền của người dùng hoặc theo thiết lập trigger liên quan.
+
+### Có tạo menu trong Google Docs được không?
+
+Có. Với Docs, bạn dùng `DocumentApp.getUi()` thay vì `SpreadsheetApp.getUi()`. Với Slides và Forms cũng có service UI tương ứng.
+
+### Vì sao bấm menu nhưng không chạy?
+
+Thường là do tên function trong `addItem` sai, function không nằm ở phạm vi global, hoặc người dùng chưa cấp quyền. Hãy xem Executions để biết lỗi cụ thể.
+
+## Tóm tắt
+
+Custom menu biến Apps Script thành công cụ thân thiện trong Google Sheets. Bạn đã học `onOpen`, `SpreadsheetApp.getUi()`, `createMenu`, `addItem`, alert xác nhận và các lỗi thường gặp. Bài tiếp theo sẽ học nút bấm, drawing và macro để chạy script nhanh hơn ngay trên sheet.

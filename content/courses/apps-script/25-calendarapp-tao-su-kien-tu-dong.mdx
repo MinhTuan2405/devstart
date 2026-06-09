@@ -1,0 +1,158 @@
+---
+title: "CalendarApp trong Apps Script để tạo sự kiện tự động"
+description: "Học cách dùng CalendarApp để tạo, tìm và quản lý sự kiện Google Calendar bằng Apps Script."
+slug: "calendarapp-tao-su-kien-tu-dong"
+course: "apps-script"
+order: 25
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["CalendarApp Apps Script", "tạo sự kiện Calendar Apps Script", "Google Calendar automation", "Apps Script lịch", "createEvent Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`CalendarApp` giúp Apps Script tạo, tìm, cập nhật và xóa sự kiện Google Calendar bằng code. Use case phổ biến là tạo lịch hẹn từ Google Sheets, gửi invite cho khách, đồng bộ deadline, hoặc tự động đặt lịch sau khi người dùng gửi form.
+
+## CalendarApp trong Apps Script dùng để làm gì?
+
+Khi dữ liệu lịch hẹn nằm trong Sheets, việc nhập thủ công vào Calendar rất dễ sai: sai giờ, quên khách mời, tạo trùng hoặc không ghi lại event ID. `CalendarApp` cho phép bạn chuẩn hóa quy trình này. Script đọc từng dòng trong sheet, tạo event với tiêu đề, thời gian bắt đầu, thời gian kết thúc, mô tả và khách mời, sau đó ghi event ID trở lại sheet để lần sau biết dòng đó đã xử lý.
+
+Mô hình tư duy là: Calendar chứa event. Event có title, start time, end time, description, guests và ID. Nếu bạn muốn cập nhật hoặc tránh tạo trùng, phải lưu ID. Nếu chỉ tạo event rồi không ghi lại ID, lần chạy sau rất khó biết event nào tương ứng với dòng nào.
+
+## Tạo sự kiện trong lịch mặc định
+
+Ví dụ cơ bản tạo một cuộc họp 60 phút trong lịch mặc định của tài khoản chạy script.
+
+```javascript
+function createCalendarEvent() {
+  const calendar = CalendarApp.getDefaultCalendar();
+  const start = new Date('2026-06-10T09:00:00');
+  const end = new Date('2026-06-10T10:00:00');
+
+  const event = calendar.createEvent('Apps Script meeting', start, end, {
+    description: 'Created by Apps Script',
+    guests: 'guest@example.com',
+    sendInvites: false,
+  });
+
+  Logger.log('Event ID: ' + event.getId());
+}
+```
+
+`sendInvites: false` là lựa chọn an toàn khi test. Nếu bật `true`, khách mời có thể nhận email mời họp thật. Trước khi bật gửi invite, hãy test với email của bạn hoặc một lịch test.
+
+## Hiểu ngày giờ và timezone
+
+Sai timezone là lỗi rất phổ biến. `new Date('2026-06-10T09:00:00')` được hiểu theo môi trường thực thi và timezone project. Dữ liệu từ Sheets có thể là object Date thật hoặc chuỗi. Nếu người dùng nhập ngày giờ dạng text không nhất quán, script có thể tạo event sai giờ.
+
+Bạn nên:
+
+- Kiểm tra timezone của Apps Script project.
+- Dùng ô date/time thật trong Sheets thay vì text tự do.
+- Log `start` và `end` trước khi tạo event.
+- Dùng `Utilities.formatDate` khi cần hiển thị ngày giờ cho người dùng.
+
+## Tạo sự kiện từ dữ liệu Sheets và lưu EventId
+
+Sheet `Meetings` nên có cột `Title`, `Start`, `End`, `GuestEmail`, `EventId`, `Status`. Chỉ tạo event cho dòng chưa có `EventId`.
+
+```javascript
+function createEventsFromSheet() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Meetings');
+  const rows = sheet.getDataRange().getValues().slice(1);
+  const calendar = CalendarApp.getDefaultCalendar();
+
+  rows.forEach(function(row, index) {
+    const sheetRow = index + 2;
+    const title = row[0];
+    const start = row[1];
+    const end = row[2];
+    const guest = row[3];
+    const eventId = row[4];
+
+    if (eventId || !title || !start || !end) return;
+
+    const options = {
+      description: 'Created from Google Sheets',
+      sendInvites: false,
+    };
+
+    if (guest) {
+      options.guests = guest;
+    }
+
+    const event = calendar.createEvent(title, new Date(start), new Date(end), options);
+    sheet.getRange(sheetRow, 5).setValue(event.getId());
+    sheet.getRange(sheetRow, 6).setValue('created');
+  });
+}
+```
+
+Lưu `EventId` là bước quan trọng nhất để tránh trùng. Nếu function chạy lại, các dòng đã có ID sẽ bị bỏ qua.
+
+## Cập nhật event đã tạo
+
+Khi bạn đã lưu ID, có thể mở event và cập nhật thông tin. Đây là lý do event ID cần được ghi lại.
+
+```javascript
+function updateFirstMeetingDescription() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Meetings');
+  const eventId = sheet.getRange('E2').getValue();
+
+  if (!eventId) {
+    Logger.log('No event ID');
+    return;
+  }
+
+  const calendar = CalendarApp.getDefaultCalendar();
+  const event = calendar.getEventById(eventId);
+
+  if (!event) {
+    Logger.log('Event not found');
+    return;
+  }
+
+  event.setDescription('Updated by Apps Script at ' + new Date().toISOString());
+}
+```
+
+Nếu `getEventById` không tìm thấy event, có thể event đã bị xóa, ID không thuộc calendar hiện tại, hoặc tài khoản không có quyền.
+
+## Dùng lịch khác lịch mặc định
+
+Bạn có thể dùng `CalendarApp.getCalendarById(calendarId)` để ghi vào lịch team, lịch phòng họp hoặc lịch dự án. Calendar ID thường nằm trong phần cài đặt của Google Calendar. Hãy đảm bảo tài khoản chạy script có quyền tạo sự kiện trên lịch đó.
+
+## Lỗi thường gặp với CalendarApp
+
+- Sai múi giờ hoặc định dạng ngày giờ.
+- Chạy lại function và tạo trùng event vì không lưu `EventId`.
+- Bật `sendInvites: true` khi vẫn đang test.
+- Không kiểm tra email khách mời rỗng.
+- Dùng lịch mặc định trong khi cần lịch team.
+- Không xử lý trường hợp event đã bị xóa thủ công.
+- Nhập ngày giờ trong Sheets dưới dạng text khó parse.
+
+## Bài tập thực hành
+
+Tạo sheet `Meetings` có cột `Title`, `Start`, `End`, `GuestEmail`, `EventId`, `Status`. Nhập ít nhất ba dòng, trong đó `Start` và `End` là ô date/time thật. Viết function tạo event cho dòng chưa có `EventId`, ghi ID và trạng thái `created`. Chạy lại function lần hai để xác nhận không tạo trùng.
+
+## Câu hỏi thường gặp về CalendarApp
+
+### CalendarApp có tạo sự kiện cả ngày được không?
+
+Có. Calendar service có method tạo all-day event. Dùng khi sự kiện không có giờ bắt đầu và kết thúc cụ thể, ví dụ deadline hoặc ngày nghỉ.
+
+### Có thể dùng lịch khác lịch mặc định không?
+
+Có. Dùng `CalendarApp.getCalendarById(calendarId)` nếu bạn có ID lịch và tài khoản chạy script có quyền truy cập.
+
+### Vì sao giờ sự kiện bị lệch?
+
+Thường do timezone của project, timezone của calendar hoặc dữ liệu ngày giờ trong sheet. Hãy kiểm tra timezone và dùng ô date/time thật thay vì chuỗi tự do.
+
+### Có thể xóa event bằng Apps Script không?
+
+Có, nếu bạn lấy được event và có quyền. Tuy nhiên nên cẩn thận, đặc biệt với lịch có nhiều người dùng.
+
+## Tóm tắt và chuyển tiếp
+
+`CalendarApp` giúp tự động hóa lịch hẹn từ dữ liệu có sẵn. Hãy lưu event ID, kiểm soát timezone, test với `sendInvites: false` và chỉ bật invite khi chắc chắn. Bài tiếp theo sẽ học `FormApp`, service giúp bạn tạo Google Forms bằng code thay vì tạo thủ công trong giao diện.

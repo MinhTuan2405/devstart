@@ -1,0 +1,183 @@
+---
+title: "Monitoring, chi phí và chất lượng AI Apps Script"
+description: "Học cách theo dõi request AI, lỗi, chi phí, chất lượng output và log an toàn trong Apps Script."
+slug: "monitoring-chi-phi-chat-luong-ai-apps-script"
+course: "ai-apps-script"
+order: 37
+duration: "23 phút"
+difficulty: "Khó"
+keywords: ["monitoring AI Apps Script", "chi phí AI API", "Apps Script AI logging", "quality tracking AI", "AI automation metrics"]
+publishedAt: "2026-06-09"
+---
+
+## Monitoring AI Apps Script cần theo dõi gì?
+
+Monitoring AI Apps Script là theo dõi request, lỗi, thời gian chạy, chi phí ước tính, chất lượng output và số lần con người phải sửa kết quả. Nếu không đo, bạn không biết automation đang tiết kiệm thời gian hay âm thầm tạo thêm rủi ro, đặc biệt khi trigger chạy tự động và AI API có chi phí.
+
+Monitoring không chỉ là log lỗi. Bạn cần log cả thành công để tính tỷ lệ lỗi, biết job nào tốn nhiều thời gian, prompt nào parse JSON kém và workflow nào cần review lại. Với dự án nhỏ, Google Sheets đủ làm usage log ban đầu; với production, Cloud Logging hoặc proxy backend sẽ tốt hơn.
+
+## Mental model: vận hành AI cần metrics kỹ thuật và metrics chất lượng
+
+AI workflow có hai nhóm chỉ số. Metrics kỹ thuật trả lời “hệ thống có chạy ổn không”: số request, lỗi API, timeout, duration, dòng xử lý, status. Metrics chất lượng trả lời “AI có tạo giá trị không”: tỷ lệ parse JSON thành công, tỷ lệ sentiment đúng khi review mẫu, số lần sửa draft, số câu trả lời RAG không có source.
+
+Sheet `AiUsageLog` nên có cột:
+
+- `Timestamp`.
+- `JobName`.
+- `Provider`.
+- `Model`.
+- `PromptVersion`.
+- `Status`.
+- `DurationMs`.
+- `InputChars` và `OutputChars`.
+- `EstimatedCost` nếu có.
+- `ErrorCode` hoặc `ErrorMessage` rút gọn.
+
+Không ghi prompt đầy đủ mặc định. Prompt thường chứa dữ liệu thật từ Sheets, Gmail hoặc Docs.
+
+## Ghi log request AI vào sheet
+
+Với project nhỏ, append vào sheet là cách bắt đầu nhanh. Hãy đảm bảo sheet tồn tại hoặc function tự bỏ qua để không làm workflow chính lỗi vì log.
+
+```javascript
+function logAiUsage(entry) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('AiUsageLog');
+  if (!sheet) return;
+
+  sheet.appendRow([
+    new Date(),
+    entry.jobName,
+    entry.provider,
+    entry.model,
+    entry.promptVersion,
+    entry.status,
+    entry.durationMs,
+    entry.inputChars,
+    entry.outputChars,
+    entry.estimatedCost || '',
+    entry.errorMessage || '',
+  ]);
+}
+```
+
+Nếu request nhiều, `appendRow` liên tục có thể chậm. Khi đó hãy batch log hoặc chuyển monitoring sang backend/proxy.
+
+## Bọc generateAiText để đo thời gian và status
+
+Wrapper metrics giúp mọi workflow tự động ghi log mà không lặp code.
+
+```javascript
+function generateAiTextWithMetrics(prompt, options) {
+  const startedAt = Date.now();
+  const config = getRequiredAiConfig();
+  const jobName = options && options.jobName ? options.jobName : 'unknown_job';
+  const promptVersion = options && options.promptVersion ? options.promptVersion : 'unknown';
+
+  try {
+    const result = generateAiText(prompt, options || {});
+    logAiUsage({
+      jobName: jobName,
+      provider: config.provider,
+      model: config.model,
+      promptVersion: promptVersion,
+      status: 'success',
+      durationMs: Date.now() - startedAt,
+      inputChars: String(prompt || '').length,
+      outputChars: String(result || '').length,
+    });
+    return result;
+  } catch (error) {
+    logAiUsage({
+      jobName: jobName,
+      provider: config.provider,
+      model: config.model,
+      promptVersion: promptVersion,
+      status: 'error',
+      durationMs: Date.now() - startedAt,
+      inputChars: String(prompt || '').length,
+      outputChars: 0,
+      errorMessage: String(error.message || '').slice(0, 300),
+    });
+    throw error;
+  }
+}
+```
+
+Function này giả định bạn có `getRequiredAiConfig`. Nếu provider trả usage token, hãy mở rộng wrapper để log token thật thay vì chỉ dùng ký tự.
+
+## Ước tính chi phí cơ bản
+
+Nếu provider không trả token, bạn có thể ước tính thô bằng độ dài ký tự. Không chính xác tuyệt đối, nhưng đủ để phát hiện job tăng bất thường.
+
+```javascript
+function estimateAiCost(inputChars, outputChars, pricePerMillionInput, pricePerMillionOutput) {
+  const estimatedInputTokens = Math.ceil(inputChars / 4);
+  const estimatedOutputTokens = Math.ceil(outputChars / 4);
+
+  return (estimatedInputTokens / 1000000) * pricePerMillionInput +
+    (estimatedOutputTokens / 1000000) * pricePerMillionOutput;
+}
+```
+
+Giá model thay đổi theo provider và thời gian, nên đừng hardcode lâu dài. Lưu pricing config trong PropertiesService hoặc sheet riêng nếu bạn cần báo cáo chi phí.
+
+## Quality metrics nên có
+
+Mỗi use case cần metrics riêng:
+
+- Classification: tỷ lệ parse JSON thành công, tỷ lệ nhãn đúng trên mẫu review.
+- Gmail draft: số lần người dùng sửa nhiều, số draft bị xóa, số draft được gửi.
+- Docs summary: số action item bị thiếu khi review, số summary quá dài.
+- RAG Q&A: tỷ lệ câu trả lời có source, tỷ lệ “không đủ dữ liệu”, số feedback sai.
+- Agent workflow: số tool call cần confirmation, số plan bị reject, số lỗi validation.
+
+Đừng cố đo mọi thứ từ ngày đầu. Chọn 2-3 chỉ số liên quan đến rủi ro lớn nhất của workflow.
+
+## Ngưỡng cảnh báo và cơ chế dừng
+
+Monitoring hữu ích hơn khi có hành động. Ví dụ: nếu lỗi API vượt 30% trong ngày, dừng trigger; nếu chi phí ước tính vượt ngưỡng, chỉ chạy dry run; nếu parse JSON lỗi liên tục, gửi email cho owner.
+
+```javascript
+function shouldPauseAiJob(errorRate, estimatedDailyCost) {
+  if (errorRate > 0.3) return true;
+  if (estimatedDailyCost > 10) return true;
+  return false;
+}
+```
+
+Trong Apps Script, bạn có thể lưu flag `AI_JOBS_PAUSED=true` trong PropertiesService để các job kiểm tra trước khi gọi AI.
+
+## Lỗi thường gặp khi monitoring
+
+- Chỉ log lỗi, không log success nên không biết tỷ lệ lỗi.
+- Log dữ liệu nhạy cảm hoặc prompt đầy đủ.
+- Không phân biệt `jobName`, khiến không biết workflow nào tốn chi phí.
+- Không theo dõi prompt version.
+- Không có ngưỡng dừng khi lỗi tăng cao.
+- Chỉ đo request mà không đo chất lượng output.
+
+## Bài tập thực hành
+
+Tạo sheet `AiUsageLog` với các cột ở trên. Bọc `generateAiText` bằng `generateAiTextWithMetrics`. Chạy 5 request test cho 2 job khác nhau, sau đó tạo bảng tổng hợp số request thành công/lỗi theo `JobName`. Nếu muốn nâng cao, thêm cột `PromptVersion` và tính chi phí ước tính theo ký tự.
+
+## Câu hỏi thường gặp về monitoring AI
+
+### Có cần đo token không?
+
+Có nếu provider trả usage. Token là cách đo chi phí tốt hơn ký tự. Nếu không có token, ước tính bằng ký tự chỉ dùng để phát hiện xu hướng, không dùng làm hóa đơn chính xác.
+
+### Chất lượng AI đo thế nào?
+
+Tùy use case. Với draft email, đo số lần sửa hoặc số draft bị xóa. Với classification, lấy mẫu review thủ công. Với RAG, đo câu trả lời có source và feedback người dùng.
+
+### Có nên lưu mọi response AI không?
+
+Không mặc định. Lưu có chọn lọc, ẩn danh và có quyền hạn chế nếu cần audit. Nhiều response chứa dữ liệu khách hàng hoặc tài liệu nội bộ.
+
+### Khi nào nên chuyển khỏi Sheets log?
+
+Khi request nhiều, cần dashboard realtime, cần alert hoặc nhiều script cùng ghi log. Khi đó hãy dùng Cloud Logging, BigQuery hoặc backend proxy.
+
+## Tóm tắt và bước tiếp theo
+
+Monitoring biến AI automation từ demo thành hệ thống có thể vận hành: biết nó chạy bao nhiêu, lỗi ở đâu, tốn bao nhiêu và chất lượng ra sao. Bài cuối sẽ tổng hợp toàn bộ khóa bằng dự án AI Workspace Assistant.

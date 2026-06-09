@@ -1,0 +1,153 @@
+---
+title: "clasp cơ bản: phát triển Apps Script bằng command line"
+description: "Học cách dùng clasp để login, clone, pull, push và quản lý Apps Script project từ máy local."
+slug: "clasp-co-ban-command-line"
+course: "apps-script"
+order: 40
+duration: "23 phút"
+difficulty: "Khó"
+keywords: ["clasp Apps Script", "Google clasp", "phát triển Apps Script local", "clasp push pull", "command line Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`clasp` là công cụ command line chính thức giúp bạn phát triển Apps Script trên máy local. Thay vì sửa mọi thứ trong editor trình duyệt, bạn có thể dùng VS Code, git, review diff, pull code từ Apps Script và push code ngược lên project bằng vài lệnh rõ ràng.
+
+## Vì sao nên học clasp?
+
+Editor Apps Script rất tiện cho người mới, nhưng khi dự án lớn hơn, nó có nhiều giới hạn: khó review thay đổi, khó tìm kiếm nhiều file, khó dùng git, khó chia nhánh và khó rollback. `clasp` giải quyết phần quản lý source code bằng cách đồng bộ project Apps Script với thư mục local.
+
+Mental model nên nhớ: Apps Script server vẫn là nơi code chạy, còn máy local là nơi bạn chỉnh file. `clasp pull` kéo code từ Apps Script về local. `clasp push` đẩy file local lên Apps Script. `clasp` không biến Apps Script thành Node.js local, và không chạy trực tiếp `SpreadsheetApp` trên máy bạn.
+
+## Cài đặt và đăng nhập clasp
+
+Bạn cần Node.js và npm. Sau đó cài package `@google/clasp` global. Trước khi login, hãy đảm bảo bạn dùng đúng tài khoản Google sẽ quản lý Apps Script project.
+
+```bash
+npm install @google/clasp -g
+clasp login
+clasp --version
+```
+
+Lệnh `clasp login` mở trình duyệt để cấp quyền cho clasp quản lý Apps Script. Nếu login thành công, token thường được lưu trong file cấu hình ở máy của bạn. File token này không được commit lên git.
+
+Nếu gặp lỗi liên quan Apps Script API, vào trang cài đặt Apps Script của tài khoản Google và bật Apps Script API. Đây là lỗi rất thường gặp khi dùng clasp lần đầu.
+
+## Clone project Apps Script có sẵn
+
+Để clone, bạn cần Script ID, không phải Deployment ID và không phải URL web app. Script ID nằm trong Project Settings của Apps Script editor.
+
+```bash
+mkdir lead-tracker-script
+cd lead-tracker-script
+clasp clone PASTE_SCRIPT_ID_HERE
+clasp pull
+clasp open-script
+```
+
+Sau khi clone, thư mục thường có `.clasp.json`, `appsscript.json`, các file `.js`, `.gs` hoặc `.html`. Lệnh `clasp open-script` mở project trên trình duyệt để bạn xác nhận đúng project.
+
+File `.clasp.json` cho biết thư mục local đang liên kết với script nào. Ví dụ:
+
+```json
+{
+  "scriptId": "PASTE_SCRIPT_ID_HERE",
+  "rootDir": "./"
+}
+```
+
+Nếu `.clasp.json` trỏ nhầm scriptId, `clasp push` có thể đẩy code sang project sai. Vì vậy hãy kiểm tra file này trước khi push, đặc biệt khi bạn copy thư mục hoặc làm nhiều môi trường dev/prod.
+
+## Tạo project mới bằng clasp
+
+Bạn cũng có thể tạo project mới từ local. Lệnh `clasp create` tạo Apps Script project và sinh `.clasp.json`.
+
+```bash
+mkdir apps-script-demo
+cd apps-script-demo
+clasp create --title "Apps Script Demo" --type standalone
+clasp open-script
+```
+
+Sau đó tạo `Code.js` và `appsscript.json` nếu chưa có. Khi push, Apps Script nhận file local.
+
+```javascript
+function helloAppsScript() {
+  Logger.log('Hello from local clasp project');
+}
+```
+
+```bash
+clasp push
+clasp open-script
+```
+
+Mở editor, chạy `helloAppsScript` để kiểm tra. Lưu ý code vẫn chạy trên Apps Script, không chạy trên terminal local.
+
+## Pull, push và open-script
+
+Ba lệnh bạn dùng nhiều nhất là `pull`, `push`, `open-script`.
+
+- `clasp pull`: lấy code mới nhất từ Apps Script về local.
+- `clasp push`: đẩy code local lên Apps Script.
+- `clasp open-script`: mở editor của project hiện tại.
+
+Quy trình tối thiểu trước khi sửa là pull trước. Sau khi sửa, review diff bằng git, rồi push. Nếu bạn sửa cả trên editor và local cùng lúc, rất dễ ghi đè thay đổi.
+
+## Lưu ý về file và thư mục
+
+Apps Script hỗ trợ file `.gs`, `.js`, `.html` và manifest `appsscript.json`. Khi dùng clasp, bạn có thể tổ chức file theo thư mục nếu cấu hình phù hợp, nhưng hãy giữ cấu trúc đơn giản lúc mới học.
+
+Ví dụ cấu trúc dễ hiểu:
+
+```text
+appsscript.json
+Code.js
+webapp.js
+sheets.js
+Index.html
+.clasp.json
+```
+
+Đặt tên file theo chức năng giúp project dễ đọc hơn so với để mọi thứ trong `Code.gs`. Tuy nhiên, Apps Script vẫn chạy theo global scope, nên function trùng tên giữa các file sẽ gây lỗi hoặc ghi đè hành vi.
+
+## Bảo mật khi dùng clasp
+
+Không commit token đăng nhập clasp. Thường token nằm ngoài project, nhưng bạn vẫn nên kiểm tra `.gitignore`. Với `.clasp.json`, quyết định commit hay không tùy team. Nếu team cùng làm trên một script dev, commit có thể tiện. Nếu có nhiều môi trường hoặc scriptId nhạy cảm, hãy cân nhắc dùng hướng dẫn riêng.
+
+Không dùng `clasp push --force` nếu chưa hiểu tác động. Force có thể ghi đè file trên Apps Script bằng trạng thái local, làm mất sửa đổi của người khác.
+
+## Lỗi thường gặp với clasp
+
+- Chưa bật Apps Script API cho tài khoản Google.
+- Login bằng tài khoản khác với tài khoản sở hữu script.
+- Clone nhầm Script ID hoặc nhầm Deployment ID.
+- `.clasp.json` trỏ sai project.
+- Quên `clasp pull` trước khi sửa khi có người khác chỉnh trên editor.
+- Tưởng `clasp` chạy được `SpreadsheetApp` trên máy local.
+- Commit nhầm file token hoặc thông tin nhạy cảm.
+
+## Bài tập thực hành
+
+Cài clasp, login, clone một Apps Script project test. Chạy `clasp open-script` để xác nhận đúng project. Tạo file `Code.js` hoặc sửa function `helloAppsScript`, chạy `clasp push`, mở editor và chạy function đó. Sau đó sửa một dòng trên editor, chạy `clasp pull` về local và xem thay đổi bằng git diff.
+
+## Câu hỏi thường gặp về clasp
+
+### Có bắt buộc dùng clasp để học Apps Script không?
+
+Không. Editor trình duyệt đủ cho bài cơ bản. Clasp hữu ích khi project nhiều file, cần git, review code, team workflow hoặc deploy có kiểm soát.
+
+### clasp có chạy test local được không?
+
+Không theo nghĩa chạy `SpreadsheetApp` trên máy bạn. Bạn có thể test helper JavaScript thuần nếu tách riêng, nhưng Apps Script services vẫn cần chạy trên môi trường Google.
+
+### Nên dùng .gs hay .js khi dùng clasp?
+
+Cả hai đều được. Với local workflow, nhiều team dùng `.js` cho editor hiện đại. Quan trọng hơn là code hợp V8 và không phụ thuộc cú pháp Node.js không có trong Apps Script.
+
+### Có nên commit .clasp.json không?
+
+Tùy quy trình. Nếu team dùng cùng script dev, có thể commit. Nếu mỗi người có project riêng hoặc có dev/prod riêng, cần cẩn thận để tránh push nhầm.
+
+## Tóm tắt và bước tiếp theo
+
+`clasp` đưa Apps Script về workflow local: clone, pull, sửa bằng editor quen thuộc, review git diff và push lên Google. Hãy luôn kiểm tra tài khoản, Script ID và `.clasp.json` trước khi push. Bài tiếp theo sẽ xây quy trình local với git và clasp để làm việc an toàn hơn trong team hoặc dự án production.

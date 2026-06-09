@@ -1,0 +1,197 @@
+---
+title: "Test pure functions trong AI Apps Script"
+description: "Học cách tách pure functions để test logic AI Apps Script dễ hơn trước khi gọi Sheets, Gmail hoặc AI API thật."
+slug: "test-pure-functions-ai-apps-script"
+course: "ai-apps-script"
+order: 11
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["test Apps Script", "pure functions Apps Script", "test AI Apps Script", "debug Apps Script VS Code", "Apps Script unit test"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao cần pure functions trong AI Apps Script?
+
+Pure function giúp bạn test logic AI Apps Script mà không cần mở Sheets, gửi Gmail hoặc gọi AI API thật. Function thuần chỉ nhận input và trả output, không có side effect. Nhờ vậy bạn có thể kiểm tra mapping dữ liệu, prompt, parser và validator nhanh hơn, rẻ hơn và an toàn hơn.
+
+Trong dự án AI, phần dễ sai không chỉ là API call. AI có thể trả output sai schema, prompt có thể thiếu ràng buộc, dữ liệu sheet có thể rỗng, cột có thể đổi thứ tự. Nếu mọi logic nằm trong một function vừa đọc sheet vừa gọi AI vừa ghi kết quả, bạn rất khó test từng lỗi. Tách pure functions giúp bạn cô lập vấn đề.
+
+## Mental model: tách phần tính toán khỏi side effect
+
+Side effect là hành động tác động ra ngoài function: đọc Google Sheets, ghi ô, gửi email, gọi `UrlFetchApp`, tạo file Drive, log dữ liệu hoặc cập nhật PropertiesService. Pure function thì không làm những việc đó.
+
+Một job AI nên có cấu trúc:
+
+- Function service đọc dữ liệu từ Sheets.
+- Pure function map row thành object.
+- Pure function build prompt.
+- Function client gọi AI API.
+- Pure function parse và validate response.
+- Function service ghi kết quả về Sheets.
+
+Bạn không thể biến toàn bộ Apps Script thành pure functions, nhưng có thể tách phần logic quan trọng ra khỏi runtime Google.
+
+## Tách mapping dữ liệu khỏi service
+
+Thay vì vừa đọc sheet vừa xử lý trong một function dài, hãy tách phần biến row thành object. Đây là nơi test rất đáng làm vì nhầm cột là lỗi phổ biến.
+
+```javascript
+function toLead(row, rowNumber) {
+  return {
+    rowNumber: rowNumber,
+    name: String(row[0] || '').trim(),
+    email: String(row[1] || '').trim(),
+    status: String(row[2] || '').trim().toLowerCase(),
+    message: String(row[3] || '').trim(),
+  };
+}
+
+function shouldProcessLead(lead) {
+  return lead.status === 'new' && lead.email !== '' && lead.message !== '';
+}
+```
+
+Hai function này không cần `SpreadsheetApp`. Bạn có thể test bằng mảng giả. Nếu AI refactor sai vị trí cột, test sẽ phát hiện sớm.
+
+## Viết test function đơn giản trong Apps Script
+
+Apps Script không bắt buộc có test framework. Với project nhỏ, bạn có thể viết function `test...` và throw lỗi nếu kết quả không đúng.
+
+```javascript
+function assertEqual(actual, expected, message) {
+  if (actual !== expected) {
+    throw new Error(message + '. Expected: ' + expected + ', actual: ' + actual);
+  }
+}
+
+function testToLead() {
+  const lead = toLead(['Hoa', 'hoa@example.com', 'NEW', 'Need pricing'], 2);
+
+  assertEqual(lead.rowNumber, 2, 'rowNumber should match');
+  assertEqual(lead.email, 'hoa@example.com', 'email should match');
+  assertEqual(lead.status, 'new', 'status should be normalized');
+  assertEqual(shouldProcessLead(lead), true, 'lead should be processable');
+
+  console.log('testToLead passed');
+}
+```
+
+Đây là test thủ công, nhưng vẫn có giá trị. Bạn chạy `testToLead` trong editor hoặc qua clasp, nếu lỗi thì execution failed rõ ràng.
+
+## Test prompt builder
+
+Prompt builder cũng nên là pure function. Nó nhận object đã làm sạch và trả chuỗi prompt. Bạn có thể test rằng prompt không chứa dữ liệu không được phép gửi cho AI.
+
+```javascript
+function buildLeadSummaryPrompt(lead) {
+  return [
+    'Summarize this lead request in Vietnamese.',
+    'Do not include email or personal identifiers.',
+    'Return one concise sentence.',
+    '',
+    'Message: ' + lead.message,
+  ].join('\n');
+}
+
+function testBuildLeadSummaryPrompt() {
+  const lead = toLead(['Hoa', 'hoa@example.com', 'new', 'I need a demo for my team'], 2);
+  const prompt = buildLeadSummaryPrompt(lead);
+
+  if (prompt.indexOf('hoa@example.com') !== -1) {
+    throw new Error('Prompt should not include email');
+  }
+
+  if (prompt.indexOf('I need a demo') === -1) {
+    throw new Error('Prompt should include lead message');
+  }
+
+  console.log('testBuildLeadSummaryPrompt passed');
+}
+```
+
+Test này gắn trực tiếp với bảo mật dữ liệu. Nó không đảm bảo tuyệt đối, nhưng giúp bạn phát hiện lỗi rõ ràng khi prompt vô tình chứa field nhạy cảm.
+
+## Test parser và validator bằng response giả
+
+Không nên gọi model thật trong mọi test. Hãy test parser bằng response giả để kiểm tra output hợp lệ, output rỗng và output sai enum.
+
+```javascript
+function parsePriority(rawText) {
+  const value = String(rawText || '').trim().toLowerCase();
+  const allowed = ['low', 'medium', 'high'];
+
+  if (!allowed.includes(value)) {
+    throw new Error('Invalid priority: ' + value);
+  }
+
+  return value;
+}
+
+function testParsePriority() {
+  assertEqual(parsePriority('HIGH'), 'high', 'priority should normalize');
+
+  try {
+    parsePriority('urgent');
+    throw new Error('Expected invalid priority to fail');
+  } catch (error) {
+    if (!String(error.message).includes('Invalid priority')) throw error;
+  }
+
+  console.log('testParsePriority passed');
+}
+```
+
+Parser là lớp phòng thủ cuối trước khi ghi dữ liệu AI vào Sheets. Test parser giúp giảm lỗi âm thầm.
+
+## Prompt yêu cầu AI tách pure functions
+
+Khi gặp function dài, hãy yêu cầu AI tách theo ranh giới rõ:
+
+```text
+Refactor function Apps Script này thành:
+- Pure function map row to Lead object
+- Pure function build AI prompt
+- Pure function parse AI response
+- Function đọc/ghi Google Sheets riêng
+- Function gọi AI API riêng
+
+Giữ nguyên hành vi đầu ra. Không gọi Gmail, Sheets hoặc UrlFetchApp trong pure functions.
+Thêm test functions cho mapping và parser.
+```
+
+Prompt này giúp AI không chỉ làm code đẹp hơn, mà còn làm code test được.
+
+## Lỗi thường gặp khi test Apps Script
+
+- Test function vẫn gọi Gmail, Sheets hoặc AI API thật.
+- Không có dữ liệu mẫu cho ô rỗng, status viết hoa hoặc response sai format.
+- Không throw khi test fail, khiến execution vẫn thành công.
+- Test prompt nhưng không kiểm tra dữ liệu nhạy cảm bị đưa vào prompt.
+- Không tách parser, nên phải gọi model thật mới test được.
+- Đặt tên test function khó tìm trong editor.
+
+## Bài tập thực hành
+
+Viết hai pure functions: `buildSentimentPrompt(message)` và `parseSentimentResponse(text)`. Sau đó tạo `testBuildSentimentPrompt` và `testParseSentimentResponse` với ba input: phản hồi tích cực, phản hồi tiêu cực và response sai format như `very good`. Test phải throw lỗi khi response không nằm trong `positive`, `neutral`, `negative`.
+
+## Câu hỏi thường gặp về test Apps Script
+
+### Có cần framework test không?
+
+Không bắt buộc. Với project nhỏ, test functions thủ công đủ hữu ích. Với project lớn, bạn có thể dùng clasp và test local nâng cao, nhưng vẫn nên giữ pure functions dễ test.
+
+### Pure function có gọi PropertiesService được không?
+
+Không nên. Nếu function gọi PropertiesService, Sheets, Gmail hoặc UrlFetchApp, nó không còn thuần và khó test độc lập.
+
+### Có test AI output được không?
+
+Có, nhưng nên test parser và validator bằng response giả. Không nên gọi model thật trong mọi test vì tốn quota, chậm và không ổn định.
+
+### Test thủ công có đáng làm không?
+
+Có. Một vài test nhỏ cho mapping, prompt và parser có thể bắt nhiều lỗi do AI sinh code sai hoặc do sheet đổi cấu trúc.
+
+## Tóm tắt và bước tiếp theo
+
+Pure functions giúp AI Apps Script dễ test, dễ refactor và ít side effect hơn. Hãy tách mapping, prompt builder, parser và validator khỏi service Google. Bài tiếp theo sẽ học bảo mật API key, prompt và dữ liệu người dùng khi tích hợp AI.

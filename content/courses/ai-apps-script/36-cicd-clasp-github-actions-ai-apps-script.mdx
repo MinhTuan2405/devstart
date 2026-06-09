@@ -1,0 +1,175 @@
+---
+title: "CI/CD với clasp và GitHub Actions cho AI Apps Script"
+description: "Học workflow kiểm tra, version và deploy Apps Script bằng clasp, git và GitHub Actions cho dự án AI."
+slug: "cicd-clasp-github-actions-ai-apps-script"
+course: "ai-apps-script"
+order: 36
+duration: "24 phút"
+difficulty: "Khó"
+keywords: ["CI/CD Apps Script", "clasp GitHub Actions", "deploy Apps Script", "AI Apps Script workflow", "Apps Script automation deployment"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao AI Apps Script cần CI/CD?
+
+CI/CD với clasp và GitHub Actions giúp dự án AI Apps Script có review diff, versioning, kiểm tra tự động và deploy có kiểm soát. Điều này quan trọng vì thay đổi prompt, API wrapper, trigger hoặc Gmail tool có thể làm output khác, tăng chi phí hoặc gây side effect thật như gửi email và sửa Sheets.
+
+Nếu bạn vẫn sửa trực tiếp trong Apps Script editor, rất khó biết ai đổi gì, khi nào lỗi bắt đầu và rollback về bản nào. `clasp` đưa code Apps Script về local/repo, còn GitHub Actions giúp chạy kiểm tra trước khi merge hoặc deploy.
+
+## Mental model: repo là nguồn sự thật
+
+CI/CD chỉ có ý nghĩa khi repo là nguồn sự thật. Team cần thống nhất: sửa code trong editor chỉ để hotfix hoặc thử nhanh; thay đổi chính thức đi qua git. Với dự án AI, prompt cũng là code vì nó quyết định hành vi hệ thống.
+
+Một workflow tối thiểu:
+
+- Developer sửa code/prompt local.
+- Chạy lint hoặc test thủ công.
+- Tạo pull request.
+- AI/code review kiểm tra rủi ro.
+- Merge vào main.
+- Tạo clasp version.
+- Deploy dev hoặc prod theo quyền.
+
+Không nên tự động deploy production từ mọi branch. Production cần approval nếu automation có side effect.
+
+## Workflow local trước CI
+
+Trước khi dùng GitHub Actions, hãy đảm bảo bạn chạy được clasp local. Các lệnh cơ bản:
+
+```bash
+npm install -g @google/clasp
+clasp login
+clasp pull
+clasp push
+clasp version "ai workflow v1"
+```
+
+`clasp pull` lấy code hiện tại từ Apps Script về local. `clasp push` đẩy code local lên Apps Script. `clasp version` tạo version có tên để deployment trỏ tới. Đừng setup CI khi local workflow còn lẫn lộn hoặc team vẫn sửa trực tiếp trong editor mỗi ngày.
+
+## Cấu trúc repo nên có
+
+Một dự án Apps Script có AI nên tách module rõ để review dễ hơn.
+
+```text
+src/
+  appsscript.json
+  aiClient.js
+  prompts.js
+  sheetsJobs.js
+  gmailTools.js
+  webapp.js
+  monitoring.js
+  tests/
+    parsers.test.js
+.clasp.json
+package.json
+```
+
+Nếu dự án nhỏ, bạn không bắt buộc có hết các file này. Nhưng ít nhất nên tách `aiClient`, prompt và business logic để một thay đổi provider không làm hỏng toàn bộ workflow.
+
+## GitHub Actions kiểm tra pull request
+
+Ví dụ workflow chạy trên pull request, cài Node và chạy lint/test nếu project có script tương ứng.
+
+```yaml
+name: Apps Script CI
+on:
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test --if-present
+```
+
+Với Apps Script thuần chưa có npm project, CI có thể bắt đầu rất nhẹ: kiểm tra secret không bị commit, kiểm tra file JSON hợp lệ, hoặc yêu cầu review thủ công. Đừng thêm pipeline phức tạp hơn khả năng duy trì của team.
+
+## Deploy bằng clasp trong CI
+
+Deploy CI cần credential clasp. Credential này rất nhạy cảm, phải đặt trong GitHub Secrets, không commit `.clasprc.json`.
+
+```yaml
+name: Deploy Apps Script Dev
+on:
+  push:
+    branches: ["develop"]
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm install -g @google/clasp
+      - run: echo '${{ secrets.CLASPRC_JSON }}' > ~/.clasprc.json
+      - run: clasp push
+      - run: clasp version "dev-${{ github.sha }}"
+```
+
+Production nên chặt hơn: chỉ deploy khi merge main, có environment protection hoặc manual approval, và deployment trỏ tới version cụ thể.
+
+## Secret cần bảo vệ
+
+- `CLASPRC_JSON`: credential clasp để CI push/deploy.
+- `.clasp.json`: mapping script ID, tùy team có thể commit nếu script ID không nhạy cảm, nhưng cần cân nhắc.
+- AI provider keys không nằm trong repo.
+- Webhook token, proxy token và OpenAI/Gemini keys nằm trong Script Properties, Secret Manager hoặc GitHub Secrets tùy vị trí dùng.
+- Prod và dev nên dùng script ID, token và Cloud project khác nhau.
+
+Nếu CI chỉ push code, AI key không cần vào GitHub Secrets. Key runtime nên nằm trong Apps Script Properties hoặc backend proxy.
+
+## Prompt thay đổi cũng cần review
+
+Trong AI Apps Script, file prompt có thể quan trọng ngang code. Một câu “hãy trả JSON” bị xóa có thể làm parser lỗi. Một temperature mặc định thay đổi có thể làm classification kém ổn định. Vì vậy PR nên hiển thị diff prompt rõ và có sample input/output khi prompt quan trọng.
+
+Bạn có thể thêm checklist PR:
+
+- Prompt version có đổi không?
+- Output schema có đổi không?
+- Parser có cập nhật không?
+- Có sample test cho JSON output không?
+- Có rollback version không?
+
+## Lỗi thường gặp khi CI/CD Apps Script
+
+- Dùng `clasp push --force` không kiểm soát.
+- CI deploy vào production từ mọi branch.
+- Commit `.clasprc.json` hoặc token thật.
+- Không phân biệt dev/staging/prod script ID.
+- Deploy prompt mới không có review sample.
+- Team vừa sửa editor vừa sửa repo, gây ghi đè lẫn nhau.
+- Không tạo version rõ ràng nên rollback khó.
+
+## Bài tập thực hành
+
+Thiết kế pipeline 2 môi trường: dev và prod. Dev cho phép push test bằng clasp từ branch `develop`. Prod chỉ deploy khi merge `main` và có approval. Ghi rõ secret cần có cho mỗi môi trường, file nào được commit, file nào bị ignore và cách rollback về version trước.
+
+## Câu hỏi thường gặp về CI/CD Apps Script
+
+### Có bắt buộc dùng GitHub Actions không?
+
+Không. Bạn có thể dùng GitLab CI, Cloud Build hoặc deploy thủ công bằng clasp. Nhưng git workflow và versioning rất hữu ích cho dự án AI có nhiều thay đổi prompt.
+
+### Có nên deploy tự động prompt thay đổi không?
+
+Không nên nếu prompt ảnh hưởng output quan trọng. Prompt change cũng cần review như code, đặc biệt khi parser kỳ vọng JSON schema cố định.
+
+### Có thể rollback không?
+
+Có nếu bạn tạo version rõ ràng và deployment trỏ đến version cụ thể. Nếu chỉ push trực tiếp không version, rollback sẽ khó hơn nhiều.
+
+### Có cần test framework cho Apps Script không?
+
+Không bắt buộc lúc đầu. Hãy bắt đầu bằng pure functions cho parser, prompt builder và validator. Những phần đó có thể test dễ hơn service Google thật.
+
+## Tóm tắt và bước tiếp theo
+
+CI/CD giúp AI Apps Script an toàn hơn khi nhiều người cùng phát triển: code được review, prompt có version, deploy có môi trường và rollback rõ. Bài tiếp theo học monitoring, chi phí và quality tracking để biết hệ thống sau deploy có hoạt động tốt thật không.

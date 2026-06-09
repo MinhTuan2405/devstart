@@ -76,7 +76,7 @@ export function getLessonBySlug(courseName: string, slug: string): Lesson | null
 }
 
 export function getAllLessons(): Lesson[] {
-  const courseNames = ['python', 'cpp', 'html-css', 'machine-learning', 'claude-code', 'sql', 'git']
+  const courseNames = ['python', 'cpp', 'html-css', 'machine-learning', 'claude-code', 'sql', 'git', 'apps-script', 'ai-apps-script']
   return courseNames.flatMap((name) => getLessonsByCourseName(name))
 }
 
@@ -164,5 +164,17 @@ export const courseInfo: Record<string, { name: string; description: string; ico
     description: 'Học Git từ cơ bản đến nâng cao: commit, branch, merge, remote, pull request, rebase, bảo mật và workflow doanh nghiệp.',
     icon: '🌿',
     slug: 'git',
+  },
+  'apps-script': {
+    name: 'Apps Script',
+    description: 'Tự động hóa Google Workspace với Sheets, Docs, Gmail, Drive, Forms, triggers, web apps, API, OAuth, clasp và dự án thực tế.',
+    icon: '⚙️',
+    slug: 'apps-script',
+  },
+  'ai-apps-script': {
+    name: 'AI Apps Script',
+    description: 'Dùng AI để viết, debug và tích hợp Gemini/OpenAI vào Google Apps Script, Sheets, Gmail, Docs, Drive, web app và workflow clasp.',
+    icon: '✨',
+    slug: 'ai-apps-script',
   },
 }

@@ -1,0 +1,173 @@
+---
+title: "HtmlService trong Apps Script để tạo giao diện"
+description: "Học cách dùng HtmlService để tạo dialog, sidebar và giao diện HTML đơn giản trong Google Workspace."
+slug: "htmlservice-tao-giao-dien-apps-script"
+course: "apps-script"
+order: 30
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["HtmlService Apps Script", "sidebar Apps Script", "dialog Apps Script", "giao diện Apps Script", "Google Sheets UI Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`HtmlService` giúp Apps Script tạo giao diện HTML cho sidebar, dialog hoặc web app. Nhờ nó, bạn có thể cho người dùng nhập dữ liệu qua form thân thiện thay vì bắt họ sửa ô trong Sheets hoặc chạy function trong editor.
+
+## HtmlService trong Apps Script là gì?
+
+Apps Script không chỉ chạy automation ẩn phía sau. Nó còn có thể hiển thị giao diện trong Google Sheets, Docs, Slides hoặc mở thành web app. `HtmlService` tạo ra HTML output, sau đó bạn đưa output đó vào sidebar, dialog hoặc trả về từ `doGet`. Với Google Sheets, sidebar là lựa chọn rất phổ biến để tạo công cụ nhập lead, tạo báo cáo, chọn bộ lọc hoặc bấm nút chạy script.
+
+Mô hình tư duy là có hai phía. Phía server là file `.gs`, nơi có `SpreadsheetApp`, `DriveApp`, `MailApp`. Phía client là HTML, CSS, JavaScript chạy trong giao diện. HTML không gọi trực tiếp `SpreadsheetApp`. Muốn HTML yêu cầu server làm việc, bạn dùng `google.script.run`, phần này sẽ học kỹ hơn ở bài sau.
+
+## Hiển thị sidebar đơn giản
+
+Bạn có thể tạo HTML trực tiếp bằng chuỗi để hiểu luồng hoạt động. Function server tạo `HtmlOutput`, đặt title, rồi gọi `showSidebar`.
+
+```javascript
+function showSimpleSidebar() {
+  const html = HtmlService
+    .createHtmlOutput('<h2>Apps Script</h2><p>This is the first sidebar.</p>')
+    .setTitle('DevStart Tools');
+
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+```
+
+Chạy function này khi đang mở spreadsheet bound script. Nếu project không gắn với Google Sheets, `SpreadsheetApp.getUi()` sẽ không có ngữ cảnh để hiển thị sidebar.
+
+## Tạo custom menu để mở sidebar
+
+Người dùng không nên vào Apps Script editor để chạy function. Hãy tạo menu khi spreadsheet mở, sau đó họ bấm menu để mở sidebar.
+
+```javascript
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Tools')
+    .addItem('Open sidebar', 'showSidebarFromFile')
+    .addToUi();
+}
+
+function showSidebarFromFile() {
+  const html = HtmlService.createHtmlOutputFromFile('Sidebar')
+    .setTitle('Lead tools');
+
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+```
+
+`onOpen` là simple trigger chạy khi người dùng mở spreadsheet. Menu giúp automation giống một công cụ thật hơn thay vì một tập hợp function trong editor.
+
+## Tạo file HTML riêng
+
+Trong Apps Script project, tạo file HTML tên `Sidebar.html`. Khi dùng `createHtmlOutputFromFile('Sidebar')`, bạn truyền tên file không kèm `.html`.
+
+```html
+<h2>New lead</h2>
+
+<label for="name">Name</label>
+<input id="name" type="text" />
+
+<label for="email">Email</label>
+<input id="email" type="email" />
+
+<button type="button">Save</button>
+```
+
+HTML trong Apps Script có thể chứa CSS và JavaScript cơ bản. Ở bài này, mục tiêu là hiển thị giao diện. Bài sau mới xử lý nút bấm gọi server để ghi dữ liệu vào Sheets.
+
+## Thêm CSS đơn giản cho sidebar
+
+Sidebar không cần thiết kế phức tạp, nhưng nên có khoảng cách, label rõ ràng và nút dễ bấm. Bạn có thể viết CSS ngay trong file HTML.
+
+```html
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 12px;
+  }
+
+  label {
+    display: block;
+    margin-top: 12px;
+    font-weight: 600;
+  }
+
+  input {
+    box-sizing: border-box;
+    margin-top: 4px;
+    padding: 8px;
+    width: 100%;
+  }
+
+  button {
+    margin-top: 16px;
+    padding: 8px 12px;
+  }
+</style>
+
+<h2>New lead</h2>
+<label for="name">Name</label>
+<input id="name" />
+<label for="email">Email</label>
+<input id="email" />
+<button type="button">Save</button>
+```
+
+Giữ CSS đơn giản giúp sidebar dễ bảo trì. Apps Script không phải môi trường lý tưởng để bắt đầu với frontend phức tạp nếu mục tiêu chính là automation.
+
+## Dialog, sidebar và web app khác gì nhau?
+
+- Dialog là hộp nổi, phù hợp cho xác nhận, cảnh báo hoặc form ngắn.
+- Sidebar nằm bên phải, phù hợp cho công cụ nhập liệu, bộ lọc hoặc bảng điều khiển dài hơn.
+- Web app là giao diện mở bằng URL riêng, phù hợp khi người dùng không làm việc trực tiếp trong Sheets.
+
+Nếu người dùng đang thao tác trong spreadsheet, sidebar thường thân thiện nhất. Nếu chỉ cần hỏi “Bạn có chắc không?”, dialog gọn hơn. Nếu muốn chia sẻ công cụ cho người ngoài file, web app đáng cân nhắc.
+
+## HTML client không truy cập trực tiếp Sheets
+
+Đây là điểm người mới hay nhầm. Code trong file HTML chạy phía client, nên không có `SpreadsheetApp`. Đoạn sau là sai nếu đặt trong HTML:
+
+```html
+<script>
+  function saveLead() {
+    SpreadsheetApp.getActiveSheet().appendRow(['A', 'B']);
+  }
+</script>
+```
+
+Thay vào đó, HTML sẽ gọi function server bằng `google.script.run`. Function server trong file `.gs` mới dùng được `SpreadsheetApp`. Bạn sẽ học luồng này ở bài sau.
+
+## Lỗi thường gặp với HtmlService
+
+- Nghĩ HTML có thể gọi trực tiếp `SpreadsheetApp`.
+- Quên tạo file HTML đúng tên, ví dụ gọi `Sidebar` nhưng file tên khác.
+- Truyền `Sidebar.html` vào `createHtmlOutputFromFile` thay vì `Sidebar`.
+- Dùng JavaScript frontend phức tạp quá sớm.
+- Không tạo custom menu, khiến người dùng không biết mở sidebar ở đâu.
+- Không xử lý loading và lỗi khi gọi server trong các bài nâng cao.
+- Viết HTML trực tiếp vào body bài học MDX thay vì đặt trong code block khi viết tài liệu cho repo này.
+
+## Bài tập thực hành
+
+Trong spreadsheet bound script, tạo custom menu `Tools` có item `Open sidebar`. Viết function `showSidebarFromFile()` mở file `Sidebar.html`. Trong `Sidebar.html`, hiển thị tiêu đề `New lead`, hai input `Name`, `Email` và một nút `Save`. Chưa cần xử lý nút bấm; mục tiêu là mở được sidebar từ menu.
+
+## Câu hỏi thường gặp về HtmlService
+
+### HtmlService có dùng CSS được không?
+
+Có. Bạn có thể viết CSS trong file HTML. Với sidebar và dialog, nên giữ CSS đơn giản, rõ ràng và dễ sửa.
+
+### HTML có truy cập trực tiếp Sheets được không?
+
+Không. HTML chạy phía client. Muốn ghi hoặc đọc Sheets, HTML phải gọi function server bằng `google.script.run`.
+
+### Có dùng framework như React không?
+
+Có thể, nhưng với Apps Script cơ bản, HTML, CSS và JavaScript đơn giản thường đủ. Framework làm build và deploy phức tạp hơn.
+
+### HtmlService có tạo web app được không?
+
+Có. Bạn có thể trả `HtmlService.createHtmlOutputFromFile()` trong `doGet(e)` để tạo web app. Sidebar và dialog là bước nhập môn dễ hơn.
+
+## Tóm tắt và chuyển tiếp
+
+`HtmlService` giúp bạn tạo giao diện người dùng cho automation Apps Script. Hãy hiểu sự khác nhau giữa server `.gs` và client HTML, mở sidebar bằng custom menu, và giữ giao diện đơn giản trước. Bài tiếp theo sẽ học `google.script.run`, cơ chế để nút trong HTML gọi function server và ghi dữ liệu vào Google Sheets.

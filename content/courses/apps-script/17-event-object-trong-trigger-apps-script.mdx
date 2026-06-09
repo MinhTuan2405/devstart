@@ -1,0 +1,141 @@
+---
+title: "Event object trong trigger Apps Script"
+description: "Hiểu event object trong onEdit, onFormSubmit và web app để xử lý đúng dữ liệu sự kiện."
+slug: "event-object-trong-trigger-apps-script"
+course: "apps-script"
+order: 17
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["event object Apps Script", "onEdit e Apps Script", "onFormSubmit Apps Script", "trigger event Apps Script", "e.range Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Event object là object Apps Script tự truyền vào function trigger để mô tả sự kiện vừa xảy ra. Thường bạn đặt tham số này là `e`. Nhờ `e`, code biết ô nào vừa được sửa, form submit có dữ liệu gì, người dùng nhập gì vào web app, hoặc trigger đang xử lý dòng nào.
+
+## Event object trong Apps Script là gì?
+
+Khi một trigger chạy, Apps Script không chỉ gọi function theo kiểu “chạy đi”. Nó còn có thể gửi kèm ngữ cảnh. Với `onEdit(e)`, ngữ cảnh là range vừa sửa, giá trị mới, giá trị cũ và spreadsheet nguồn. Với `onFormSubmit(e)`, ngữ cảnh là câu trả lời form theo dạng mảng hoặc theo tên câu hỏi. Với web app, `doGet(e)` và `doPost(e)` nhận query string, parameter và body request.
+
+Mô hình tư duy rất đơn giản: trigger là người báo có sự kiện, event object là tờ phiếu mô tả sự kiện đó. Nếu bạn không đọc `e`, function vẫn chạy được, nhưng nó không biết phải xử lý dòng nào, ô nào hoặc người gửi nào. Nếu bạn đọc sai thuộc tính của `e`, lỗi thường gặp sẽ là `Cannot read properties of undefined`.
+
+## Event object trong onEdit
+
+Với `onEdit(e)`, các thuộc tính hay dùng nhất là `e.range`, `e.value`, `e.oldValue` và `e.source`. `e.range` là ô hoặc vùng vừa được chỉnh. Từ range, bạn lấy được sheet, dòng, cột và A1 notation.
+
+```javascript
+function onEdit(e) {
+  if (!e || !e.range) {
+    Logger.log('No edit event object');
+    return;
+  }
+
+  const range = e.range;
+  const sheet = range.getSheet();
+
+  Logger.log('Sheet: ' + sheet.getName());
+  Logger.log('Cell: ' + range.getA1Notation());
+  Logger.log('Row: ' + range.getRow());
+  Logger.log('Column: ' + range.getColumn());
+  Logger.log('New value: ' + (e.value || ''));
+  Logger.log('Old value: ' + (e.oldValue || ''));
+}
+```
+
+Đừng bấm Run trực tiếp `onEdit(e)` trong editor để test. Khi chạy thủ công, Apps Script không có sự kiện sửa ô thật nên không truyền `e`. Hãy mở spreadsheet và sửa một ô. Sau đó xem log trong Executions.
+
+## Ví dụ thực tế: cập nhật thời gian khi đổi trạng thái
+
+Giả sử sheet `Tasks` có cột A là tên việc, cột B là trạng thái, cột C là thời gian hoàn thành. Khi người dùng đổi cột B thành `done`, script ghi thời gian vào cột C.
+
+```javascript
+function onEdit(e) {
+  if (!e || !e.range) return;
+
+  const range = e.range;
+  const sheet = range.getSheet();
+
+  if (sheet.getName() !== 'Tasks') return;
+  if (range.getColumn() !== 2) return;
+  if (String(e.value).toLowerCase() !== 'done') return;
+
+  const row = range.getRow();
+  sheet.getRange(row, 3).setValue(new Date());
+}
+```
+
+Ví dụ này minh họa cách đọc event object có điều kiện. Bạn không nên xử lý mọi edit trong file vì mỗi lần sửa ô đều kích hoạt trigger. Hãy kiểm tra tên sheet, cột, dòng và giá trị trước khi ghi dữ liệu.
+
+## Event object trong onFormSubmit
+
+Với form submit, cấu trúc `e` phụ thuộc trigger được gắn với Form hay với spreadsheet nhận phản hồi. Trong thực tế, khi trigger gắn với response sheet, bạn thường dùng `e.namedValues`, `e.values` và đôi khi `e.range`. `namedValues` tiện vì truy cập theo tên câu hỏi hoặc tên cột.
+
+```javascript
+function handleFormSubmit(e) {
+  const values = e.namedValues;
+  const name = values['Name'] ? values['Name'][0] : '';
+  const email = values['Email'] ? values['Email'][0] : '';
+  const course = values['Course'] ? values['Course'][0] : '';
+
+  Logger.log('Name: ' + name);
+  Logger.log('Email: ' + email);
+  Logger.log('Course: ' + course);
+}
+```
+
+Điểm cần nhớ là key trong `namedValues` phải khớp tên câu hỏi hoặc tên cột. Nếu bạn đổi câu hỏi từ `Email` thành `Your email`, code dùng `values['Email']` sẽ không còn đọc được dữ liệu.
+
+## Tách logic để test dễ hơn
+
+Bạn không nên cố tạo event object thật bằng tay cho mọi trường hợp. Cách tốt hơn là để function trigger chỉ đọc `e`, còn logic nghiệp vụ nằm trong function riêng nhận tham số bình thường.
+
+```javascript
+function getTaskMessage(status) {
+  if (String(status).toLowerCase() === 'done') {
+    return 'Task completed';
+  }
+
+  return 'No action';
+}
+
+function testGetTaskMessage() {
+  Logger.log(getTaskMessage('done'));
+  Logger.log(getTaskMessage('todo'));
+}
+```
+
+Khi làm dự án lớn, pattern này giúp bạn debug nhanh. Bạn chỉ cần test `getTaskMessage()` bằng dữ liệu giả, còn trigger thật chỉ làm nhiệm vụ lấy đúng dữ liệu từ `e`.
+
+## Lỗi thường gặp với event object
+
+- Chạy trigger function trực tiếp trong editor rồi gặp lỗi `e is undefined`.
+- Gọi `e.range` trong trigger không có range, ví dụ một số trigger form hoặc web app.
+- Không xử lý trường hợp `e.oldValue` không tồn tại khi ô trước đó rỗng.
+- Đổi tên câu hỏi Google Forms nhưng không cập nhật key trong `namedValues`.
+- Log toàn bộ event có dữ liệu nhạy cảm như email, số điện thoại hoặc câu trả lời riêng tư.
+- Viết `onEdit` xử lý quá rộng, khiến script chạy chậm mỗi lần người dùng sửa sheet.
+
+## Bài tập thực hành
+
+Tạo sheet `Tasks` với cột `Task`, `Status`, `CompletedAt`. Viết `onEdit(e)` chỉ xử lý khi người dùng sửa cột `Status` trong sheet này. Nếu giá trị mới là `done`, ghi thời gian hiện tại vào `CompletedAt`. Sau đó tách phần kiểm tra trạng thái vào function riêng để có thể test bằng function `test...`.
+
+## Câu hỏi thường gặp về event object
+
+### Có phải trigger nào cũng có cùng event object không?
+
+Không. Mỗi loại trigger có cấu trúc event object riêng. Bạn phải đọc tài liệu hoặc log chọn lọc các thuộc tính quan trọng cho đúng loại trigger đang dùng.
+
+### Có nên log toàn bộ e không?
+
+Khi học, bạn có thể log để khám phá cấu trúc. Trong dự án thật, nên log có chọn lọc và tránh ghi dữ liệu nhạy cảm.
+
+### Vì sao e.value bị undefined khi xóa ô?
+
+Khi người dùng xóa nội dung, giá trị mới có thể không được truyền như bạn kỳ vọng. Hãy dùng kiểm tra an toàn như `e.value || ''` trước khi xử lý.
+
+### Event object có dùng được trong function chạy theo giờ không?
+
+Time-driven trigger cũng có event object, nhưng nó không có `range` hay `namedValues`. Với trigger theo giờ, bạn thường không cần đọc nhiều từ `e`.
+
+## Tóm tắt và chuyển tiếp
+
+Event object là chìa khóa để trigger biết chuyện gì vừa xảy ra. Hãy đọc đúng thuộc tính theo đúng loại trigger, kiểm tra dữ liệu trước khi dùng, và tách logic nghiệp vụ để test dễ hơn. Bài tiếp theo sẽ học `PropertiesService`, nơi bạn lưu cấu hình như email nhận báo cáo, API token hoặc lần đồng bộ cuối cùng.

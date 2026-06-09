@@ -1,0 +1,152 @@
+---
+title: "Tạo dự án Apps Script đầu tiên trong trình duyệt"
+description: "Hướng dẫn tạo project Apps Script đầu tiên, viết hàm, chạy hàm và xem log trong editor."
+slug: "tao-du-an-apps-script-dau-tien"
+course: "apps-script"
+order: 2
+duration: "17 phút"
+difficulty: "Dễ"
+keywords: ["tạo dự án Apps Script", "Apps Script editor", "script.google.com", "học Apps Script cho người mới", "chạy hàm Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Tạo dự án Apps Script đầu tiên như thế nào?
+
+Để tạo dự án Apps Script đầu tiên, bạn vào `script.google.com`, tạo project mới, viết một function trong file `.gs`, lưu lại, chọn function và bấm Run. Bài này giúp bạn hiểu trọn luồng cơ bản: viết mã, chạy mã, cấp quyền nếu cần, xem log và kiểm tra kết quả.
+
+Nếu bạn mới học lập trình, đừng cố nhớ mọi nút trong editor ngay. Hãy tập trung vào một vòng lặp làm việc rất đơn giản: sửa code, lưu, chạy, xem log, sửa tiếp. Đây là thói quen quan trọng nhất khi học Apps Script vì hầu hết lỗi ban đầu đều được phát hiện qua log và thông báo thực thi.
+
+## Các phần chính trong Apps Script editor
+
+Trong Apps Script editor, bạn thường làm việc với các khu vực sau:
+
+- Danh sách file ở bên trái, thường có file `Code.gs` đầu tiên.
+- Vùng soạn thảo code ở giữa.
+- Thanh chọn function và nút Run ở phía trên.
+- Execution log để xem kết quả `Logger.log()`.
+- Executions để xem lịch sử các lần chạy, lỗi và thời gian chạy.
+- Project Settings để xem Script ID và một số tùy chọn nâng cao.
+
+Mô hình tư duy là: project chứa nhiều file, file chứa nhiều function, và mỗi lần chạy bạn chọn một function làm điểm bắt đầu. Apps Script không tự chạy tất cả code trong project; nó chạy function bạn chọn, function được menu gọi, function được nút gọi hoặc function được trigger kích hoạt.
+
+## Viết và chạy function đầu tiên
+
+Hãy bắt đầu bằng một function chỉ ghi thời gian hiện tại ra log:
+
+```javascript
+function myFirstFunction() {
+  const now = new Date();
+  Logger.log('First run at: ' + now);
+}
+```
+
+Sau khi nhập code, bấm Save hoặc dùng phím tắt lưu. Ở thanh chọn function, chọn `myFirstFunction`, bấm Run, rồi mở Execution log. Nếu log hiện thời gian, bạn đã chạy thành công project đầu tiên.
+
+Cú pháp cần chú ý ở đây gồm `function` để khai báo hàm, cặp ngoặc nhọn để chứa phần thân hàm, `const` để tạo biến không gán lại, và `Logger.log()` để ghi thông tin ra log. Tất cả ví dụ sau này đều xây trên mô hình này.
+
+## Tạo file Google Sheets bằng Apps Script
+
+Sau khi quen với log, hãy thử ví dụ có tác động thật: tạo một Google Sheets mới và ghi hàng tiêu đề. Đây là bài tập tốt vì bạn nhìn thấy kết quả trong Google Drive.
+
+```javascript
+function createFirstSpreadsheet() {
+  const spreadsheet = SpreadsheetApp.create('First Apps Script Sheet');
+  const sheet = spreadsheet.getActiveSheet();
+
+  sheet.appendRow(['Date', 'Task', 'Status']);
+  sheet.appendRow([new Date(), 'Create first project', 'done']);
+
+  Logger.log(spreadsheet.getUrl());
+}
+```
+
+Lần đầu chạy function này, Apps Script sẽ yêu cầu authorization vì script tạo file trong Drive và chỉnh sửa Google Sheets. Bạn nên đọc màn hình cấp quyền để hiểu script đang xin quyền gì. Sau khi cho phép, function chạy lại và URL spreadsheet sẽ xuất hiện trong log.
+
+## Bound script và standalone script
+
+Apps Script có hai kiểu project phổ biến: standalone script và bound script. Standalone script là project độc lập, thường tạo từ `script.google.com` và nằm trong Drive như một file riêng. Bound script là project gắn với một file Google Sheets, Docs, Slides hoặc Forms, thường mở từ Extensions > Apps Script trong file đó.
+
+Hai kiểu này có cách dùng hơi khác nhau. Với bound script trong Google Sheets, `SpreadsheetApp.getActiveSpreadsheet()` thường trả về file đang mở. Với standalone script, bạn thường mở file cụ thể bằng ID hoặc tạo file mới.
+
+Ví dụ kiểm tra project đang gắn với spreadsheet nào:
+
+```javascript
+function inspectActiveFile() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+
+  if (!spreadsheet) {
+    Logger.log('No active spreadsheet. This may be a standalone script.');
+    return;
+  }
+
+  Logger.log('Active spreadsheet: ' + spreadsheet.getName());
+  Logger.log('URL: ' + spreadsheet.getUrl());
+}
+```
+
+Đây là pattern quan trọng: đừng giả định luôn có file active. Khi script lớn hơn, kiểm tra dữ liệu đầu vào trước khi dùng sẽ giúp bạn tránh nhiều lỗi khó hiểu.
+
+## Quy trình làm việc an toàn cho người mới
+
+Khi viết project đầu tiên, hãy đi theo quy trình nhỏ:
+
+- Đặt tên project rõ ràng, ví dụ `Hoc Apps Script`.
+- Viết một function nhỏ, chạy được ngay.
+- Dùng `Logger.log()` để kiểm tra dữ liệu.
+- Chỉ thêm service mới khi đã hiểu service đó làm gì.
+- Sau mỗi thay đổi lớn, chạy lại function test.
+
+Đừng viết một function dài 100 dòng ngay từ đầu. Với Apps Script, lỗi có thể đến từ JavaScript, dữ liệu trong Sheets, quyền truy cập, tên file, tên sheet hoặc quota. Function nhỏ giúp bạn khoanh vùng vấn đề nhanh hơn.
+
+## Lỗi thường gặp khi tạo project
+
+- Chưa lưu file trước khi chạy hàm mới, nên Apps Script vẫn chạy phiên bản cũ.
+- Chọn sai function trên thanh Run.
+- Đặt tên hàm có dấu tiếng Việt, dấu cách hoặc ký tự đặc biệt.
+- Đóng popup cấp quyền quá sớm rồi tưởng script không hoạt động.
+- Không xem Execution log hoặc tab Executions khi có lỗi.
+- Tạo standalone script nhưng dùng code giả định có active spreadsheet.
+
+## Bài tập thực hành
+
+Tạo project tên `Hoc Apps Script`. Viết hai function: `logLearningGoal` ghi log mục tiêu học của bạn, và `createPracticeSheet` tạo Google Sheets mới có ba cột `Date`, `Content`, `Note`. Chạy cả hai function và kiểm tra log.
+
+```javascript
+function logLearningGoal() {
+  Logger.log('Goal: automate weekly reports');
+}
+
+function createPracticeSheet() {
+  const spreadsheet = SpreadsheetApp.create('Apps Script Practice');
+  const sheet = spreadsheet.getActiveSheet();
+
+  sheet.appendRow(['Date', 'Content', 'Note']);
+  sheet.appendRow([new Date(), 'Create project', 'Completed']);
+
+  Logger.log(spreadsheet.getUrl());
+}
+```
+
+Sau khi hoàn thành, thử đổi tên project, đổi tên function và chạy lại để quen với editor.
+
+## Câu hỏi thường gặp về project Apps Script
+
+### Project Apps Script nằm ở đâu?
+
+Standalone project được lưu trong Google Drive và có thể mở lại từ Apps Script dashboard. Bound script thì gắn với file Google Workspace, ví dụ một file Sheets cụ thể.
+
+### Có cần cài VS Code không?
+
+Không cần ở giai đoạn đầu. Editor trong trình duyệt đủ để học nền tảng, chạy ví dụ và xem log. Sau này khi học `clasp`, bạn có thể chuyển sang workflow local.
+
+### Vì sao phải cấp quyền khi chạy script?
+
+Vì script đang truy cập dữ liệu Google của bạn. Mỗi service như Sheets, Drive hoặc Gmail cần scope tương ứng. Authorization giúp bạn biết script được phép làm gì.
+
+### Có thể chia project thành nhiều file không?
+
+Có. Khi project lớn hơn, bạn có thể thêm file `.gs` để tách logic. Tuy nhiên người mới nên giữ ít file trước, ưu tiên hiểu function và luồng chạy.
+
+## Tóm tắt
+
+Bạn đã biết tạo dự án Apps Script, viết function, chạy code, xem log, cấp quyền và phân biệt standalone script với bound script. Bài tiếp theo sẽ ôn JavaScript nền tảng cần dùng trong Apps Script, gồm biến, kiểu dữ liệu, hàm, điều kiện và cách viết logic nhỏ dễ kiểm tra.

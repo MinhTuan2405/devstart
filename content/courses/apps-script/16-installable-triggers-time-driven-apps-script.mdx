@@ -1,0 +1,139 @@
+---
+title: "Installable triggers và time-driven triggers trong Apps Script"
+description: "Học cách tạo trigger cài đặt để chạy Apps Script theo giờ, theo form submit hoặc theo sự kiện nâng cao."
+slug: "installable-triggers-time-driven-apps-script"
+course: "apps-script"
+order: 16
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["installable trigger Apps Script", "time-driven trigger Apps Script", "ScriptApp newTrigger", "trigger chạy theo giờ Apps Script", "Apps Script tự động gửi báo cáo"]
+publishedAt: "2026-06-09"
+---
+
+Installable trigger là cách để Apps Script tự chạy một function theo lịch hoặc theo sự kiện có quyền đầy đủ hơn simple trigger. Nếu bạn muốn gửi báo cáo mỗi sáng, xử lý form submit, đồng bộ dữ liệu định kỳ hoặc chạy tác vụ khi spreadsheet thay đổi, installable trigger là công cụ cần dùng.
+
+## Installable trigger khác simple trigger thế nào?
+
+Simple trigger như `onOpen(e)` hoặc `onEdit(e)` rất tiện vì chỉ cần đặt đúng tên function là chạy. Nhưng simple trigger có nhiều giới hạn: thời gian chạy ngắn hơn, không dùng được một số service cần cấp quyền nâng cao, và không phù hợp cho tác vụ tự động theo lịch. Installable trigger thì ngược lại: bạn phải cài trigger bằng giao diện hoặc bằng code, nhưng đổi lại script được chạy dưới quyền người tạo trigger và có thể làm nhiều việc thực tế hơn như gửi email, gọi API, tạo file Drive hoặc đọc nhiều spreadsheet.
+
+Mô hình tư duy nên nhớ là: function chỉ là đoạn xử lý, trigger là lịch hoặc điều kiện gọi function đó. Khi bạn viết `sendDailyReport()`, Apps Script chưa tự biết khi nào cần chạy. Khi bạn tạo time-driven trigger trỏ tới `sendDailyReport`, bạn đã nói với Apps Script rằng hãy gọi function này theo lịch đã cấu hình.
+
+## Cú pháp tạo time-driven trigger bằng ScriptApp
+
+Bạn có thể tạo trigger trong Apps Script editor, nhưng tạo bằng code giúp dự án dễ lặp lại và dễ reset. Cú pháp thường bắt đầu bằng `ScriptApp.newTrigger('tenFunction')`, sau đó chọn loại trigger như `timeBased()`, cấu hình lịch, cuối cùng gọi `create()`.
+
+```javascript
+function createDailyReportTrigger() {
+  ScriptApp.newTrigger('sendDailyReport')
+    .timeBased()
+    .everyDays(1)
+    .atHour(8)
+    .create();
+}
+
+function sendDailyReport() {
+  const now = new Date();
+  Logger.log('Daily report job started at ' + now.toISOString());
+}
+```
+
+Bạn chỉ chạy `createDailyReportTrigger()` một lần để cài lịch. Sau đó, Apps Script sẽ tự gọi `sendDailyReport()` mỗi ngày quanh mốc 8 giờ theo timezone của project. Từ “quanh” rất quan trọng: time-driven trigger không cam kết chạy chính xác từng giây. Với báo cáo hằng ngày, điều này thường chấp nhận được. Với hệ thống cần chính xác từng phút, bạn phải thiết kế thêm cơ chế kiểm tra thời gian trong function.
+
+## Tạo trigger chạy mỗi giờ để ghi heartbeat
+
+Ví dụ thực tế nhất để kiểm tra trigger là ghi một dấu thời gian vào sheet `Log`. Khi trigger chạy, bạn có bằng chứng rõ ràng rằng automation đang hoạt động.
+
+```javascript
+function writeHeartbeat() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName('Log');
+
+  if (!sheet) {
+    sheet = ss.insertSheet('Log');
+    sheet.appendRow(['Time', 'Message']);
+  }
+
+  sheet.appendRow([new Date(), 'heartbeat']);
+}
+
+function createHourlyHeartbeatTrigger() {
+  ScriptApp.newTrigger('writeHeartbeat')
+    .timeBased()
+    .everyHours(1)
+    .create();
+}
+```
+
+Pattern này hữu ích khi bạn mới học trigger vì nó không gửi email, không gọi API ngoài, không gây tác động lớn. Bạn chỉ cần mở sheet sau vài giờ để xem có dòng mới không. Nếu không có, hãy kiểm tra mục Executions và danh sách Triggers trong Apps Script dashboard.
+
+## Xóa trigger cũ để tránh chạy trùng
+
+Một lỗi rất phổ biến là chạy function tạo trigger nhiều lần. Mỗi lần `create()` tạo thêm một trigger mới, không tự thay thế trigger cũ. Nếu có 5 trigger cùng gọi `sendDailyReport`, bạn sẽ gửi 5 email giống nhau mỗi ngày. Vì vậy dự án thật nên có function reset: xóa trigger cũ của đúng handler rồi tạo lại.
+
+```javascript
+function resetTriggerForHandler(handlerName) {
+  const triggers = ScriptApp.getProjectTriggers();
+
+  triggers.forEach(function(trigger) {
+    if (trigger.getHandlerFunction() === handlerName) {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+}
+
+function resetDailyReportTrigger() {
+  resetTriggerForHandler('sendDailyReport');
+
+  ScriptApp.newTrigger('sendDailyReport')
+    .timeBased()
+    .everyDays(1)
+    .atHour(8)
+    .create();
+}
+```
+
+Khi chỉnh lịch từ 8 giờ sang 9 giờ, hãy chạy `resetDailyReportTrigger()` thay vì tạo trigger mới. Cách này giúp số lượng trigger luôn có kiểm soát.
+
+## Các loại installable trigger phổ biến
+
+- Time-driven trigger: chạy theo phút, giờ, ngày, tuần hoặc tháng.
+- Spreadsheet trigger: chạy khi mở file, sửa ô, thay đổi cấu trúc hoặc submit form vào sheet.
+- Form trigger: chạy khi có phản hồi mới trên Google Forms.
+- Calendar trigger: dùng trong một số trường hợp theo dõi cập nhật lịch.
+
+Hãy chọn trigger theo sự kiện thật. Nếu cần chạy báo cáo lúc 8 giờ, dùng time-driven. Nếu cần xử lý khi người dùng gửi form, dùng form submit. Nếu cần phản ứng ngay khi người dùng sửa sheet, dùng edit trigger nhưng phải cẩn thận vì on edit có thể xảy ra rất nhiều lần.
+
+## Lỗi thường gặp với installable trigger
+
+- Tạo nhiều trigger trùng nhau, làm email hoặc API request bị lặp.
+- Đổi tên function nhưng không cập nhật trigger, khiến trigger gọi handler không còn tồn tại.
+- Quên cấp quyền lần đầu cho function dùng Gmail, Drive hoặc UrlFetchApp.
+- Dùng tài khoản tạo trigger không còn quyền truy cập spreadsheet hoặc folder liên quan.
+- Không ghi log, không ghi trạng thái, nên không biết trigger đã chạy hay chưa.
+- Kỳ vọng trigger chạy chính xác từng giây như cron trên server riêng.
+
+## Bài tập thực hành
+
+Tạo sheet `Log`. Viết function `writeHeartbeat()` ghi thời gian hiện tại và chuỗi `hourly job` vào dòng mới. Viết tiếp `resetHourlyHeartbeatTrigger()` để xóa mọi trigger cũ gọi `writeHeartbeat`, rồi tạo trigger chạy mỗi giờ. Sau khi chạy function reset, vào Apps Script dashboard kiểm tra chỉ có đúng một trigger cho handler này.
+
+## Câu hỏi thường gặp về installable trigger
+
+### Trigger chạy dưới quyền ai?
+
+Thông thường installable trigger chạy dưới quyền người tạo trigger. Nếu người đó mất quyền truy cập file hoặc rời khỏi tổ chức, automation có thể lỗi. Với dự án quan trọng, hãy tạo trigger bằng tài khoản có quyền ổn định.
+
+### Có thể tạo trigger bằng code không?
+
+Có. Dùng `ScriptApp.newTrigger()`. Nhưng function tạo trigger vẫn phải được chạy ít nhất một lần và người chạy cần cấp quyền cho các service liên quan.
+
+### Làm sao biết trigger đã chạy chưa?
+
+Xem mục Executions trong Apps Script dashboard, dùng `Logger.log`, hoặc ghi trạng thái vào sheet `Log`. Với automation quan trọng, nên ghi cả thời gian bắt đầu, kết quả và lỗi nếu có.
+
+### Có nên tạo trigger trong mọi lần chạy script không?
+
+Không. Tạo trigger là thao tác cấu hình, không phải thao tác nghiệp vụ. Hãy tạo một lần hoặc dùng function reset có xóa trigger cũ trước.
+
+## Tóm tắt và chuyển tiếp
+
+Installable trigger giúp Apps Script chuyển từ code chạy thủ công sang automation chạy theo lịch hoặc sự kiện thật. Hãy nhớ tách function xử lý khỏi function tạo trigger, luôn reset để tránh trùng, và kiểm tra log sau khi cài. Bài tiếp theo sẽ đi sâu vào event object, tức dữ liệu Apps Script truyền vào trigger để bạn biết chính xác ô nào được sửa hoặc form nào vừa được gửi.

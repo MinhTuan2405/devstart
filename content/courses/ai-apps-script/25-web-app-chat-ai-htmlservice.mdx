@@ -1,0 +1,169 @@
+---
+title: "Tạo web app chat AI bằng HtmlService và Apps Script"
+description: "Học cách tạo giao diện chat AI đơn giản bằng HtmlService, doGet và Apps Script web app."
+slug: "web-app-chat-ai-htmlservice"
+course: "ai-apps-script"
+order: 25
+duration: "24 phút"
+difficulty: "Trung bình"
+keywords: ["Apps Script AI web app", "HtmlService AI chat", "web app chat AI Apps Script", "doGet AI Apps Script", "Google Apps Script chatbot"]
+publishedAt: "2026-06-09"
+---
+
+## Web app chat AI bằng Apps Script là gì?
+
+Web app chat AI bằng HtmlService là một giao diện HTML nhỏ được Apps Script deploy thành web app, nơi người dùng nhập câu hỏi, client gọi function server bằng `google.script.run`, server gọi AI API và trả câu trả lời về giao diện. API key luôn nằm phía server Apps Script, không đặt trong HTML.
+
+Đây là cách nhanh để tạo chatbot nội bộ, form hỏi đáp tài liệu, trợ lý support nhỏ hoặc giao diện test prompt cho team. Bạn không cần dựng backend riêng, nhưng vẫn phải chú ý quyền deploy, giới hạn input, log lỗi và quota vì web app có thể bị gọi nhiều lần.
+
+## Mental model: client HTML và server Apps Script
+
+HtmlService có hai phần rõ ràng. File `Index.html` chạy trong trình duyệt người dùng, xử lý UI, input và hiển thị kết quả. File `.gs` chạy trên server Apps Script, có quyền dùng `UrlFetchApp`, `PropertiesService`, `GmailApp`, `SpreadsheetApp` và các service khác.
+
+Luồng xử lý cơ bản:
+
+- `doGet` trả HTML khi người dùng mở web app.
+- Người dùng nhập câu hỏi và bấm nút.
+- HTML gọi `google.script.run.answerUserQuestion(question)`.
+- Server validate câu hỏi, gọi AI bằng wrapper đã học.
+- Server trả text hoặc throw lỗi.
+- HTML hiển thị câu trả lời hoặc thông báo lỗi.
+
+Không gọi AI API trực tiếp từ HTML vì như vậy phải đưa API key ra trình duyệt. Bất kỳ ai mở DevTools cũng có thể thấy key và abuse quota của bạn.
+
+## doGet trả giao diện HTML
+
+Trong Apps Script, tạo file `Code.gs` và `Index.html`. `doGet` là entry point cho HTTP GET của web app.
+
+```javascript
+function doGet() {
+  return HtmlService
+    .createHtmlOutputFromFile('Index')
+    .setTitle('AI Apps Script Chat')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+```
+
+`setXFrameOptionsMode` chỉ cần nếu bạn muốn nhúng web app vào site khác. Nếu không cần embed, có thể bỏ dòng này để giữ cấu hình mặc định an toàn hơn.
+
+## HTML chat tối giản nhưng có xử lý lỗi
+
+File `Index.html` nên có input, button, vùng trạng thái và vùng câu trả lời. Ví dụ dưới đây cố tình đơn giản để tập trung vào `google.script.run`.
+
+```html
+<h2>AI Chat</h2>
+<textarea id="question" rows="5" placeholder="Nhap cau hoi..."></textarea>
+<button id="askButton" onclick="ask()">Ask AI</button>
+<p id="status"></p>
+<pre id="answer"></pre>
+
+<script>
+function ask() {
+  var question = document.getElementById('question').value.trim();
+  var button = document.getElementById('askButton');
+  var status = document.getElementById('status');
+  var answer = document.getElementById('answer');
+
+  if (!question) {
+    status.textContent = 'Please enter a question.';
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = 'Processing...';
+  answer.textContent = '';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      answer.textContent = result;
+      status.textContent = 'Done';
+      button.disabled = false;
+    })
+    .withFailureHandler(function(error) {
+      status.textContent = 'Error: ' + error.message;
+      button.disabled = false;
+    })
+    .answerUserQuestion(question);
+}
+</script>
+```
+
+Button bị disable trong lúc xử lý để tránh người dùng bấm nhiều lần, tạo nhiều request AI giống nhau. Đây là guardrail nhỏ nhưng rất hữu ích khi gọi API có chi phí.
+
+## Function server gọi AI an toàn
+
+Server function phải coi input từ HTML là dữ liệu không tin cậy. Luôn kiểm tra rỗng, độ dài và có thể kiểm tra user nếu web app chỉ dành cho nội bộ.
+
+```javascript
+function answerUserQuestion(question) {
+  const text = String(question || '').trim();
+  if (!text) throw new Error('Question is required');
+  if (text.length > 2000) throw new Error('Question is too long');
+
+  const prompt = [
+    'Answer in Vietnamese for a Google Workspace user.',
+    'Be concise and practical.',
+    'If the request asks for secrets or private data, refuse briefly.',
+    'Question: ' + text,
+  ].join('\n');
+
+  return generateAiText(prompt, { temperature: 0.3 });
+}
+```
+
+Nếu web app dùng cho nhiều người, hãy log `Session.getActiveUser().getEmail()` khi domain cho phép. Tuy nhiên, tùy cách deploy, active user có thể rỗng hoặc không như bạn kỳ vọng, nên cần test quyền `Execute as` và `Who has access`.
+
+## Ghi log request đơn giản
+
+Với prototype, log số request và lỗi vào sheet giúp bạn biết web app có bị abuse không.
+
+```javascript
+function logWebChatRequest(userEmail, status, questionLength) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('WebChatLog');
+  if (!sheet) return;
+
+  sheet.appendRow([
+    new Date(),
+    userEmail || 'unknown',
+    status,
+    questionLength,
+  ]);
+}
+```
+
+Không nên log toàn bộ câu hỏi nếu người dùng có thể nhập dữ liệu nhạy cảm. Log độ dài, status và job name thường đủ cho monitoring ban đầu.
+
+## Lỗi thường gặp với web app AI
+
+- Deploy public nhưng không giới hạn input, auth hoặc quota.
+- Không có `withFailureHandler`, khiến UI treo khi server lỗi.
+- Gọi AI API từ HTML client và làm lộ API key.
+- Không test quyền `Execute as`, dẫn đến đọc nhầm dữ liệu hoặc không lấy được user.
+- Không disable button khi request đang chạy.
+- Không log request count, nên không biết web app có bị gọi bất thường hay không.
+
+## Bài tập thực hành
+
+Tạo web app AI chat nội bộ với `Index.html`, `doGet` và `answerUserQuestion`. Thêm giới hạn input 2.000 ký tự, disable button khi đang xử lý, hiển thị lỗi từ `withFailureHandler` và ghi log vào sheet `WebChatLog` gồm thời gian, user, status và độ dài câu hỏi.
+
+## Câu hỏi thường gặp về web app AI
+
+### Có nên deploy public không?
+
+Không nên nếu chưa có auth, quota guard và abuse protection. Bắt đầu với quyền giới hạn trong domain hoặc nhóm nhỏ, sau đó mới cân nhắc public.
+
+### HTML có thấy API key không?
+
+Không nếu bạn giữ key trong server Apps Script và chỉ gọi qua `google.script.run`. HTML chỉ thấy tên function server và dữ liệu bạn trả về.
+
+### Web app Apps Script có đủ làm chatbot production không?
+
+Phù hợp prototype, demo hoặc công cụ nội bộ nhỏ. Với lượng user lớn, yêu cầu auth phức tạp, streaming hoặc logging tập trung, nên cân nhắc backend riêng.
+
+### Có thể dùng CSS đẹp hơn không?
+
+Có. HtmlService hỗ trợ HTML, CSS và JavaScript cơ bản. Tuy nhiên, bài này ưu tiên luồng client-server; giao diện đẹp nên làm sau khi guardrails hoạt động đúng.
+
+## Tóm tắt và bước tiếp theo
+
+HtmlService giúp bạn dựng web app chat AI rất nhanh, nhưng phải giữ API key phía server, validate input và xử lý lỗi rõ ràng. Bài tiếp theo đi sâu vào `google.script.run` cho chat có lịch sử hội thoại, nơi mỗi câu hỏi cần mang theo ngữ cảnh trước đó.

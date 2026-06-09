@@ -1,0 +1,200 @@
+---
+title: "JSON output và validate AI response trong Apps Script"
+description: "Học cách yêu cầu AI trả JSON, parse an toàn và validate schema trước khi ghi vào Google Sheets."
+slug: "json-output-va-validate-ai-response"
+course: "ai-apps-script"
+order: 16
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["AI JSON Apps Script", "validate AI response", "parse JSON Apps Script", "structured output Apps Script", "Gemini JSON response Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao cần validate AI response?
+
+Bạn cần validate AI response vì model có thể trả text không đúng JSON, thiếu trường, thêm markdown, chọn giá trị ngoài danh sách hoặc trả câu giải thích thay vì dữ liệu. Nếu ghi thẳng output vào Sheets, automation sẽ tạo dữ liệu bẩn và khó sửa khi chạy hàng loạt.
+
+Prompt tốt giúp tăng xác suất output đúng, nhưng prompt không phải hợp đồng chắc chắn. Hợp đồng thật nằm ở code parser và validator. Mọi response quan trọng từ AI nên đi qua ba bước: làm sạch text, parse JSON, kiểm tra schema và enum trước khi dùng.
+
+## Mental model: prompt chỉ là lớp đầu tiên
+
+Khi cần output có cấu trúc, luồng đúng là:
+
+- Prompt yêu cầu JSON rõ schema.
+- AI trả raw text.
+- Code loại bỏ markdown fence nếu có.
+- Code parse JSON.
+- Code validate field bắt buộc, kiểu dữ liệu và enum.
+- Chỉ ghi dữ liệu đã validate vào Sheets.
+- Nếu lỗi, ghi trạng thái `error` và log raw preview an toàn.
+
+Đừng để một dòng sai từ AI làm hỏng báo cáo hoặc gửi email sai cho người dùng.
+
+## Prompt yêu cầu JSON rõ ràng
+
+Prompt nên nói rõ chỉ trả JSON hợp lệ, không markdown, không giải thích thêm và schema cụ thể.
+
+```javascript
+function buildClassifyPrompt(message) {
+  return [
+    'Classify the customer feedback below.',
+    'Return valid JSON only. Do not use markdown.',
+    'Schema: {"sentiment":"positive|neutral|negative", "reason":"short text"}',
+    'The reason must be under 120 characters.',
+    '',
+    'Feedback:',
+    String(message || '').slice(0, 2000),
+  ].join('\n');
+}
+```
+
+Schema trong prompt nên ngắn và rõ. Nếu schema quá nhiều trường, model dễ thiếu field hoặc tạo field không cần thiết.
+
+## Làm sạch và parse JSON
+
+Nhiều model dù được yêu cầu không markdown vẫn có thể trả một markdown fence kiểu `json`. Parser nên xử lý trường hợp đó nhưng không nên quá dễ dãi đến mức chấp nhận mọi thứ.
+
+```javascript
+function extractJsonText(rawText) {
+  return String(rawText || '')
+    .replace(/```json/gi, '')
+    .replace(/```/g, '')
+    .trim();
+}
+
+function parseJsonOrThrow(rawText) {
+  const cleaned = extractJsonText(rawText);
+  try {
+    return JSON.parse(cleaned);
+  } catch (error) {
+    throw new Error('AI response is not valid JSON: ' + error.message);
+  }
+}
+```
+
+Tách `extractJsonText` giúp bạn test riêng các response có markdown fence, response thuần JSON và response rỗng.
+
+## Validate schema thủ công
+
+Với project Apps Script nhỏ, bạn không cần thư viện schema validation. Validator thủ công cho vài field quan trọng thường đủ rõ và ít phụ thuộc.
+
+```javascript
+function validateClassification(data) {
+  const allowedSentiments = ['positive', 'neutral', 'negative'];
+
+  if (!data || typeof data !== 'object') {
+    throw new Error('Classification must be an object');
+  }
+
+  if (!allowedSentiments.includes(data.sentiment)) {
+    throw new Error('Invalid sentiment: ' + data.sentiment);
+  }
+
+  return {
+    sentiment: data.sentiment,
+    reason: String(data.reason || '').slice(0, 120),
+  };
+}
+
+function parseClassification(rawText) {
+  const data = parseJsonOrThrow(rawText);
+  return validateClassification(data);
+}
+```
+
+Validator nên trả object sạch, không trả object gốc từ model. Như vậy field thừa trong response sẽ không lan vào code phía sau.
+
+## Dùng parser trong job Sheets
+
+Khi xử lý một dòng Sheets, chỉ ghi kết quả sau khi parser thành công. Nếu lỗi, ghi trạng thái lỗi và message ngắn.
+
+```javascript
+function classifyFeedbackItem(item) {
+  const prompt = buildClassifyPrompt(item.message);
+  const rawText = generateAiText(prompt, { temperature: 0 });
+  return parseClassification(rawText);
+}
+
+function buildErrorResult(error) {
+  return {
+    sentiment: '',
+    reason: '',
+    status: 'error',
+    error: String(error.message || error).slice(0, 200),
+  };
+}
+```
+
+Trong production, bạn có thể ghi raw response đã cắt ngắn vào sheet debug có quyền hạn chế, nhưng không nên ghi toàn bộ output vào sheet chính.
+
+## Khi validate thất bại thì làm gì?
+
+- Không cập nhật trạng thái `done`.
+- Ghi `Status = error` và lỗi ngắn vào cột `Error`.
+- Log status, row number và raw preview đã cắt ngắn.
+- Có thể retry một lần với prompt yêu cầu sửa JSON.
+- Nếu lỗi lặp lại nhiều, xem lại prompt, model hoặc parser.
+- Không tự đoán giá trị nếu field quan trọng bị thiếu.
+
+Retry khi JSON sai nên dùng thận trọng. Nếu prompt kém, retry nhiều lần chỉ tốn quota mà không giải quyết gốc rễ.
+
+## Test parser bằng response giả
+
+Hãy test parser trước khi gọi model thật:
+
+```javascript
+function testParseClassification() {
+  const ok = parseClassification('{"sentiment":"positive","reason":"Clear praise"}');
+  if (ok.sentiment !== 'positive') throw new Error('Expected positive');
+
+  const fenced = parseClassification('```json\n{"sentiment":"neutral","reason":"Mixed"}\n```');
+  if (fenced.sentiment !== 'neutral') throw new Error('Expected neutral');
+
+  try {
+    parseClassification('{"sentiment":"angry","reason":"Bad"}');
+    throw new Error('Expected invalid sentiment to fail');
+  } catch (error) {
+    if (!String(error.message).includes('Invalid sentiment')) throw error;
+  }
+
+  console.log('testParseClassification passed');
+}
+```
+
+Test này bắt ba trường hợp thực tế: JSON đúng, JSON bọc markdown và enum sai.
+
+## Lỗi thường gặp với JSON AI output
+
+- Tin rằng yêu cầu "chỉ trả JSON" luôn được tuân thủ.
+- Không xử lý markdown fence.
+- Không kiểm tra enum như sentiment, priority, tag.
+- Không xử lý response rỗng.
+- Ghi raw JSON string vào sheet thay vì trường đã validate.
+- Bỏ qua field thừa hoặc field thiếu mà không log.
+- Parser throw lỗi nhưng job vẫn đánh dấu dòng là done.
+
+## Bài tập thực hành
+
+Viết parser cho schema `{ "priority": "low|medium|high", "summary": "" }`. Test với ba response: JSON đúng, JSON có markdown fence, JSON có priority sai. Sau đó viết prompt yêu cầu AI trả schema này cho một support ticket và thêm validator trước khi ghi vào Sheets.
+
+## Câu hỏi thường gặp về JSON output
+
+### Có cần schema validation library không?
+
+Không bắt buộc cho project nhỏ. Validator thủ công đủ tốt nếu schema ít trường. Với schema lớn hoặc production nghiêm túc, bạn có thể cân nhắc validation chặt hơn ở backend.
+
+### Có nên retry khi JSON sai không?
+
+Có thể retry một lần với prompt yêu cầu sửa output. Nhưng nếu sai liên tục, hãy log lỗi và sửa prompt hoặc schema thay vì retry mãi.
+
+### Có nên ghi raw response vào sheet không?
+
+Chỉ nên ghi bản cắt ngắn trong sheet debug có quyền hạn chế nếu cần. Sheet chính nên lưu dữ liệu đã validate.
+
+### Nếu model trả thêm field thì sao?
+
+Validator nên bỏ qua field thừa trừ khi bạn cần dùng. Chỉ return object sạch gồm field được phép.
+
+## Tóm tắt và bước tiếp theo
+
+AI output phải được parse và validate trước khi dùng. Prompt JSON chỉ là bước đầu, code mới là lớp bảo vệ thật. Bài tiếp theo sẽ học retry, quota và rate limit khi gọi AI API từ Apps Script.

@@ -1,0 +1,175 @@
+---
+title: "Quota, performance và best practices trong Apps Script"
+description: "Học cách tối ưu Apps Script: giảm service calls, batch read/write, kiểm soát quota và chạy ổn định hơn."
+slug: "quota-performance-best-practices"
+course: "apps-script"
+order: 43
+duration: "24 phút"
+difficulty: "Khó"
+keywords: ["quota Apps Script", "performance Apps Script", "best practices Apps Script", "tối ưu Google Sheets Apps Script", "batch operations Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Apps Script cần tối ưu vì mỗi execution có giới hạn thời gian chạy, mỗi service có quota và mỗi lần gọi Google service đều tốn chi phí. Best practice quan trọng nhất là giảm số lần gọi service: đọc dữ liệu theo batch, xử lý trong mảng JavaScript, rồi ghi lại theo batch.
+
+## Quota và performance trong Apps Script là gì?
+
+Quota là giới hạn sử dụng theo ngày, theo execution hoặc theo dịch vụ. Ví dụ số email gửi, số lần gọi `UrlFetchApp`, thời gian chạy trigger, số lần đọc ghi service. Google có thể thay đổi quota theo loại tài khoản, nên bạn không nên hardcode con số trong tư duy thiết kế. Hãy đọc tài liệu quota khi làm hệ thống thật.
+
+Performance là tốc độ và độ ổn định của script. Một script chậm không chỉ gây khó chịu, mà còn dễ chạm giới hạn thời gian chạy. Với Apps Script, phần chậm nhất thường không phải JavaScript thuần, mà là các lần gọi ra Google services như Sheets, Drive, Gmail hoặc API ngoài.
+
+Mental model nên nhớ: gọi service giống đi qua mạng, còn xử lý mảng trong JavaScript giống làm việc trong bộ nhớ. Hãy gom dữ liệu về một lần, xử lý trong bộ nhớ, rồi ghi kết quả một lần.
+
+## Ví dụ chậm: đọc ghi từng ô trong vòng lặp
+
+Code sau dễ hiểu nhưng kém hiệu quả vì mỗi dòng gọi `getRange`, `getValue` và `setValue`. Với 100 dòng có thể tạm được, nhưng với vài nghìn dòng sẽ rất chậm.
+
+```javascript
+function slowUpdateScores() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  const lastRow = sheet.getLastRow();
+
+  for (let row = 2; row <= lastRow; row++) {
+    const source = sheet.getRange(row, 4).getValue();
+    const score = source === 'event' ? 80 : 50;
+    sheet.getRange(row, 5).setValue(score);
+  }
+}
+```
+
+Vấn đề không nằm ở công thức tính score. Vấn đề là bạn gọi Sheets service lặp lại quá nhiều lần. Đây là lỗi performance phổ biến nhất của Apps Script.
+
+## Ví dụ nhanh: batch read và batch write
+
+Cách tốt hơn là đọc toàn bộ vùng cần thiết bằng `getValues()`, tính toán trong mảng, rồi ghi kết quả bằng `setValues()`.
+
+```javascript
+function fastUpdateScores() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  const sourceValues = sheet.getRange(2, 4, lastRow - 1, 1).getValues();
+  const scoreValues = sourceValues.map(function(row) {
+    const source = row[0];
+    return [source === 'event' ? 80 : 50];
+  });
+
+  sheet.getRange(2, 5, scoreValues.length, 1).setValues(scoreValues);
+}
+```
+
+Số lần gọi Sheets service giảm từ hàng nghìn xuống hai lần chính: một lần đọc, một lần ghi. Đây là khác biệt rất lớn với script chạy hằng ngày.
+
+## Dừng sớm và giới hạn phạm vi dữ liệu
+
+Script tốt không xử lý nhiều hơn cần thiết. Nếu sheet rỗng, return sớm. Nếu chỉ cần cột A:D, đừng đọc toàn bộ `getDataRange()` với hàng chục cột. Nếu chỉ xử lý lead mới, hãy lưu trạng thái hoặc timestamp để không quét lại toàn bộ lịch sử mỗi lần.
+
+```javascript
+function processNewLeadsOnly() {
+  const props = PropertiesService.getScriptProperties();
+  const lastProcessedRow = Number(props.getProperty('LAST_PROCESSED_ROW') || 1);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow <= lastProcessedRow) {
+    Logger.log('No new leads');
+    return;
+  }
+
+  const rowCount = lastRow - lastProcessedRow;
+  const values = sheet.getRange(lastProcessedRow + 1, 1, rowCount, 5).getValues();
+
+  values.forEach(function(row) {
+    Logger.log('Process lead: ' + row[2]);
+  });
+
+  props.setProperty('LAST_PROCESSED_ROW', String(lastRow));
+}
+```
+
+Ví dụ này dùng Script Properties để nhớ dòng đã xử lý. Trong dự án thật, hãy thiết kế kỹ nếu có khả năng xóa/sắp xếp dòng, vì lưu row number có thể sai khi dữ liệu thay đổi cấu trúc.
+
+## Dùng CacheService cho dữ liệu đọc nhiều
+
+Nếu script thường đọc cùng một cấu hình, ví dụ bảng mapping source sang score, bạn có thể cache kết quả vài phút. Cache giúp giảm đọc sheet hoặc gọi API ngoài lặp lại.
+
+```javascript
+function getSourceScoreMap() {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get('SOURCE_SCORE_MAP');
+
+  if (cached) {
+    return JSON.parse(cached);
+  }
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+  const map = {};
+
+  values.forEach(function(row) {
+    map[row[0]] = Number(row[1]);
+  });
+
+  cache.put('SOURCE_SCORE_MAP', JSON.stringify(map), 300);
+  return map;
+}
+```
+
+Cache không phải database. Dữ liệu có thể hết hạn hoặc bị xóa. Code phải chạy đúng ngay cả khi cache miss.
+
+## Dùng LockService khi có ghi đồng thời
+
+Web app hoặc trigger có thể chạy nhiều execution cùng lúc. Nếu nhiều request cùng append hoặc cập nhật trạng thái, bạn có thể cần lock để tránh tranh chấp.
+
+```javascript
+function saveLeadSafely(lead) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+    sheet.appendRow([new Date(), lead.name, lead.email, lead.source || 'web']);
+  } finally {
+    lock.releaseLock();
+  }
+}
+```
+
+Luôn release lock trong `finally`. Nếu quên, execution lỗi có thể làm request khác phải chờ lâu hoặc thất bại.
+
+## Lỗi thường gặp về quota và performance
+
+- Dùng `getValue()` hoặc `setValue()` trong vòng lặp lớn.
+- Đọc toàn bộ sheet trong khi chỉ cần vài cột.
+- Gọi API ngoài cho từng dòng thay vì gom request hoặc cache.
+- Không dừng sớm khi không có dữ liệu mới.
+- Không dùng lock khi có nhiều request ghi cùng tài nguyên.
+- Log quá nhiều dữ liệu nhạy cảm hoặc log trong vòng lặp lớn.
+- Tạo trigger chạy quá dày so với nhu cầu thật.
+
+## Bài tập thực hành
+
+Tạo sheet `Leads` có 1.000 dòng và cột `Source`. Viết hai function: một function chậm dùng `getValue/setValue` trong vòng lặp để ghi score, một function nhanh dùng `getValues/setValues`. Chạy cả hai, ghi lại thời gian bằng `console.time` hoặc log thời điểm bắt đầu/kết thúc. Sau đó thêm cache cho bảng mapping source sang score.
+
+## Câu hỏi thường gặp về quota Apps Script
+
+### Có cách nào tăng quota Apps Script không?
+
+Quota phụ thuộc loại tài khoản và dịch vụ. Bạn có thể tối ưu code, giảm tần suất trigger hoặc chuyển phần tải cao sang dịch vụ khác. Không nên thiết kế dựa trên giả định quota sẽ được tăng.
+
+### Batch read/write có luôn nhanh hơn không?
+
+Gần như luôn tốt hơn khi xử lý nhiều ô. Với một ô đơn lẻ, khác biệt không đáng kể. Với hàng trăm hoặc hàng nghìn dòng, batch là bắt buộc.
+
+### CacheService có đảm bảo dữ liệu luôn tồn tại không?
+
+Không. Cache có thể hết hạn hoặc bị xóa. Hãy xem cache là tối ưu tạm thời, không phải nguồn dữ liệu chính.
+
+### LockService có làm script chậm hơn không?
+
+Có thể làm request phải chờ, nhưng giúp tránh lỗi cạnh tranh dữ liệu. Dùng lock cho đoạn ghi quan trọng, giữ vùng lock ngắn và release trong `finally`.
+
+## Tóm tắt và bước tiếp theo
+
+Performance tốt trong Apps Script đến từ việc giảm service calls, batch read/write, dừng sớm, cache hợp lý và lock khi ghi đồng thời. Tối ưu không chỉ để nhanh hơn mà còn để tránh quota và timeout. Bài tiếp theo sẽ học error handling, retry và alert để automation không im lặng thất bại.

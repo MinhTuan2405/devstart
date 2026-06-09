@@ -1,0 +1,168 @@
+---
+title: "Đọc dữ liệu Google Sheets bằng getValues trong Apps Script"
+description: "Học cách đọc dữ liệu từ Google Sheets bằng getRange, getDataRange và getValues trong Apps Script."
+slug: "doc-du-lieu-google-sheets-getvalues"
+course: "apps-script"
+order: 7
+duration: "19 phút"
+difficulty: "Dễ"
+keywords: ["getValues Apps Script", "đọc dữ liệu Google Sheets Apps Script", "getDataRange Apps Script", "SpreadsheetApp getValues", "Apps Script Sheets cơ bản"]
+publishedAt: "2026-06-09"
+---
+
+## Đọc dữ liệu Sheets bằng Apps Script như thế nào?
+
+Để đọc dữ liệu Google Sheets bằng Apps Script, bạn lấy `Sheet`, chọn `Range`, rồi gọi `getValues()`. Kết quả trả về là mảng hai chiều, cho phép bạn xử lý dữ liệu trong JavaScript trước khi ghi ra log, gửi email, tạo báo cáo hoặc cập nhật sheet khác.
+
+Đọc dữ liệu là kỹ năng cốt lõi vì hầu hết automation đều bắt đầu từ câu hỏi: dữ liệu hiện tại là gì? Bạn có thể đọc toàn bộ bảng, đọc một vùng cố định, đọc từ dòng 2 để bỏ header, hoặc đọc một số cột cụ thể để tối ưu hiệu năng.
+
+## Mô hình Range thành mảng hai chiều
+
+`getValues()` luôn trả về mảng hai chiều, ngay cả khi bạn đọc một ô hoặc một cột. Mảng ngoài là danh sách dòng. Mảng con là danh sách ô trong dòng đó.
+
+```javascript
+function readAllData() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const values = sheet.getDataRange().getValues();
+
+  values.forEach(row => {
+    Logger.log(row.join(' | '));
+  });
+}
+```
+
+Nếu vùng `A1:C3` có ba dòng và ba cột, `values.length` là `3`, còn `values[0].length` là `3`. Nếu dòng đầu tiên là tiêu đề, `values[0]` là header, dữ liệu thật thường bắt đầu từ `values[1]`.
+
+## Đọc toàn bộ bảng bằng getDataRange
+
+`getDataRange()` lấy vùng có dữ liệu trong sheet. Đây là cách nhanh để bắt đầu khi bảng nhỏ và có cấu trúc đơn giản. Tuy nhiên, nếu sheet có dữ liệu rác ở cột xa hoặc dòng rất thấp, vùng đọc có thể lớn hơn bạn nghĩ.
+
+```javascript
+function readCustomersWithHeader() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length < 2) {
+    Logger.log('No customer data');
+    return;
+  }
+
+  const headers = values[0];
+  const rows = values.slice(1);
+
+  Logger.log('Headers: ' + headers.join(', '));
+  Logger.log('Data rows: ' + rows.length);
+}
+```
+
+`slice(1)` tạo mảng mới bỏ dòng đầu. Đây là kỹ thuật rất hay dùng khi dòng 1 là tên cột như `Customer`, `Email`, `Amount`, `Status`.
+
+## Đọc một vùng cụ thể bằng getRange
+
+Khi biết chính xác vùng dữ liệu, bạn nên dùng `getRange('A2:D100')` hoặc dạng số để kiểm soát tốt hơn. Dạng số đặc biệt hữu ích khi bạn muốn đọc từ dòng 2 đến dòng cuối có dữ liệu.
+
+```javascript
+function readOrders() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow < 2) {
+    Logger.log('No orders yet');
+    return;
+  }
+
+  const rows = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+  const paidOrders = rows.filter(row => row[3] === 'paid');
+
+  Logger.log('Paid orders: ' + paidOrders.length);
+}
+```
+
+Cú pháp `getRange(row, column, numRows, numColumns)` dùng số bắt đầu từ `1`. Trong ví dụ trên, dòng bắt đầu là `2`, cột bắt đầu là `1`, số dòng là `lastRow - 1`, số cột là `4`.
+
+## Xử lý dữ liệu sau khi đọc
+
+Sau khi có mảng dữ liệu, bạn có thể lọc dòng theo trạng thái, tính tổng theo cột số, biến dòng thành object, tạo danh sách email cần gửi hoặc tạo báo cáo tóm tắt. Apps Script hiệu quả nhất khi bạn đọc dữ liệu một lần, xử lý trong JavaScript, rồi ghi kết quả một lần.
+
+Ví dụ tính tổng doanh thu từ sheet `Orders`:
+
+```javascript
+function calculatePaidTotal() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Orders');
+
+  if (!sheet) {
+    Logger.log('Sheet Orders not found');
+    return;
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  const rows = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+  const total = rows
+    .filter(row => row[3] === 'paid')
+    .reduce((sum, row) => sum + Number(row[2]), 0);
+
+  Logger.log('Paid total: ' + total);
+}
+```
+
+Giả sử cột C là `Amount` và cột D là `Status`, dòng nào có status `paid` sẽ được cộng vào tổng. `Number(row[2])` giúp tránh lỗi khi dữ liệu tiền bị nhập dạng chuỗi.
+
+## getValues, getDisplayValues và getFormulas
+
+`getValues()` trả về giá trị thật của ô. Nếu ô là ngày, bạn thường nhận object `Date`. Nếu ô là công thức, bạn nhận kết quả tính toán. Nếu muốn lấy chuỗi đang hiển thị trên màn hình, dùng `getDisplayValues()`. Nếu muốn lấy công thức, dùng `getFormulas()`.
+
+Ví dụ: ô hiển thị `01/06/2026` có thể là object Date khi dùng `getValues()`, nhưng là chuỗi khi dùng `getDisplayValues()`. Khi viết automation tính toán, ưu tiên giá trị thật. Khi xuất báo cáo dạng text hoặc email, đôi khi display value lại thuận tiện hơn.
+
+## Lỗi thường gặp khi dùng getValues
+
+- Quên kiểm tra sheet rỗng nên `lastRow - 1` thành `0` hoặc số âm.
+- Nhầm chỉ số cột trong mảng, vì cột A là `row[0]`.
+- Đọc quá nhiều cột không cần thiết, làm script chậm.
+- Không bỏ header nên tính cả dòng tiêu đề.
+- Dữ liệu ngày tháng trả về object `Date`, không phải chuỗi.
+- Ô có công thức trả về kết quả hiển thị, không phải công thức, trừ khi dùng `getFormulas()`.
+
+## Bài tập thực hành
+
+Tạo sheet `Orders` có cột `Customer`, `Email`, `Amount`, `Status`. Viết function đọc dữ liệu từ dòng 2, lọc các đơn `paid`, tính tổng `Amount` và log kết quả.
+
+```javascript
+function practiceReadPaidOrders() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Orders');
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow < 2) {
+    Logger.log('No data');
+    return;
+  }
+
+  const rows = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+  Logger.log(rows);
+}
+```
+
+Hoàn thiện phần tính tổng bằng `filter` và `reduce`. Sau đó thử thêm một dòng `pending` để kiểm tra logic có bỏ qua đúng không.
+
+## Câu hỏi thường gặp về getValues
+
+### getValue và getValues khác gì nhau?
+
+`getValue()` đọc một ô, còn `getValues()` đọc một vùng và trả về mảng hai chiều. Với dữ liệu nhiều dòng, `getValues()` hiệu quả hơn vì giảm số lần gọi service.
+
+### Có nên dùng getDataRange mọi lúc không?
+
+Không. `getDataRange()` tiện cho bảng nhỏ, nhưng với bảng lớn bạn nên giới hạn vùng đọc bằng `getRange(row, column, numRows, numColumns)`.
+
+### getValues có đọc format không?
+
+Không. Nó chỉ đọc giá trị. Nếu cần màu, font, validation hoặc định dạng số, bạn dùng các phương thức format riêng như `getBackgrounds()` hoặc `getNumberFormats()`.
+
+### Vì sao ngày tháng đọc ra khó hiểu?
+
+Vì `getValues()` có thể trả về object `Date`. Khi log, định dạng hiển thị phụ thuộc môi trường. Nếu cần chuỗi giống trên sheet, thử `getDisplayValues()`.
+
+## Tóm tắt
+
+`getValues()` là kỹ năng cốt lõi khi làm Apps Script với Sheets. Bạn đã biết đọc toàn bộ bảng, đọc vùng cụ thể, bỏ header, xử lý mảng hai chiều và tránh các lỗi phổ biến. Bài tiếp theo sẽ học cách ghi dữ liệu bằng `appendRow()` và `setValues()`.

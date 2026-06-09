@@ -1,0 +1,156 @@
+---
+title: "Trợ lý soạn email Gmail bằng AI Apps Script"
+description: "Học cách dùng Apps Script và AI để tạo draft email Gmail từ dữ liệu Sheets và ngữ cảnh khách hàng."
+slug: "tro-ly-soan-email-gmail-ai"
+course: "ai-apps-script"
+order: 21
+duration: "23 phút"
+difficulty: "Trung bình"
+keywords: ["Gmail AI Apps Script", "soạn email bằng AI", "GmailApp AI", "AI email draft Apps Script", "Google Sheets Gmail AI"]
+publishedAt: "2026-06-09"
+---
+
+## Trợ lý soạn email Gmail bằng AI là gì?
+
+Trợ lý soạn email Gmail bằng AI là workflow dùng Apps Script đọc dữ liệu khách hàng, tạo prompt có mục tiêu rõ ràng, gọi model AI và tạo Gmail draft để người dùng kiểm tra trước khi gửi. Điểm an toàn nhất là chỉ tạo bản nháp, không để AI tự gửi email thật nếu chưa có review và guardrails.
+
+Ứng dụng này phù hợp cho follow-up khách hàng, phản hồi lead từ Google Forms, email nhắc lịch, email tóm tắt sau cuộc họp hoặc phản hồi support sơ bộ. AI giúp viết nhanh hơn, nhưng Apps Script mới là nơi kiểm soát người nhận, trạng thái xử lý, log và quyền truy cập.
+
+## Mental model: dữ liệu, mục tiêu, ràng buộc và draft
+
+Một draft email tốt cần 4 nhóm thông tin. Thứ nhất là dữ liệu người nhận: tên, email, công ty, nhu cầu. Thứ hai là mục tiêu: hẹn cuộc gọi, gửi tài liệu, xin phản hồi, nhắc deadline. Thứ ba là ràng buộc: giọng văn, độ dài, điều không được hứa. Thứ tư là trạng thái trong Sheets để không tạo draft lặp.
+
+Bạn nên thiết kế sheet `Customers` hoặc `Leads` với các cột:
+
+- `Name`: tên người nhận.
+- `Email`: địa chỉ email.
+- `Need`: nhu cầu hoặc vấn đề chính.
+- `Note`: ghi chú nội bộ đã được lọc.
+- `DraftSubject`: tiêu đề bản nháp.
+- `DraftCreatedAt`: thời điểm đã tạo draft.
+- `Status`: `pending`, `drafted`, `error`.
+- `Error`: lỗi ngắn nếu có.
+
+Không nên đưa mọi ghi chú nội bộ vào prompt. Nếu note chứa giá, điều khoản nhạy cảm hoặc thông tin cá nhân không cần thiết, hãy tóm tắt hoặc loại bỏ trước.
+
+## Tạo prompt email có kiểm soát
+
+Prompt nên nói rõ vai trò, mục tiêu, giọng văn, độ dài và điều cấm. Với email, bạn cũng nên yêu cầu AI không bịa cam kết.
+
+```javascript
+function buildEmailDraftPrompt(customer) {
+  return [
+    'Write a concise Vietnamese business email.',
+    'Goal: schedule a short consultation call.',
+    'Tone: polite, helpful, not pushy.',
+    'Do not promise discounts, timelines, or features not listed here.',
+    'Return only the email body. No subject. No markdown.',
+    'Customer name: ' + customer.name,
+    'Customer need: ' + customer.need,
+    'Internal note: ' + String(customer.note || '').slice(0, 800),
+  ].join('\n');
+}
+```
+
+Trong code thật, bạn có thể thêm prompt version, ví dụ `email_followup_v1`. Khi team thay đổi tone hoặc cấu trúc email, version giúp bạn biết draft nào được tạo bằng prompt nào.
+
+## Tạo Gmail draft bằng GmailApp
+
+`GmailApp.createDraft(to, subject, body)` tạo bản nháp trong Gmail của tài khoản chạy script. Function nên validate email, subject và body trước khi gọi Gmail.
+
+```javascript
+function createAiEmailDraft(customer) {
+  if (!customer.email || !customer.email.includes('@')) {
+    throw new Error('Invalid email');
+  }
+
+  const subject = 'Trao doi them ve nhu cau cua ban';
+  const body = generateAiText(buildEmailDraftPrompt(customer), { temperature: 0.4 });
+
+  if (!body || body.length < 50) {
+    throw new Error('AI returned an empty or too short draft');
+  }
+
+  GmailApp.createDraft(customer.email, subject, body);
+  return { email: customer.email, subject, bodyLength: body.length };
+}
+```
+
+Subject trong ví dụ dùng ASCII để tránh lỗi encoding trong một số môi trường copy/paste, nhưng Gmail xử lý tiếng Việt bình thường. Nếu dùng tiếng Việt, hãy giữ subject ngắn và rõ.
+
+## Ví dụ thực tế: tạo draft từ Google Sheets
+
+Job dưới đây xử lý tối đa 5 dòng chưa có draft. Cách này tránh vượt quota Gmail và cho phép bạn chạy thử an toàn.
+
+```javascript
+function createLeadFollowUpDrafts() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Customers');
+  if (!sheet) throw new Error('Missing Customers sheet');
+
+  const rows = sheet.getDataRange().getValues();
+  let count = 0;
+
+  for (let i = 1; i < rows.length && count < 5; i++) {
+    const rowNumber = i + 1;
+    const customer = {
+      name: rows[i][0],
+      email: rows[i][1],
+      need: rows[i][2],
+      note: rows[i][3],
+    };
+    const draftCreatedAt = rows[i][5];
+
+    if (!customer.email || draftCreatedAt) continue;
+
+    try {
+      const result = createAiEmailDraft(customer);
+      sheet.getRange(rowNumber, 5, 1, 3).setValues([[
+        result.subject,
+        new Date(),
+        'drafted',
+      ]]);
+    } catch (error) {
+      sheet.getRange(rowNumber, 7, 1, 2).setValues([['error', error.message]]);
+    }
+
+    count++;
+  }
+}
+```
+
+Khi test, hãy dùng tài khoản nội bộ hoặc email của chính bạn. Sau đó mở Gmail Drafts để review từng bản nháp: có đúng tên không, tone có phù hợp không, có hứa điều gì sai không, CTA có rõ không.
+
+## Lỗi thường gặp khi dùng AI soạn email
+
+- Gửi email thật ngay thay vì tạo draft, làm tăng rủi ro gửi sai nội dung.
+- Không kiểm tra email rỗng hoặc sai định dạng trước khi tạo draft.
+- Để AI tự bịa ưu đãi, deadline, cam kết kỹ thuật hoặc chính sách công ty.
+- Không ghi `DraftCreatedAt`, khiến trigger chạy lại và tạo nhiều draft trùng.
+- Đưa dữ liệu nhạy cảm vào prompt dù email không cần thông tin đó.
+- Không giới hạn số dòng mỗi lần chạy, dễ chạm quota Gmail hoặc AI API.
+
+## Bài tập thực hành
+
+Tạo sheet `Customers` với cột `Name`, `Email`, `Need`, `Note`, `DraftSubject`, `DraftCreatedAt`, `Status`, `Error`. Viết job tạo tối đa 5 draft cho dòng chưa có `DraftCreatedAt`. Thêm một biến `DRY_RUN`; khi `DRY_RUN` là `true`, chỉ log body và không gọi `GmailApp.createDraft`.
+
+## Câu hỏi thường gặp về Gmail AI
+
+### Có nên gửi email tự động bằng AI không?
+
+Với email bán hàng, support hoặc nội dung có ảnh hưởng khách hàng, nên tạo draft để người review. Gửi tự động chỉ phù hợp với template rất kiểm soát, dữ liệu ít biến động và đã có cơ chế dừng khi lỗi tăng.
+
+### GmailApp hay MailApp phù hợp hơn?
+
+Tạo draft cần `GmailApp`. `MailApp` phù hợp khi chỉ gửi email đơn giản. Trong bài này, `GmailApp` tốt hơn vì mục tiêu là human review trước khi gửi.
+
+### Có cần lưu nội dung draft vào Sheets không?
+
+Không mặc định. Nếu cần audit, lưu subject, thời gian, prompt version và trạng thái là đủ. Lưu toàn bộ nội dung email có thể tạo rủi ro dữ liệu, nhất là khi email chứa thông tin khách hàng.
+
+### Làm sao kiểm soát tone của email?
+
+Đưa tone vào prompt, giới hạn độ dài, thêm ví dụ ngắn và lấy mẫu review. Nếu team có brand voice, hãy biến nó thành checklist ngắn thay vì mô tả mơ hồ như “viết hay hơn”.
+
+## Tóm tắt và bước tiếp theo
+
+Gmail AI Apps Script giúp tạo draft nhanh từ dữ liệu Sheets, nhưng phải giữ nguyên tắc: validate người nhận, không gửi tự động, lưu trạng thái và review nội dung. Bài tiếp theo sẽ dùng AI để tóm tắt Google Docs, một nguồn dữ liệu dài hơn và cần xử lý context cẩn thận hơn.

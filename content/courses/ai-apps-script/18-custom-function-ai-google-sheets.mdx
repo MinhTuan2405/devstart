@@ -1,0 +1,161 @@
+---
+title: "Custom function AI trong Google Sheets bằng Apps Script"
+description: "Học cách tạo custom function gọi AI trong Google Sheets và các giới hạn quan trọng cần biết."
+slug: "custom-function-ai-google-sheets"
+course: "ai-apps-script"
+order: 18
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["custom function AI Google Sheets", "AI function Apps Script", "Gemini custom function Sheets", "Apps Script AI Sheets", "Google Sheets AI Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Custom function AI trong Sheets là gì?
+
+Custom function AI là hàm Apps Script dùng trực tiếp trong Google Sheets như `=AI_SUMMARY(A2)`. Nó rất tiện cho demo, phân tích nhỏ và workflow cá nhân, nhưng cần kiểm soát kỹ vì Sheets có thể tính lại công thức nhiều lần, gây tốn quota hoặc làm kết quả thay đổi.
+
+Custom function nên được xem là công cụ tính toán trả về giá trị, không phải job tự động hóa có side effect. Nếu tác vụ cần gửi email, ghi nhiều ô khác, cập nhật trạng thái hoặc xử lý hàng nghìn dòng, bạn nên dùng menu, button hoặc trigger thay vì custom function.
+
+## Mental model: công thức sheet khác job trigger
+
+Khi bạn nhập `=AI_SUMMARY(A2)`, Sheets có quyền gọi lại function khi ô đầu vào đổi, khi sheet tính toán lại hoặc khi người dùng copy công thức. Bạn không kiểm soát vòng đời giống một job trigger có trạng thái `pending`, `done`, `error`.
+
+Vì vậy custom function AI phù hợp nhất cho:
+
+- Demo một prompt đơn giản.
+- Tóm tắt một ô hoặc vài ô.
+- Gán tag cho dữ liệu nhỏ.
+- Phân tích thử trước khi chuyển thành job batch.
+
+Không phù hợp cho workflow cần đảm bảo đúng một lần, cần audit hoặc cần kiểm soát chi phí chặt.
+
+## Custom function tóm tắt đơn giản
+
+Ví dụ dưới đây minh họa hàm tùy chỉnh gọi wrapper AI. Hàm trả chuỗi ngắn để ô Sheets dễ đọc.
+
+```javascript
+function AI_SUMMARY(text) {
+  if (!text) return '';
+
+  const prompt = [
+    'Summarize the following text in one concise Vietnamese sentence.',
+    'Return plain text only.',
+    '',
+    String(text).slice(0, 2000),
+  ].join('\n');
+
+  return generateAiText(prompt, { temperature: 0.2 }).trim();
+}
+```
+
+Trong sheet, bạn dùng:
+
+```text
+=AI_SUMMARY(A2)
+```
+
+Nếu function báo lỗi quyền hoặc service không chạy được trong ngữ cảnh custom function, hãy chuyển cùng logic sang menu hoặc trigger. Custom functions có nhiều giới hạn hơn function chạy thủ công.
+
+## Custom function phân loại tag
+
+Với phân loại, hãy trả output ngắn và validate enum trước khi trả về ô.
+
+```javascript
+function AI_TAG(message) {
+  if (!message) return '';
+
+  const prompt = [
+    'Classify this support message into exactly one tag:',
+    'billing, bug, feature, other.',
+    'Return only the tag.',
+    '',
+    String(message).slice(0, 1500),
+  ].join('\n');
+
+  const tag = generateAiText(prompt, { temperature: 0 }).trim().toLowerCase();
+  const allowed = ['billing', 'bug', 'feature', 'other'];
+
+  if (!allowed.includes(tag)) {
+    return 'error: invalid tag';
+  }
+
+  return tag;
+}
+```
+
+Trả `error: invalid tag` trong ô giúp người dùng biết kết quả không hợp lệ mà không làm workflow âm thầm sai.
+
+## Thêm cache để giảm request lặp
+
+Nếu cùng input được tính lại nhiều lần, cache có thể giảm chi phí. Chỉ cache dữ liệu không quá nhạy cảm và chọn thời gian cache phù hợp.
+
+```javascript
+function AI_SUMMARY_CACHED(text) {
+  if (!text) return '';
+
+  const input = String(text).slice(0, 2000);
+  const cache = CacheService.getScriptCache();
+  const key = 'summary:' + Utilities.base64EncodeWebSafe(input).slice(0, 120);
+  const cached = cache.get(key);
+
+  if (cached) return cached;
+
+  const result = AI_SUMMARY(input);
+  cache.put(key, result, 21600);
+  return result;
+}
+```
+
+Cache key ở đây không lưu nguyên text, nhưng vẫn cần cẩn thận nếu input rất nhạy cảm. Cache không thay thế trạng thái xử lý trong workflow production.
+
+## Giới hạn cần nhớ
+
+- Custom function không phù hợp cho side effect như gửi email hoặc ghi ô khác.
+- Sheets có thể gọi lại function khi tính toán, gây tốn quota.
+- Khó kiểm soát chi phí nếu kéo công thức xuống hàng nghìn dòng.
+- Output AI có thể thay đổi nếu công thức tính lại.
+- Một số service hoặc quyền có thể không phù hợp trong ngữ cảnh custom function.
+- Không nên dùng cho dữ liệu nhạy cảm nếu chưa có chính sách rõ.
+- Nên xử lý lỗi gọn để ô không khó đọc.
+
+## Khi nào nên chuyển sang menu hoặc trigger?
+
+Nếu bạn cần xử lý hàng loạt, ghi trạng thái, retry, cập nhật nhiều cột, log lỗi hoặc chạy theo lịch, hãy chuyển sang job Apps Script. Menu custom như "Run AI Tagging" cho phép bạn kiểm soát số dòng, dry run và trạng thái tốt hơn custom function.
+
+Custom function là bước thử nhanh. Job batch là cách vận hành nghiêm túc hơn.
+
+## Lỗi thường gặp với custom function AI
+
+- Gọi AI cho quá nhiều ô cùng lúc.
+- Không cache kết quả cho input lặp.
+- Trả JSON dài vào ô làm sheet khó đọc.
+- Không xử lý input rỗng.
+- Dùng custom function cho tác vụ cần cập nhật trạng thái.
+- Không validate enum trước khi trả kết quả.
+- Kéo công thức xuống hàng nghìn dòng khi chưa ước tính chi phí.
+
+## Bài tập thực hành
+
+Tạo custom function `AI_TAG(text)` trả một tag trong `billing`, `bug`, `feature`, `other`. Test với 5 dòng dữ liệu nhỏ. Sau đó viết một đoạn ghi chú trong sheet: nếu áp dụng cho 5.000 dòng, rủi ro quota, chi phí và recalculation là gì? Cuối cùng đề xuất khi nào nên chuyển sang menu batch.
+
+## Câu hỏi thường gặp về custom function AI
+
+### Có nên dùng custom function AI trong production không?
+
+Chỉ cho use case nhỏ và kiểm soát tốt. Với workflow quan trọng, menu hoặc trigger có trạng thái xử lý thường an toàn hơn.
+
+### Có cache được custom function không?
+
+Có thể dùng CacheService theo input, nhưng cần cân nhắc dữ liệu nhạy cảm, thời gian cache và khả năng kết quả cũ.
+
+### Custom function có gửi email được không?
+
+Không nên. Custom function nên tính toán và trả kết quả, không tạo side effect như gửi email, tạo file hoặc cập nhật ô khác.
+
+### Vì sao công thức AI đôi khi chạy lại?
+
+Google Sheets có cơ chế recalculation. Khi dữ liệu liên quan đổi hoặc sheet tính lại, custom function có thể được gọi lại. Vì vậy cần cache và giới hạn phạm vi dùng.
+
+## Tóm tắt và bước tiếp theo
+
+Custom function AI rất tiện cho Sheets, đặc biệt để demo và phân tích nhỏ. Nhưng nó cần kiểm soát quota, cache, side effect và dữ liệu nhạy cảm. Bài tiếp theo sẽ học tóm tắt dữ liệu Sheets bằng AI theo batch, phù hợp hơn cho workflow thực tế.

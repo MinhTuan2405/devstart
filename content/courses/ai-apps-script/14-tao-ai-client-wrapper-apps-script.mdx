@@ -1,0 +1,195 @@
+---
+title: "Tạo AI client wrapper trong Apps Script"
+description: "Học cách đóng gói logic gọi AI API thành wrapper có config, parse response, retry và logging."
+slug: "tao-ai-client-wrapper-apps-script"
+course: "ai-apps-script"
+order: 14
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["AI client Apps Script", "wrapper Gemini Apps Script", "AI API wrapper", "Apps Script AI helper", "generateAiText Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao cần AI client wrapper?
+
+AI client wrapper giúp gom logic gọi model vào một nơi: đọc config, tạo payload, gửi request, kiểm tra status code, parse response, log an toàn và xử lý lỗi. Nếu mỗi job tự gọi API, code sẽ lặp, khó đổi model và khó kiểm soát bảo mật.
+
+Wrapper không làm project phức tạp hơn nếu thiết kế đúng. Ngược lại, nó làm code nghiệp vụ đơn giản hơn. Job đọc Sheets chỉ cần gọi `generateAiText(prompt, options)`, không cần biết endpoint Gemini, header, status code hay cấu trúc `candidates`.
+
+## Mental model: một interface ổn định cho toàn project
+
+Hãy thiết kế một interface nhỏ và giữ ổn định. Ví dụ:
+
+- Input: `prompt` và `options`.
+- Output: text đã parse hoặc lỗi rõ ràng.
+- Không trả raw response cho code nghiệp vụ.
+- Không log secret hoặc prompt đầy đủ.
+
+Khi interface ổn định, bạn có thể thay đổi bên trong wrapper: thêm retry, đổi model, thêm timeout, đổi endpoint, nhưng các job Sheets, Docs, Gmail không cần sửa.
+
+## Interface `generateAiText`
+
+Wrapper tối thiểu có thể bắt đầu như sau:
+
+```javascript
+function generateAiText(prompt, options) {
+  const config = getRequiredAiConfig();
+  const requestOptions = options || {};
+  const payload = buildGeminiPayload(prompt, requestOptions);
+  const response = fetchGemini(config, payload);
+
+  return parseGeminiTextResponse(response);
+}
+```
+
+Đây là function duy nhất code nghiệp vụ cần biết. Khi đọc job, bạn sẽ thấy `generateAiText` như một hành động cấp cao: tạo text từ prompt.
+
+## Tách payload và fetch
+
+Tách nhỏ giúp test dễ hơn và giúp AI sửa ít rủi ro hơn. Payload builder là pure function, còn fetch function có side effect.
+
+```javascript
+function buildGeminiPayload(prompt, options) {
+  return {
+    contents: [
+      {
+        parts: [{ text: String(prompt || '') }],
+      },
+    ],
+    generationConfig: {
+      temperature: options.temperature !== undefined ? options.temperature : 0.2,
+    },
+  };
+}
+
+function fetchGemini(config, payload) {
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/'
+    + encodeURIComponent(config.model)
+    + ':generateContent?key='
+    + encodeURIComponent(config.apiKey);
+
+  return UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+}
+```
+
+`buildGeminiPayload` có thể test bằng dữ liệu giả. `fetchGemini` nên được giữ nhỏ để sau này thêm retry hoặc logging dễ hơn.
+
+## Parser và log trong wrapper
+
+Wrapper nên kiểm tra lỗi tại một chỗ. Nếu API lỗi, throw lỗi có status code. Nếu JSON sai, throw lỗi parse. Nếu thiếu text, throw lỗi rõ.
+
+```javascript
+function parseGeminiTextResponse(response) {
+  const statusCode = response.getResponseCode();
+  const body = response.getContentText();
+
+  if (statusCode < 200 || statusCode >= 300) {
+    console.error({
+      message: 'Gemini request failed',
+      statusCode: statusCode,
+      bodyPreview: body.slice(0, 300),
+    });
+    throw new Error('Gemini request failed: ' + statusCode);
+  }
+
+  const data = JSON.parse(body);
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!text) {
+    throw new Error('Gemini response missing text');
+  }
+
+  return text;
+}
+```
+
+V8 trong Apps Script hỗ trợ optional chaining. Nếu team bạn muốn code tương thích thận trọng hơn, có thể dùng kiểm tra từng field như bài trước.
+
+## Ví dụ dùng wrapper trong job Sheets
+
+Khi wrapper đã có, code nghiệp vụ ngắn và dễ đọc hơn:
+
+```javascript
+function classifySupportMessage(message) {
+  const prompt = buildSupportTagPrompt(message);
+  const rawTag = generateAiText(prompt, { temperature: 0 });
+  const tag = rawTag.trim().toLowerCase();
+
+  if (!['billing', 'bug', 'feature', 'other'].includes(tag)) {
+    throw new Error('Invalid support tag: ' + tag);
+  }
+
+  return tag;
+}
+```
+
+Function này không biết Gemini endpoint. Nó chỉ biết prompt, text output và validation. Đây là ranh giới tốt.
+
+## Wrapper nên xử lý gì?
+
+- Thiếu API key, model hoặc provider.
+- Payload rỗng hoặc prompt quá dài nếu bạn muốn guard.
+- Status code lỗi.
+- JSON parse lỗi.
+- Response thiếu text.
+- Log provider, model, status code, duration, nhưng không log secret.
+- Tùy chọn temperature và output format.
+- Retry cho lỗi tạm thời, nếu bài toán cần.
+
+Wrapper không nên biết sheet nào đang dùng, cột nào cần ghi hoặc tag nghiệp vụ nào hợp lệ. Những thứ đó thuộc lớp nghiệp vụ.
+
+## Prompt cho AI khi sửa wrapper
+
+Khi nhờ AI sửa wrapper, hãy giữ interface ổn định:
+
+```text
+Chỉ sửa aiClient.js.
+Giữ interface generateAiText(prompt, options) trả về string.
+Không thay đổi code nghiệp vụ trong jobs.js.
+Thêm logging statusCode và durationMs.
+Không log apiKey hoặc prompt đầy đủ.
+Nếu response thiếu text, throw lỗi rõ ràng.
+```
+
+Prompt này tránh tình trạng AI đổi toàn bộ project chỉ để sửa parser.
+
+## Lỗi thường gặp khi viết wrapper
+
+- Wrapper biết quá nhiều về nghiệp vụ Sheets.
+- Trả raw response cho mọi nơi tự parse.
+- Không có interface ổn định.
+- Không test parser bằng response giả.
+- Không phân biệt lỗi tạm thời và lỗi cấu hình.
+- Log prompt hoặc API key trong wrapper.
+- Mỗi provider có một function public khác nhau, làm code nghiệp vụ phụ thuộc provider.
+
+## Bài tập thực hành
+
+Viết `generateAiText(prompt, options)` dùng các helper `getRequiredAiConfig`, `buildGeminiPayload`, `fetchGemini`, `parseGeminiTextResponse`. Tạo `testBuildGeminiPayload` để kiểm tra temperature mặc định và `testGenerateAiText` với prompt ngắn. Sau đó viết một job nhỏ gọi wrapper để phân loại support message.
+
+## Câu hỏi thường gặp về AI wrapper
+
+### Wrapper có nên hỗ trợ nhiều provider không?
+
+Chỉ khi cần. Ban đầu hãy hỗ trợ một provider thật tốt. Khi có nhu cầu đổi model hoặc fallback, lúc đó mới thêm abstraction provider.
+
+### Có nên trả raw response không?
+
+Chỉ nên có function debug riêng nếu cần. Code nghiệp vụ nên nhận text hoặc JSON đã validate, không tự parse raw response ở nhiều nơi.
+
+### Có nên log prompt trong wrapper không?
+
+Không mặc định. Prompt có thể chứa dữ liệu nhạy cảm. Nếu cần debug, log độ dài prompt, task type hoặc preview đã ẩn danh.
+
+### Wrapper có nên retry không?
+
+Có thể, nhưng hãy retry có chọn lọc cho lỗi tạm thời như 429 hoặc 5xx. Không retry lỗi key sai hoặc payload sai.
+
+## Tóm tắt và bước tiếp theo
+
+AI client wrapper giúp dự án Apps Script sạch, an toàn và dễ đổi model hơn. Code nghiệp vụ chỉ gọi interface ổn định, còn API details nằm trong một nơi. Bài tiếp theo sẽ học prompt templates có biến để tạo request AI nhất quán.

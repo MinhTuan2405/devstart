@@ -1,0 +1,151 @@
+---
+title: "DriveApp trong Apps Script để quản lý file và thư mục"
+description: "Học cách dùng DriveApp để tạo thư mục, tìm file, di chuyển và chia sẻ file trong Google Drive."
+slug: "driveapp-quan-ly-file-folder"
+course: "apps-script"
+order: 23
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["DriveApp Apps Script", "quản lý Google Drive Apps Script", "tạo folder Apps Script", "tìm file Drive Apps Script", "chia sẻ file Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`DriveApp` là service giúp Apps Script làm việc với Google Drive: tạo thư mục, tạo file, tìm file, lấy URL, di chuyển file và chia sẻ quyền truy cập. Khi automation tạo báo cáo, tài liệu, file export hoặc thư mục theo khách hàng, `DriveApp` thường là service trung tâm.
+
+## DriveApp trong Apps Script là gì?
+
+Google Drive là nơi chứa rất nhiều đầu ra của automation: Google Docs báo cáo, Google Sheets dữ liệu, file PDF, file text, folder dự án, folder theo tháng. `DriveApp` cho phép script thao tác với các đối tượng này bằng code. Thay vì người dùng tự tạo folder `Reports/2026/June`, script có thể tạo đúng cấu trúc, lưu file vào đúng nơi và chia sẻ cho đúng người.
+
+Mô hình tư duy là: Drive có file và folder. File có ID, tên, URL, MIME type và quyền truy cập. Folder cũng có ID, tên, URL và có thể chứa file hoặc folder con. Tên trong Drive không bắt buộc duy nhất, nên ID mới là định danh đáng tin cậy nhất. Nếu bạn cần dùng lại một file hoặc folder, hãy lưu ID vào PropertiesService hoặc sheet cấu hình.
+
+## Tạo thư mục và file đơn giản
+
+Ví dụ đầu tiên tạo folder báo cáo và một file text bên trong. Đây là cách tốt để hiểu object `Folder` và `File`.
+
+```javascript
+function createReportFolder() {
+  const folder = DriveApp.createFolder('Apps Script Reports');
+  const file = folder.createFile('readme.txt', 'Created by Apps Script');
+
+  Logger.log('Folder URL: ' + folder.getUrl());
+  Logger.log('Folder ID: ' + folder.getId());
+  Logger.log('File URL: ' + file.getUrl());
+}
+```
+
+Khi chạy lần đầu, script cần quyền Drive. Sau khi tạo, hãy mở URL trong log để kiểm tra. Trong dự án thật, bạn nên đặt tên folder có ngày tháng hoặc mã dự án để dễ nhận biết, nhưng không nên chỉ dựa vào tên để tìm lại.
+
+## Tạo hoặc lấy folder theo cấu trúc cố định
+
+Một pattern thực tế là “nếu folder đã có thì dùng lại, nếu chưa có thì tạo mới”. Vì Drive cho phép trùng tên, hàm này chỉ phù hợp khi bạn chấp nhận lấy folder đầu tiên tìm thấy theo tên trong một folder cha.
+
+```javascript
+function getOrCreateFolder(parentFolder, folderName) {
+  const folders = parentFolder.getFoldersByName(folderName);
+
+  if (folders.hasNext()) {
+    return folders.next();
+  }
+
+  return parentFolder.createFolder(folderName);
+}
+
+function createMonthlyReportFolder() {
+  const root = DriveApp.getRootFolder();
+  const reports = getOrCreateFolder(root, 'Reports');
+  const yearFolder = getOrCreateFolder(reports, '2026');
+  const monthFolder = getOrCreateFolder(yearFolder, '06');
+
+  Logger.log(monthFolder.getUrl());
+}
+```
+
+Với dự án nghiêm túc, sau khi tạo folder `Reports`, hãy lưu `folder.getId()` vào PropertiesService. Lần sau mở bằng `DriveApp.getFolderById(id)` sẽ chính xác hơn tìm theo tên.
+
+## Tìm file theo tên và hiểu iterator
+
+Khi gọi `DriveApp.getFilesByName()`, Apps Script trả về iterator, không phải mảng. Bạn phải dùng `hasNext()` và `next()` để duyệt.
+
+```javascript
+function findFilesByName() {
+  const files = DriveApp.getFilesByName('Monthly report');
+
+  while (files.hasNext()) {
+    const file = files.next();
+    Logger.log(file.getName() + ' - ' + file.getId() + ' - ' + file.getUrl());
+  }
+}
+```
+
+Nếu kết quả có nhiều file, đó không phải lỗi. Drive cho phép nhiều file cùng tên ở cùng hoặc khác folder. Khi automation cần cập nhật đúng file, hãy lưu file ID ngay từ lúc tạo.
+
+## Chia sẻ file và kiểm soát quyền
+
+Bạn có thể thêm viewer hoặc editor cho file. Hãy mặc định dùng viewer nếu người nhận chỉ cần đọc.
+
+```javascript
+function shareFileWithViewer() {
+  const fileId = 'PASTE_FILE_ID_HERE';
+  const file = DriveApp.getFileById(fileId);
+
+  file.addViewer('viewer@example.com');
+  Logger.log('Shared file: ' + file.getUrl());
+}
+```
+
+Quyền chia sẻ là phần nhạy cảm. `addEditor` cho phép người nhận sửa file. Chia sẻ rộng theo link có thể làm lộ dữ liệu nội bộ. Với báo cáo chứa thông tin khách hàng, hãy chia sẻ theo email cụ thể và kiểm tra quyền trước khi gửi link qua email.
+
+## Ví dụ thực tế: tạo file log trong folder Reports
+
+Kết hợp những phần trên, bạn có thể tạo folder `Reports`, tạo file log ghi thời gian chạy, rồi lưu URL vào sheet.
+
+```javascript
+function createRunLogFile() {
+  const root = DriveApp.getRootFolder();
+  const reports = getOrCreateFolder(root, 'Reports');
+  const fileName = 'run-log-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd-HHmmss') + '.txt';
+  const content = 'Run at ' + new Date().toISOString();
+  const file = reports.createFile(fileName, content);
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('DriveLog');
+  sheet.appendRow([new Date(), file.getName(), file.getId(), file.getUrl()]);
+}
+```
+
+Đây là ví dụ nhỏ nhưng sát thực tế: automation tạo đầu ra trong Drive và ghi lại ID để truy vết.
+
+## Lỗi thường gặp với DriveApp
+
+- Nhầm file ID với folder ID.
+- Tìm theo tên và tưởng chỉ có một kết quả.
+- Không có quyền truy cập vì file thuộc tài khoản khác.
+- Chia sẻ nhầm quyền editor thay vì viewer.
+- Không lưu ID hoặc URL của file vừa tạo.
+- Tạo quá nhiều file khi test mà không dọn Drive.
+- Không kiểm tra folder đích trước khi tạo file.
+
+## Bài tập thực hành
+
+Viết function tạo hoặc lấy folder `Reports` trong Drive root. Bên trong folder đó, tạo file text có tên `created-at-YYYYMMDD.txt` và nội dung là thời gian hiện tại. Sau đó ghi `Time`, `FileName`, `FileId`, `FileUrl` vào sheet `DriveLog`. Chạy hai lần để thấy mỗi lần tạo file mới và log lại được URL.
+
+## Câu hỏi thường gặp về DriveApp
+
+### DriveApp có đọc được mọi file trong Drive không?
+
+Không. Script chỉ truy cập file theo quyền của tài khoản chạy script và scope đã cấp. Nếu tài khoản không có quyền, `getFileById` có thể lỗi.
+
+### Nên lưu file ID ở đâu?
+
+Bạn có thể lưu trong PropertiesService nếu đó là cấu hình cố định, hoặc trong Google Sheets nếu mỗi dòng dữ liệu gắn với một file riêng.
+
+### DriveApp khác Drive API nâng cao thế nào?
+
+`DriveApp` đơn giản và đủ cho nhiều tác vụ cơ bản. Drive API nâng cao có query chi tiết hơn, metadata sâu hơn và nhiều khả năng dành cho trường hợp phức tạp.
+
+### Có thể di chuyển file vào folder không?
+
+Có. Bạn có thể dùng các method trên file và folder, nhưng hãy kiểm tra kỹ vì mô hình Drive hiện đại có thể khác cách bạn hình dung về thư mục truyền thống.
+
+## Tóm tắt và chuyển tiếp
+
+`DriveApp` giúp Apps Script quản lý file đầu ra, folder và quyền truy cập. Hãy ưu tiên lưu ID, cẩn thận khi tìm theo tên và chia sẻ quyền tối thiểu cần thiết. Bài tiếp theo sẽ học `DocumentApp`, nơi bạn tạo Google Docs tự động từ dữ liệu và có thể lưu tài liệu đó trong Drive.

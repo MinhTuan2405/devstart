@@ -1,0 +1,177 @@
+---
+title: "UrlFetchApp trong Apps Script để gọi API bên ngoài"
+description: "Học cách dùng UrlFetchApp để gọi REST API, đọc response và kết nối Apps Script với hệ thống ngoài."
+slug: "urlfetchapp-goi-api-ben-ngoai"
+course: "apps-script"
+order: 28
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["UrlFetchApp Apps Script", "gọi API Apps Script", "REST API Apps Script", "fetch API Apps Script", "kết nối API Google Sheets"]
+publishedAt: "2026-06-09"
+---
+
+`UrlFetchApp` là service giúp Apps Script gửi HTTP request đến API bên ngoài. Nhờ nó, script có thể lấy dữ liệu từ hệ thống khác, gửi webhook, đồng bộ Google Sheets với CRM, kiểm tra trạng thái đơn hàng hoặc gọi backend nội bộ có URL công khai.
+
+## UrlFetchApp trong Apps Script là gì?
+
+Trước bài này, phần lớn automation của bạn nằm trong Google Workspace: Sheets, Gmail, Drive, Forms, Calendar. Nhưng dự án thực tế thường cần kết nối ra ngoài: gửi lead sang CRM, lấy tỷ giá từ API, gửi thông báo Slack, gọi endpoint tạo hóa đơn, hoặc nhận dữ liệu sản phẩm từ hệ thống bán hàng. `UrlFetchApp` là cầu nối đó.
+
+Mô hình tư duy khi gọi API gồm bốn phần: URL, method, request options và response. URL là endpoint. Method thường là `get`, `post`, `put`, `patch`, `delete`. Options chứa headers, contentType, payload, timeout behavior và `muteHttpExceptions`. Response chứa status code, headers và body.
+
+## Gọi API bằng GET
+
+GET thường dùng để lấy dữ liệu. Ví dụ gọi endpoint trả JSON rồi parse thành object hoặc mảng JavaScript.
+
+```javascript
+function fetchPublicApi() {
+  const url = 'https://api.example.com/users';
+  const response = UrlFetchApp.fetch(url, {
+    muteHttpExceptions: true,
+  });
+
+  const statusCode = response.getResponseCode();
+  const text = response.getContentText();
+
+  Logger.log('Status: ' + statusCode);
+
+  if (statusCode !== 200) {
+    throw new Error('API error: ' + text);
+  }
+
+  const data = JSON.parse(text);
+  Logger.log(data.length);
+}
+```
+
+`getContentText()` trả body dạng chuỗi. Nếu API trả JSON, bạn dùng `JSON.parse()`. Đừng parse trước khi kiểm tra status code, vì body lỗi có thể không phải JSON như bạn kỳ vọng.
+
+## Gửi dữ liệu bằng POST
+
+POST thường dùng để tạo dữ liệu mới hoặc gửi webhook. Khi API nhận JSON, bạn cần `contentType: 'application/json'` và `payload: JSON.stringify(payload)`.
+
+```javascript
+function sendLeadToApi() {
+  const payload = {
+    name: 'Hoa',
+    email: 'hoa@example.com',
+    source: 'Google Sheets',
+  };
+
+  const response = UrlFetchApp.fetch('https://api.example.com/leads', {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+
+  Logger.log('Status: ' + response.getResponseCode());
+  Logger.log('Body: ' + response.getContentText());
+}
+```
+
+`muteHttpExceptions: true` rất hữu ích khi debug. Nếu API trả 400 hoặc 500, Apps Script vẫn cho bạn đọc response body thay vì dừng ngay. Sau khi debug xong, nhiều dự án vẫn giữ option này và tự xử lý status code rõ ràng.
+
+## Gửi dữ liệu từ Sheets sang API
+
+Ví dụ thực tế: sheet `Leads` có cột `Name`, `Email`, `Status`, `ApiResponse`. Script gửi các dòng `ready` sang API, sau đó ghi trạng thái.
+
+```javascript
+function sendReadyLeadsToApi() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  const rows = sheet.getDataRange().getValues().slice(1);
+
+  rows.forEach(function(row, index) {
+    const sheetRow = index + 2;
+    const name = row[0];
+    const email = row[1];
+    const status = row[2];
+
+    if (status !== 'ready' || !email) return;
+
+    const response = UrlFetchApp.fetch('https://api.example.com/leads', {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({ name: name, email: email, source: 'sheet' }),
+      muteHttpExceptions: true,
+    });
+
+    const code = response.getResponseCode();
+    sheet.getRange(sheetRow, 3).setValue(code >= 200 && code < 300 ? 'sent' : 'error');
+    sheet.getRange(sheetRow, 4).setValue(response.getContentText().slice(0, 500));
+  });
+}
+```
+
+Workflow này có trạng thái nên chạy lại an toàn hơn. Nếu một dòng lỗi, bạn thấy `error` và body phản hồi để debug.
+
+## Gửi header Authorization
+
+Nhiều API yêu cầu token. Không nên hardcode token trong code; hãy lưu trong PropertiesService.
+
+```javascript
+function fetchWithToken() {
+  const token = PropertiesService.getScriptProperties().getProperty('API_TOKEN');
+
+  if (!token) {
+    throw new Error('Missing API token');
+  }
+
+  const response = UrlFetchApp.fetch('https://api.example.com/account', {
+    method: 'get',
+    headers: {
+      Authorization: 'Bearer ' + token,
+    },
+    muteHttpExceptions: true,
+  });
+
+  Logger.log(response.getResponseCode());
+}
+```
+
+Khi debug, đừng log token. Bạn có thể log `Token exists: true` nhưng không log giá trị thật.
+
+## Khi nào dùng UrlFetchApp?
+
+- Gửi dữ liệu từ Sheets sang CRM hoặc hệ thống nội bộ.
+- Lấy dữ liệu tỷ giá, sản phẩm, đơn hàng hoặc trạng thái thanh toán.
+- Gửi webhook tới Slack, Discord hoặc hệ thống automation khác.
+- Kết nối web app Apps Script với backend riêng.
+- Gọi API sau khi người dùng submit form.
+
+Nếu API không mở ra internet hoặc bị firewall chặn, Apps Script không gọi được. Request xuất phát từ hạ tầng Google, không phải từ máy tính của bạn.
+
+## Lỗi thường gặp khi gọi API
+
+- Quên `JSON.stringify(payload)` khi gửi JSON.
+- Thiếu header `Authorization` hoặc dùng sai format token.
+- Không kiểm tra status code, cứ parse JSON và tưởng thành công.
+- Không bật `muteHttpExceptions`, nên không đọc được body lỗi.
+- Gọi API quá nhiều và chạm quota hoặc rate limit.
+- Log token hoặc dữ liệu nhạy cảm khi debug.
+- Không ghi trạng thái vào sheet, khiến chạy lại gửi trùng.
+
+## Bài tập thực hành
+
+Tạo sheet `ApiLog` có cột `Time`, `StatusCode`, `Body`. Viết function gọi một API test hoặc endpoint nội bộ bằng GET, bật `muteHttpExceptions`, log status code và body. Sau đó ghi status code và 500 ký tự đầu của body vào `ApiLog`. Nâng cấp tiếp bằng cách đọc token từ PropertiesService nếu API cần authorization.
+
+## Câu hỏi thường gặp về UrlFetchApp
+
+### UrlFetchApp có giống fetch trong browser không?
+
+Tương tự về mục đích, nhưng cú pháp khác và chạy trên máy chủ Google, không phải trong trình duyệt của người dùng.
+
+### Có gửi header Authorization được không?
+
+Có. Truyền `headers` trong options, ví dụ `Authorization: 'Bearer ' + token`. Nên lưu token trong PropertiesService.
+
+### Có gọi được API nội bộ không?
+
+Chỉ gọi được endpoint mà máy chủ Google có thể truy cập qua internet. API chỉ mở trong mạng nội bộ hoặc sau firewall thường không gọi được trực tiếp.
+
+### Có cần xử lý rate limit không?
+
+Có nếu gọi nhiều. Hãy cache dữ liệu, ghi trạng thái, giảm tần suất trigger và đọc response code như 429 để biết API yêu cầu chậm lại.
+
+## Tóm tắt và chuyển tiếp
+
+`UrlFetchApp` mở rộng Apps Script ra ngoài Google Workspace. Hãy hiểu URL, method, headers, payload và response; luôn kiểm tra status code; không log secret; và ghi trạng thái khi gửi dữ liệu từ Sheets. Bài tiếp theo sẽ học sâu hơn về JSON, payload, headers và cách viết helper xử lý response an toàn.

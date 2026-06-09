@@ -1,0 +1,199 @@
+---
+title: "Dùng Cloud Run proxy để bảo mật AI API cho Apps Script"
+description: "Học khi nào đặt backend proxy giữa Apps Script và AI API để quản lý key, quota, auth và logging tốt hơn."
+slug: "cloud-run-proxy-bao-mat-ai-api"
+course: "ai-apps-script"
+order: 30
+duration: "24 phút"
+difficulty: "Khó"
+keywords: ["Cloud Run proxy Apps Script", "bảo mật AI API Apps Script", "Apps Script backend proxy", "AI API security", "Google Cloud Apps Script AI"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao cần proxy cho AI API?
+
+Cloud Run proxy là một backend nhỏ đứng giữa Apps Script và AI provider để bảo vệ API key, kiểm soát request, rate limit, logging và chọn model tập trung. Với prototype cá nhân, Apps Script gọi AI trực tiếp là đủ; nhưng khi có nhiều user, dữ liệu nhạy cảm hoặc chi phí đáng kể, proxy giúp hệ thống an toàn và dễ vận hành hơn.
+
+Điểm quan trọng là proxy không làm AI “thông minh hơn”. Nó làm kiến trúc chắc hơn: key không nằm rải rác trong nhiều Apps Script project, request được kiểm tra trước khi tới provider, và usage có thể ghi theo user/job/model ở một nơi.
+
+## Mental model: Apps Script là client, Cloud Run là cổng kiểm soát
+
+Hãy hình dung Apps Script chỉ biết một endpoint nội bộ: `AI_PROXY_URL`. Nó gửi prompt, job name và metadata tối thiểu. Cloud Run nhận request, xác thực token, kiểm tra độ dài prompt, quyết định provider/model, gọi AI API thật, rồi trả response chuẩn về Apps Script.
+
+Proxy có thể xử lý:
+
+- Validate token hoặc user.
+- Rate limit theo user, job hoặc domain.
+- Chặn prompt quá dài hoặc payload thiếu field.
+- Ẩn provider API key khỏi Apps Script.
+- Ghi audit log và usage tập trung.
+- Chọn model khác nhau cho summary, classification hoặc draft.
+- Trả lỗi chuẩn để Apps Script xử lý nhất quán.
+
+Đổi lại, bạn có thêm một hệ thống cần deploy, monitor và bảo mật. Vì vậy chỉ thêm proxy khi có lý do rõ ràng.
+
+## Contract JSON giữa Apps Script và proxy
+
+Contract nên nhỏ và ổn định. Apps Script không nên gửi dữ liệu thừa.
+
+```json
+{
+  "jobName": "feedback_summary",
+  "prompt": "Summarize these rows...",
+  "options": { "temperature": 0.2 },
+  "userEmail": "user@example.com"
+}
+```
+
+Response nên có `ok`, `text`, `usage` và `error` nếu thất bại.
+
+```json
+{
+  "ok": true,
+  "text": "Ket qua AI da duoc tao",
+  "usage": { "inputTokens": 120, "outputTokens": 80, "model": "fast-model" }
+}
+```
+
+Khi contract rõ, Apps Script business logic không cần biết proxy đang dùng Gemini, OpenAI hay Vertex AI.
+
+## Apps Script gọi proxy thay vì gọi model trực tiếp
+
+Function phía Apps Script cần đọc URL và token từ PropertiesService, gửi JSON, kiểm tra status code và parse response.
+
+```javascript
+function callAiProxy(prompt, options) {
+  const props = PropertiesService.getScriptProperties();
+  const proxyUrl = props.getProperty('AI_PROXY_URL');
+  const proxyToken = props.getProperty('AI_PROXY_TOKEN');
+
+  if (!proxyUrl || !proxyToken) {
+    throw new Error('Missing AI proxy config');
+  }
+
+  const payload = {
+    jobName: options && options.jobName ? options.jobName : 'unknown_job',
+    prompt: String(prompt || ''),
+    options: options || {},
+    userEmail: Session.getActiveUser().getEmail() || 'unknown',
+  };
+
+  const response = UrlFetchApp.fetch(proxyUrl, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + proxyToken },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+
+  return parseAiProxyResponse(response);
+}
+```
+
+Không log `proxyToken`. Nếu cần debug, log URL rút gọn, status code và job name là đủ.
+
+## Parse response proxy trong Apps Script
+
+Apps Script nên throw lỗi nếu HTTP fail hoặc `ok` là false. Điều này giúp các workflow cũ như Sheets job, Gmail draft, Docs summary xử lý lỗi theo cùng một cách.
+
+```javascript
+function parseAiProxyResponse(response) {
+  const code = response.getResponseCode();
+  const body = response.getContentText();
+
+  if (code < 200 || code >= 300) {
+    throw new Error('AI proxy HTTP failed: ' + code);
+  }
+
+  const data = JSON.parse(body);
+  if (!data.ok) {
+    throw new Error('AI proxy failed: ' + (data.error || 'Unknown error'));
+  }
+
+  if (!data.text) {
+    throw new Error('AI proxy returned empty text');
+  }
+
+  return data.text;
+}
+```
+
+Bạn có thể mở rộng parser để trả cả `usage`. Ví dụ `return { text: data.text, usage: data.usage }`, rồi log chi phí trong Apps Script.
+
+## Ví dụ Cloud Run proxy tối giản bằng Node.js
+
+Đây là ví dụ minh họa logic proxy, không phải cấu hình production hoàn chỉnh. Trong Cloud Run, provider key nằm trong environment variable, không nằm trong Apps Script.
+
+```javascript
+import express from 'express';
+
+const app = express();
+app.use(express.json({ limit: '64kb' }));
+
+app.post('/ai', async (req, res) => {
+  const auth = req.get('authorization') || '';
+  if (auth !== 'Bearer ' + process.env.AI_PROXY_TOKEN) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+
+  const prompt = String(req.body.prompt || '');
+  if (!prompt || prompt.length > 20000) {
+    return res.status(400).json({ ok: false, error: 'Invalid prompt' });
+  }
+
+  const text = await callProvider(prompt, req.body.options || {});
+  return res.json({
+    ok: true,
+    text,
+    usage: { model: 'configured-in-proxy' },
+  });
+});
+
+app.listen(process.env.PORT || 8080);
+```
+
+Proxy thật cần thêm structured logging, timeout, retry có kiểm soát, secret manager và rate limiting. Nhưng ví dụ này cho thấy Apps Script chỉ cần token proxy, không cần provider key.
+
+## Khi nào chưa cần proxy?
+
+- Prototype cá nhân hoặc bài học.
+- Dữ liệu không nhạy cảm.
+- Ít người dùng và request thấp.
+- Không cần logging tập trung.
+- Chấp nhận quản lý key trong PropertiesService.
+- Team chưa có khả năng vận hành backend riêng.
+
+## Lỗi thường gặp khi dùng proxy
+
+- Proxy không validate input nên vẫn bị abuse.
+- Apps Script log token proxy hoặc prompt nhạy cảm.
+- Không xử lý timeout và response lỗi từ proxy.
+- Không có fallback khi proxy lỗi.
+- Không theo dõi chi phí theo user, job hoặc model.
+- Dùng một token proxy quyền quá rộng cho mọi môi trường.
+
+## Bài tập thực hành
+
+Thiết kế contract JSON giữa Apps Script và proxy cho 3 job: `summarize_doc`, `classify_feedback`, `draft_email`. Viết function Apps Script `callAiProxy` và `parseAiProxyResponse`. Nếu chưa deploy Cloud Run thật, tạo mock response JSON và test parser với trường hợp `ok: true`, `ok: false` và HTTP 500.
+
+## Câu hỏi thường gặp về Cloud Run proxy
+
+### Có bắt buộc dùng Cloud Run không?
+
+Không. Bạn có thể dùng backend khác như Cloud Functions, Firebase Functions, server riêng hoặc API gateway. Cloud Run phù hợp nếu team đã dùng Google Cloud và muốn deploy container linh hoạt.
+
+### Proxy có làm chậm request không?
+
+Có thêm một network hop. Nhưng đổi lại bạn có auth, logging, rate limit và quản lý key tốt hơn. Với workflow nội bộ, độ trễ thêm thường chấp nhận được.
+
+### Proxy có giúp ẩn API key không?
+
+Có, nếu provider key chỉ nằm trong backend hoặc Secret Manager, còn Apps Script chỉ có token gọi proxy với quyền hạn chế.
+
+### Proxy có thay thế validation trong Apps Script không?
+
+Không hoàn toàn. Apps Script vẫn nên validate input gần nguồn dữ liệu. Proxy là lớp bảo vệ bổ sung, không phải lý do để bỏ guardrails ở client.
+
+## Tóm tắt và bước tiếp theo
+
+Cloud Run proxy là bước nâng cấp khi AI Apps Script cần bảo mật key, logging tập trung và kiểm soát chi phí tốt hơn. Bài tiếp theo học function calling và tool-use, pattern giúp AI không chỉ trả lời bằng text mà còn đề xuất hành động có cấu trúc để Apps Script thực thi an toàn.

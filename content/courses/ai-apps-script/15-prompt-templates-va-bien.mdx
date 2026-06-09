@@ -1,0 +1,173 @@
+---
+title: "Prompt templates và biến trong AI Apps Script"
+description: "Học cách tạo prompt template có biến, kiểm soát output và tái sử dụng prompt trong Apps Script."
+slug: "prompt-templates-va-bien"
+course: "ai-apps-script"
+order: 15
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["prompt template Apps Script", "AI prompt Apps Script", "template prompt Gemini", "Apps Script prompt variables", "AI automation prompt"]
+publishedAt: "2026-06-09"
+---
+
+## Prompt template trong AI Apps Script là gì?
+
+Prompt template là mẫu prompt có biến để tạo request AI nhất quán trong Apps Script. Thay vì nối chuỗi tùy tiện ở nhiều function, bạn đặt prompt trong helper riêng, truyền dữ liệu vào biến, giới hạn độ dài input và quy định output rõ ràng.
+
+Prompt template quan trọng vì AI output phụ thuộc rất mạnh vào cách bạn đặt yêu cầu. Nếu mỗi job tự viết prompt theo một kiểu, bạn sẽ khó debug vì không biết lỗi đến từ model, dữ liệu hay prompt. Template giúp prompt có cấu trúc, có thể test và có thể version.
+
+## Mental model: prompt là interface với model
+
+Hãy xem prompt như interface giữa code và model. Code đưa dữ liệu vào template, template nói model phải làm gì, model trả output, parser kiểm tra output. Nếu template mơ hồ, parser sẽ phải xử lý nhiều trường hợp hơn.
+
+Một prompt template tốt thường có:
+
+- Vai trò hoặc nhiệm vụ của model.
+- Dữ liệu đầu vào đã được làm sạch.
+- Quy định output cụ thể.
+- Giới hạn như không markdown, không giải thích thêm, chỉ trả JSON hoặc một enum.
+- Ngôn ngữ trả lời nếu cần.
+
+## Template phân loại feedback
+
+Ví dụ template yêu cầu model phân loại feedback thành sentiment. Dù prose có thể dùng tiếng Việt, các nhãn enum nên giữ ổn định để parser dễ kiểm tra.
+
+```javascript
+function buildSentimentPrompt(message) {
+  return [
+    'You are a customer feedback classifier.',
+    'Classify the sentiment into exactly one value:',
+    'positive, neutral, negative.',
+    'Return only the value, no explanation.',
+    '',
+    'Feedback:',
+    String(message || '').slice(0, 2000),
+  ].join('\n');
+}
+```
+
+Đoạn `slice(0, 2000)` là một guard đơn giản để tránh prompt quá dài. Với dữ liệu production, bạn có thể cần logic cắt thông minh hơn.
+
+## Template trả JSON
+
+Khi cần nhiều trường, hãy yêu cầu JSON rõ schema. Nhưng hãy nhớ: prompt chỉ là yêu cầu, code vẫn phải parse và validate.
+
+```javascript
+function buildExtractLeadPrompt(text) {
+  return [
+    'Extract lead information from the text below.',
+    'Return valid JSON only. Do not wrap in markdown.',
+    'Schema: {"name":"", "email":"", "need":"", "priority":"low|medium|high"}',
+    'If a field is missing, use an empty string.',
+    '',
+    'Text:',
+    String(text || '').slice(0, 3000),
+  ].join('\n');
+}
+```
+
+Template này nói rõ không markdown, schema và cách xử lý field thiếu. Parser ở bài sau sẽ kiểm tra output thật.
+
+## Dùng biến an toàn trong prompt
+
+Không nên chèn object thô vào prompt. Hãy sanitize và format dữ liệu trước.
+
+```javascript
+function sanitizePromptValue(value, maxLength) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength || 1000);
+}
+
+function buildSupportTagPrompt(ticket) {
+  const subject = sanitizePromptValue(ticket.subject, 300);
+  const message = sanitizePromptValue(ticket.message, 2000);
+
+  return [
+    'Classify this support ticket into one tag:',
+    'billing, bug, feature, other.',
+    'Return only the tag.',
+    '',
+    'Subject: ' + subject,
+    'Message: ' + message,
+  ].join('\n');
+}
+```
+
+Function sanitize không thay thế kiểm duyệt dữ liệu nhạy cảm, nhưng giúp prompt sạch hơn và tránh input quá dài làm tốn chi phí.
+
+## Prompt template cho batch dữ liệu Sheets
+
+Khi xử lý nhiều dòng Sheets, bạn có thể build prompt theo danh sách đánh số. Hãy giữ row id hoặc index để map kết quả nếu model cần trả nhiều dòng.
+
+```javascript
+function buildBatchSummaryPrompt(items) {
+  const lines = items.map(function (item, index) {
+    return (index + 1) + '. ' + sanitizePromptValue(item.message, 500);
+  }).join('\n');
+
+  return [
+    'Summarize these customer feedback messages in Vietnamese.',
+    'Return 5 concise bullet points about common themes.',
+    'Do not include names or emails.',
+    '',
+    lines,
+  ].join('\n');
+}
+```
+
+Batch prompt tiết kiệm request, nhưng không nên quá lớn. Prompt dài có thể làm model bỏ sót ý hoặc trả output khó kiểm soát.
+
+## Quản lý prompt template trong project
+
+- Đặt prompt trong file `promptTemplates.js` hoặc `promptTemplates.gs`.
+- Đặt tên theo use case, ví dụ `buildSummaryPrompt`, `buildSupportTagPrompt`.
+- Ghi rõ output mong muốn trong prompt.
+- Tránh đưa secret hoặc dữ liệu định danh không cần thiết vào prompt.
+- Test prompt bằng dữ liệu mẫu trước khi chạy hàng loạt.
+- Ghi version prompt nếu workflow production phụ thuộc kết quả ổn định.
+
+Version prompt có thể đơn giản là hằng số:
+
+```javascript
+const SUPPORT_TAG_PROMPT_VERSION = 'support-tag-v1';
+```
+
+Bạn có thể ghi version này vào log hoặc cột debug để biết kết quả được tạo bởi prompt nào.
+
+## Lỗi thường gặp với prompt template
+
+- Prompt quá chung nên output không ổn định.
+- Không nói "no markdown" khi cần JSON.
+- Chèn dữ liệu người dùng không giới hạn độ dài.
+- Dùng nhiều ngôn ngữ lẫn lộn trong một prompt làm output khó đoán.
+- Không version prompt khi đã dùng production.
+- Đưa email, phone hoặc internal note vào prompt dù model không cần.
+- Để prompt nằm rải rác trong job Sheets, khó review.
+
+## Bài tập thực hành
+
+Viết prompt template `buildSupportTagPrompt(message)` trả về một trong các tag `billing`, `bug`, `feature`, `other`. Thêm helper `sanitizePromptValue`. Tạo 5 message mẫu, in prompt ra log ở dạng preview đã cắt ngắn, rồi test parser bằng response giả trước khi gọi model thật.
+
+## Câu hỏi thường gặp về prompt template
+
+### Có nên lưu prompt trong sheet không?
+
+Có thể nếu non-developer cần chỉnh prompt, nhưng cần phân quyền và version rõ. Với project code-first, lưu trong file dễ review diff hơn.
+
+### Prompt có cần tiếng Anh không?
+
+Không bắt buộc. Hãy dùng ngôn ngữ team hiểu và model xử lý tốt. Tuy nhiên output enum như `bug`, `billing`, `feature` nên giữ nhất quán để code dễ validate.
+
+### Có cần version prompt không?
+
+Có với workflow production. Thay prompt có thể đổi kết quả dù code không đổi, nên version giúp debug và so sánh chất lượng.
+
+### Có nên dùng template engine không?
+
+Không cần cho project nhỏ. Function JavaScript trả string là đủ. Khi prompt phức tạp, hãy tách helper sanitize và builder rõ ràng thay vì thêm phụ thuộc.
+
+## Tóm tắt và bước tiếp theo
+
+Prompt template giúp AI Apps Script ổn định, dễ test và dễ bảo trì hơn. Hãy đặt prompt ở file riêng, dùng biến đã sanitize, quy định output rõ và version khi cần. Bài tiếp theo sẽ học cách ép AI trả JSON và validate response trước khi ghi vào Sheets.

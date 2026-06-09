@@ -1,0 +1,131 @@
+---
+title: "Authorization scopes và OAuth trong Apps Script"
+description: "Hiểu scope, màn hình cấp quyền và cách khai báo quyền truy cập an toàn trong Apps Script."
+slug: "authorization-scopes-oauth-apps-script"
+course: "apps-script"
+order: 35
+duration: "23 phút"
+difficulty: "Trung bình"
+keywords: ["Apps Script scopes", "OAuth Apps Script", "authorization Apps Script", "appsscript.json oauthScopes", "quyền truy cập Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Authorization scopes là danh sách quyền mà Apps Script cần để thao tác với dữ liệu Google thay mặt người dùng hoặc người deploy. Khi script đọc Sheets, gửi email, tạo file Drive hoặc gọi API, Google dùng OAuth để hỏi người dùng có đồng ý cấp các quyền đó hay không.
+
+## Scope trong Apps Script là gì?
+
+Scope là một chuỗi URL mô tả phạm vi quyền truy cập. Ví dụ quyền đọc ghi spreadsheet hiện tại khác với quyền đọc ghi mọi spreadsheet trong Drive. Scope càng rộng thì rủi ro càng cao, consent screen càng đáng sợ và quá trình review ứng dụng bên ngoài càng phức tạp.
+
+Mental model đơn giản là: code gọi service nào thì cần quyền tương ứng. `SpreadsheetApp` cần scope spreadsheet, `MailApp` cần scope gửi email, `DriveApp` cần scope Drive. Khi chạy lần đầu hoặc khi scope thay đổi, Apps Script yêu cầu authorize lại.
+
+Với automation cá nhân, bạn thường chỉ tự cấp quyền cho mình. Với web app, add-on hoặc tool cho team, scope trở thành vấn đề sản phẩm và bảo mật. Người dùng cần hiểu script sẽ làm gì với tài khoản của họ.
+
+## Apps Script tự suy luận scope như thế nào?
+
+Nếu manifest không khai báo `oauthScopes`, Apps Script cố gắng phân tích code để suy luận quyền cần dùng. Cách này tiện cho bài học nhỏ, nhưng trong dự án nghiêm túc bạn nên biết script đang xin quyền gì.
+
+```javascript
+function createDocAndSendEmail() {
+  const doc = DocumentApp.create('Authorization demo');
+  const url = doc.getUrl();
+
+  MailApp.sendEmail({
+    to: 'user@example.com',
+    subject: 'Document created',
+    body: 'Document URL: ' + url,
+  });
+}
+```
+
+Function trên cần quyền tạo Google Docs và gửi email. Khi bạn chạy lần đầu, Apps Script sẽ mở consent screen. Nếu sau đó bạn thêm `DriveApp.getFiles()`, scope mới có thể xuất hiện và người dùng phải authorize lại.
+
+## Khai báo scope trong appsscript.json
+
+Khai báo `oauthScopes` giúp bạn kiểm soát quyền rõ ràng hơn. Khi khai báo thủ công, hãy đảm bảo danh sách đủ cho code thật. Thiếu scope có thể gây lỗi authorization khi chạy.
+
+```json
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets.currentonly",
+    "https://www.googleapis.com/auth/script.send_mail"
+  ]
+}
+```
+
+Scope `spreadsheets.currentonly` hẹp hơn `spreadsheets` vì chỉ áp dụng cho spreadsheet hiện tại trong một số ngữ cảnh container-bound. Scope `script.send_mail` cho phép gửi email qua Apps Script. Đừng copy danh sách scope từ dự án khác nếu bạn không hiểu từng dòng.
+
+## Nguyên tắc least privilege
+
+Least privilege nghĩa là chỉ xin quyền tối thiểu đủ để hoàn thành việc. Nếu script chỉ ghi vào spreadsheet hiện tại, đừng xin quyền toàn bộ Drive. Nếu chỉ gửi email xác nhận, đừng xin Gmail full access. Quyền rộng làm tăng rủi ro khi code lỗi, khi người khác có quyền edit script, hoặc khi web app public bị lạm dụng.
+
+Ví dụ, hai scope sau nghe giống nhau nhưng khác mức rủi ro:
+
+- `https://www.googleapis.com/auth/spreadsheets.currentonly`: thao tác với spreadsheet hiện tại.
+- `https://www.googleapis.com/auth/spreadsheets`: đọc ghi mọi spreadsheet mà user có quyền.
+
+Không phải lúc nào scope hẹp cũng đủ. Nếu script cần mở spreadsheet bằng ID bất kỳ, có thể phải dùng scope rộng hơn. Nhưng quyết định đó nên có lý do rõ ràng.
+
+## Kiểm tra authorization trước khi chạy flow quan trọng
+
+Một số flow nâng cao cần biết người dùng đã cấp đủ quyền chưa. `ScriptApp.getAuthorizationInfo` giúp lấy trạng thái authorization và URL để người dùng cấp quyền nếu thiếu.
+
+```javascript
+function checkMailAuthorization() {
+  const scopes = ['https://www.googleapis.com/auth/script.send_mail'];
+  const info = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL, scopes);
+
+  Logger.log('Status: ' + info.getAuthorizationStatus());
+
+  if (info.getAuthorizationStatus() === ScriptApp.AuthorizationStatus.REQUIRED) {
+    Logger.log('Open this URL: ' + info.getAuthorizationUrl());
+  }
+}
+```
+
+Trong sidebar hoặc web app nội bộ, bạn có thể dùng thông tin này để hướng dẫn người dùng mở URL cấp quyền thay vì để họ gặp lỗi khó hiểu giữa chừng.
+
+## Scope và web app execute as
+
+Với `Execute as me`, người deploy cấp quyền cho script, và script chạy bằng quyền đó. Người truy cập có thể không thấy consent screen cho các service phía server, nhưng bạn đang chịu trách nhiệm bảo vệ dữ liệu.
+
+Với `Execute as user accessing the web app`, mỗi người dùng có thể phải cấp quyền. Nếu script gửi email, email được gửi theo quyền của người dùng hoặc theo service cho phép. Nếu script đọc spreadsheet, người dùng cũng cần có quyền với spreadsheet đó tùy cách code truy cập.
+
+Điều này giải thích vì sao cùng một web app có thể chạy tốt với owner nhưng lỗi với user khác. Vấn đề không phải chỉ là code, mà là identity và scopes.
+
+## Lỗi thường gặp với OAuth và scopes
+
+- Xin scope quá rộng vì copy manifest từ ví dụ cũ.
+- Thêm service mới nhưng không hiểu vì sao phải authorize lại.
+- Khai báo `oauthScopes` thủ công nhưng thiếu scope cho code thật.
+- Deploy web app dưới user khác rồi gặp lỗi quyền với sheet hoặc Drive.
+- Dùng email người dùng làm bảo mật duy nhất mà chưa test trong domain thật.
+- Log token OAuth hoặc gửi token ra client.
+- Nhầm OAuth consent cho Apps Script với đăng nhập tài khoản Google thông thường.
+
+## Bài tập thực hành
+
+Bật hiển thị file manifest trong Apps Script editor. Viết function đọc spreadsheet hiện tại và gửi email test. Chạy một lần để xem consent screen. Sau đó thêm `oauthScopes` gồm `spreadsheets.currentonly` và `script.send_mail`. Chạy lại, quan sát quyền được yêu cầu và ghi chú scope nào tương ứng với service nào.
+
+## Câu hỏi thường gặp về OAuth Apps Script
+
+### Scope là quyền của ai?
+
+Scope là quyền người dùng hoặc người deploy cấp cho script, tùy cách script được chạy. Với web app, `Execute as` quyết định danh tính thực thi rất quan trọng.
+
+### Có nên luôn khai báo oauthScopes thủ công không?
+
+Với bài học nhỏ, không bắt buộc. Với project nghiêm túc, manifest rõ ràng giúp review bảo mật, tránh scope rộng bất ngờ và làm thay đổi quyền có kiểm soát hơn.
+
+### Vì sao thêm một dòng code lại yêu cầu cấp quyền lại?
+
+Vì dòng code đó có thể dùng service mới hoặc phạm vi rộng hơn. Google cần người dùng đồng ý với quyền mới trước khi script tiếp tục thao tác.
+
+### Có thể tránh OAuth consent screen không?
+
+Không nếu script cần quyền truy cập dữ liệu Google. Bạn chỉ có thể giảm độ phức tạp bằng cách dùng scope hẹp, giải thích rõ và chọn mô hình deployment phù hợp.
+
+## Tóm tắt và bước tiếp theo
+
+Scopes là hợp đồng quyền giữa script và người dùng. Hãy xin quyền tối thiểu, hiểu identity khi deploy web app và đừng xem consent screen là chi tiết phụ. Bài tiếp theo sẽ dùng nền tảng này để tìm hiểu Advanced Google Services, nơi bạn gọi các Google API mạnh hơn nhưng cũng cần scope và cấu hình chính xác hơn.

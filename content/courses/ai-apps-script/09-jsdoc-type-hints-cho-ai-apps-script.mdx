@@ -1,0 +1,181 @@
+---
+title: "JSDoc và type hints để AI hiểu code Apps Script"
+description: "Học cách dùng JSDoc, typedef và mô tả schema để AI viết code Apps Script chính xác hơn."
+slug: "jsdoc-type-hints-cho-ai-apps-script"
+course: "ai-apps-script"
+order: 9
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["JSDoc Apps Script", "type hints Apps Script", "AI hiểu code Apps Script", "typedef Apps Script", "Apps Script schema"]
+publishedAt: "2026-06-09"
+---
+
+## JSDoc giúp gì cho AI Apps Script?
+
+JSDoc giúp AI và con người hiểu kiểu dữ liệu, schema object, tham số, giá trị trả về và side effect của function Apps Script. Khi project xử lý dữ liệu từ Sheets dạng mảng hai chiều, JSDoc làm rõ `row[0]` là cột nào và giảm lỗi AI nhầm mapping.
+
+Apps Script dùng JavaScript, không bắt buộc TypeScript. Nhưng bạn vẫn có thể dùng JSDoc để tạo type hints nhẹ. AI coding assistant thường đọc JSDoc rất tốt: nếu bạn nói `FeedbackItem.message` là string và `rowNumber` là số dòng thật trong sheet, AI có nhiều khả năng giữ đúng logic khi refactor.
+
+## Mental model: mô tả hợp đồng của function
+
+Mỗi function quan trọng có một hợp đồng: nhận gì, trả gì, có tác dụng phụ gì, lỗi khi nào. JSDoc là nơi ghi hợp đồng đó gần code. Với AI Apps Script, hợp đồng càng rõ thì AI càng ít tự đoán.
+
+Đặc biệt nên viết JSDoc cho:
+
+- Object đại diện cho một dòng trong Sheets.
+- Function mapping từ `getValues()` sang object.
+- Function build prompt.
+- Function parse và validate AI response.
+- Function có side effect như gửi email, ghi sheet hoặc gọi API.
+
+## Tạo typedef cho dữ liệu sheet
+
+Ví dụ sheet `Feedback` có cột `Email`, `Message`, `Rating`, `Sentiment`, `Status`. Thay vì truyền row thô khắp nơi, hãy tạo typedef cho object đã map.
+
+```javascript
+/**
+ * @typedef {Object} FeedbackRow
+ * @property {number} rowNumber Spreadsheet row number, starting at 2 for data rows.
+ * @property {string} email Customer email. Do not send to AI unless needed.
+ * @property {string} message Feedback message used for AI classification.
+ * @property {number} rating Numeric rating from the sheet.
+ * @property {string} sentiment Current sentiment value.
+ * @property {string} status Processing status such as pending, done, error.
+ */
+```
+
+Chú thích `Do not send to AI unless needed` không chỉ giúp người đọc. Nó cũng nhắc AI không đưa email vào prompt nếu bạn yêu cầu tạo code phân loại sentiment.
+
+## Gắn JSDoc cho function mapping
+
+Mảng từ `getValues()` không có tên cột. JSDoc giúp ghi rõ thứ tự cột ngay tại function chuyển đổi.
+
+```javascript
+/**
+ * Converts a spreadsheet row into a FeedbackRow object.
+ * Row format: [Email, Message, Rating, Sentiment, Status]
+ * @param {Array<*>} row Raw row from getValues().
+ * @param {number} rowNumber Spreadsheet row number.
+ * @return {FeedbackRow}
+ */
+function toFeedbackRow(row, rowNumber) {
+  return {
+    rowNumber: rowNumber,
+    email: String(row[0] || ''),
+    message: String(row[1] || ''),
+    rating: Number(row[2] || 0),
+    sentiment: String(row[3] || ''),
+    status: String(row[4] || ''),
+  };
+}
+```
+
+Nếu sau này sheet đổi thứ tự cột, bạn chỉ cần kiểm tra các function mapping. Không nên để `row[2]` xuất hiện rải rác trong nhiều file.
+
+## JSDoc cho prompt và AI response
+
+Prompt và parser cũng cần type hints vì đây là nơi AI output dễ sai nhất.
+
+```javascript
+/**
+ * Builds a prompt for classifying customer feedback.
+ * @param {FeedbackRow} feedback Feedback item. Only message is sent to the model.
+ * @return {string} Prompt asking for one sentiment label.
+ */
+function buildSentimentPrompt(feedback) {
+  return [
+    'Classify this feedback as positive, neutral, or negative.',
+    'Return only one label.',
+    '',
+    feedback.message,
+  ].join('\n');
+}
+
+/**
+ * @param {string} rawText Raw model response.
+ * @return {string} One of positive, neutral, negative.
+ */
+function parseSentimentLabel(rawText) {
+  const label = String(rawText || '').trim().toLowerCase();
+  if (!['positive', 'neutral', 'negative'].includes(label)) {
+    throw new Error('Invalid sentiment label: ' + label);
+  }
+  return label;
+}
+```
+
+JSDoc không validate runtime. Validator trong function vẫn cần thiết. Nhưng JSDoc làm rõ kỳ vọng để AI sửa code đúng hướng.
+
+## Prompt yêu cầu AI dùng JSDoc
+
+Khi yêu cầu AI viết hoặc refactor Apps Script, hãy nói rõ bạn muốn JSDoc ở đâu.
+
+```text
+Viết Apps Script bằng JavaScript V8, không dùng TypeScript.
+Thêm JSDoc cho:
+- typedef FeedbackRow
+- function mapping từ getValues
+- function build prompt
+- function parse AI response
+
+Mọi function mapping phải mô tả thứ tự cột trong @param.
+Function có side effect phải ghi rõ trong mô tả.
+```
+
+Bạn không cần JSDoc dài cho mọi function nhỏ. Ưu tiên những nơi dữ liệu đổi dạng hoặc có side effect.
+
+## JSDoc cho side effect
+
+AI hay nhầm function tính toán với function có side effect. Hãy ghi rõ function nào ghi sheet hoặc gọi API.
+
+```javascript
+/**
+ * Writes classification result back to the Feedback sheet.
+ * Side effect: updates Tag, Status, and Error columns for one row.
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet Target sheet.
+ * @param {number} rowNumber Spreadsheet row number.
+ * @param {string} tag Validated tag value.
+ */
+function writeFeedbackTag(sheet, rowNumber, tag) {
+  sheet.getRange(rowNumber, 4).setValue(tag);
+  sheet.getRange(rowNumber, 5).setValue('done');
+  sheet.getRange(rowNumber, 6).setValue('');
+}
+```
+
+Khi side effect được ghi rõ, bạn có thể yêu cầu AI không gọi function này trong test hoặc dry run.
+
+## Lỗi thường gặp với JSDoc
+
+- JSDoc không khớp dữ liệu thật trong sheet.
+- Đổi thứ tự cột nhưng không cập nhật function mapping và typedef.
+- Dùng kiểu quá chung như `Object` cho mọi thứ.
+- Không ghi rõ function có side effect.
+- Nghĩ JSDoc tự validate dữ liệu runtime.
+- Viết JSDoc quá dài nhưng thiếu thông tin quan trọng như enum hợp lệ.
+
+## Bài tập thực hành
+
+Tạo typedef `LeadRow` cho sheet `Leads` có cột `Name`, `Email`, `Status`, `OwnerEmail`, `LastContactedAt`. Viết function `toLeadRow(row, rowNumber)` có JSDoc mô tả thứ tự cột. Sau đó viết prompt yêu cầu AI review xem mapping có rủi ro nhầm cột hoặc gửi dữ liệu nhạy cảm cho AI không.
+
+## Câu hỏi thường gặp về JSDoc
+
+### JSDoc có thay TypeScript không?
+
+Không hoàn toàn. TypeScript kiểm tra kiểu mạnh hơn, nhưng JSDoc đủ tốt cho nhiều project Apps Script JavaScript và không cần build step phức tạp.
+
+### JSDoc có chạy lúc runtime không?
+
+Không. JSDoc là chú thích cho người đọc, editor và AI. Bạn vẫn cần validate dữ liệu bằng code thật.
+
+### Có nên viết JSDoc cho mọi function không?
+
+Không cần. Hãy ưu tiên function xử lý dữ liệu, gọi API, parse AI response và entry point quan trọng.
+
+### JSDoc có giúp AI viết code tốt hơn thật không?
+
+Có, đặc biệt khi schema rõ. AI thường dùng typedef và mô tả tham số để suy luận field nào được phép dùng và output nào cần trả về.
+
+## Tóm tắt và bước tiếp theo
+
+JSDoc giúp AI hiểu schema, interface và side effect của code Apps Script. Nó không thay validation, nhưng giảm lỗi khi refactor và sinh code. Bài tiếp theo sẽ học logging và Executions dashboard để debug AI Apps Script hiệu quả.

@@ -1,0 +1,149 @@
+---
+title: "Workflow dùng AI để phân tích yêu cầu Apps Script"
+description: "Học quy trình dùng AI để biến yêu cầu mơ hồ thành kế hoạch Apps Script rõ input, output, quyền và test."
+slug: "workflow-ai-phan-tich-yeu-cau-apps-script"
+course: "ai-apps-script"
+order: 3
+duration: "19 phút"
+difficulty: "Dễ"
+keywords: ["dùng AI phân tích yêu cầu Apps Script", "AI workflow Apps Script", "prompt Apps Script", "lập kế hoạch Apps Script bằng AI", "Apps Script automation planning"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao cần workflow trước khi AI viết code?
+
+Bạn cần workflow trước khi AI viết code vì Apps Script thường chạm vào dữ liệu thật, quyền Gmail/Drive/Sheets và trigger tự động. Nếu yêu cầu mơ hồ, AI có thể sinh code chạy được nhưng sai sheet, sai cột, gửi email lặp, lộ dữ liệu hoặc khó debug khi lỗi xảy ra.
+
+Workflow tốt biến câu nói nghiệp vụ thành đặc tả kỹ thuật nhỏ: input là gì, output là gì, service nào được dùng, function nào là entry point, quyền nào cần cấp, lỗi nào có thể xảy ra và test thế nào trước khi chạy thật. Khi có đặc tả này, AI viết code chính xác hơn và bạn review cũng nhanh hơn.
+
+## Mental model: từ yêu cầu mơ hồ đến spec có thể code
+
+Hãy xem AI như một người phân tích yêu cầu trước, không phải máy sinh code ngay lập tức. Luồng làm việc nên là:
+
+- Mô tả bài toán bằng ngôn ngữ nghiệp vụ.
+- Yêu cầu AI hỏi lại các điểm còn thiếu.
+- Chốt schema dữ liệu và hành động cần làm.
+- Xác định service Apps Script và quyền OAuth.
+- Chia thành function nhỏ, có test và dry run.
+- Sau đó mới yêu cầu AI viết code từng phần.
+
+Ví dụ yêu cầu mơ hồ là: "Tự động nhắc khách hàng chưa thanh toán". Spec tốt hơn sẽ nói rõ sheet tên gì, cột nào chứa email, điều kiện nào là chưa thanh toán, gửi email bằng tài khoản nào, cập nhật trạng thái ra sao và có giới hạn số email mỗi lần chạy không.
+
+## Prompt phân tích yêu cầu trước khi viết code
+
+Prompt quan trọng nhất ở giai đoạn này là prompt cấm AI viết code quá sớm. Bạn muốn nó phân tích và hỏi lại trước.
+
+```text
+Bạn là senior Apps Script engineer.
+Yêu cầu: tự động gửi email nhắc khách hàng chưa thanh toán từ Google Sheets.
+
+Trước khi viết code, không tạo code ngay. Hãy phân tích:
+- Mục tiêu nghiệp vụ
+- Sheet và cột bắt buộc
+- Input, output và trạng thái sau khi xử lý
+- Apps Script services cần dùng
+- OAuth scopes có thể cần
+- Edge cases và rủi ro bảo mật
+- Cách test thủ công với DRY_RUN
+- Câu hỏi cần tôi trả lời thêm
+```
+
+Một phản hồi tốt từ AI phải nêu được các điểm thiếu, ví dụ chưa biết tên sheet, chưa biết cột trạng thái, chưa biết nội dung email và chưa biết có được gửi email thật trong lần test hay không.
+
+## Biến phân tích thành checklist kỹ thuật
+
+Sau khi AI phân tích, hãy chuyển kết quả thành checklist. Checklist giúp bạn kiểm tra code AI sinh ra bằng tiêu chí cụ thể, thay vì chỉ đọc xem có vẻ đúng hay không.
+
+```javascript
+const REQUIREMENT_CHECKLIST = [
+  'Sheet name is confirmed',
+  'Column names are confirmed',
+  'Dry run mode exists',
+  'Email quota is considered',
+  'Processed status is updated',
+  'Errors are logged safely',
+];
+
+function printRequirementChecklist() {
+  REQUIREMENT_CHECKLIST.forEach(function (item) {
+    console.log({ check: item });
+  });
+}
+```
+
+Trong dự án nhỏ, checklist có thể nằm trong tài liệu hoặc comment. Trong dự án lớn hơn, bạn có thể biến nó thành file `requirements.md`, sheet `Config` hoặc issue trong GitHub.
+
+## Ví dụ spec cho workflow phân loại feedback bằng AI
+
+Một spec ngắn nhưng đủ dùng có thể như sau:
+
+- Sheet `Feedback` có cột `SubmittedAt`, `Email`, `Message`, `Tag`, `Status`, `Error`.
+- Chỉ xử lý dòng có `Status = pending` và `Message` không rỗng.
+- Gửi cho AI chỉ trường `Message`, không gửi `Email`.
+- AI trả một tag trong `bug`, `billing`, `feature`, `other`.
+- Nếu tag hợp lệ, ghi `Tag` và đổi `Status = done`.
+- Nếu lỗi API hoặc tag sai, ghi `Status = error` và thông báo ngắn vào `Error`.
+- Mỗi lần chạy tối đa 20 dòng.
+
+Bạn có thể mô tả spec này thành object để AI hiểu rõ hơn:
+
+```javascript
+const FEEDBACK_JOB_SPEC = {
+  sheetName: 'Feedback',
+  requiredColumns: ['SubmittedAt', 'Email', 'Message', 'Tag', 'Status', 'Error'],
+  inputColumnsForAi: ['Message'],
+  allowedTags: ['bug', 'billing', 'feature', 'other'],
+  maxRowsPerRun: 20,
+  dryRun: true,
+};
+```
+
+Khi yêu cầu AI viết code, bạn có thể dán object này và nói: "Hãy viết function theo spec này, không tự thêm cột khác". Cách này giảm đáng kể lỗi AI tự bịa schema.
+
+## Cách yêu cầu AI chia nhỏ function
+
+Đừng yêu cầu AI viết một function khổng lồ. Hãy yêu cầu các ranh giới rõ:
+
+- `readPendingFeedbackRows()` đọc dữ liệu.
+- `buildFeedbackTagPrompt(message)` tạo prompt.
+- `classifyFeedbackMessage(message)` gọi AI và validate tag.
+- `writeFeedbackResult(rowNumber, result)` ghi kết quả.
+- `runClassifyFeedbackJob()` là entry point điều phối.
+
+Khi code chia nhỏ như vậy, bạn có thể test từng phần. AI cũng dễ sửa lỗi trong một function mà không làm vỡ toàn bộ workflow.
+
+## Lỗi thường gặp trong workflow AI
+
+- Nhảy thẳng vào "write code" khi chưa có schema sheet.
+- Không nói script là bound script hay standalone script.
+- Không yêu cầu AI hỏi lại khi thiếu thông tin.
+- Không có `DRY_RUN` cho việc gửi email, ghi dữ liệu hoặc gọi API hàng loạt.
+- Không yêu cầu cập nhật trạng thái đã xử lý, làm trigger chạy lặp.
+- Không kiểm tra quota Apps Script và quota AI API.
+- Không xác định dữ liệu nào được phép gửi cho model.
+
+## Bài tập thực hành
+
+Chọn một automation bạn muốn xây, ví dụ phân loại feedback, tóm tắt biên bản họp hoặc tạo nháp email. Viết prompt yêu cầu AI phân tích trước, không viết code. Sau đó tự chấm phản hồi của AI theo checklist: có sheet schema, input/output, quyền, trigger, dry run, edge cases và test case không?
+
+## Câu hỏi thường gặp về workflow AI
+
+### Có nên để AI hỏi lại yêu cầu không?
+
+Có. Nếu yêu cầu thiếu dữ liệu quan trọng, AI nên hỏi lại thay vì tự đoán. Một prompt tốt nên nói rõ: "Nếu thiếu thông tin, hãy hỏi lại trước khi viết code".
+
+### Có cần viết tài liệu trước khi code không?
+
+Với script nhỏ, checklist ngắn là đủ. Với automation có trigger, gửi email, đọc Drive hoặc gọi AI tốn tiền, nên có spec ngắn để tránh lỗi vận hành.
+
+### Vì sao phải có dry run?
+
+Dry run giúp kiểm tra logic mà không gửi email thật, không ghi dữ liệu thật và không gọi AI hàng loạt. Đây là hàng rào an toàn khi bạn dùng code do AI hỗ trợ viết.
+
+### Nếu AI phân tích sai thì làm gì?
+
+Hãy yêu cầu AI giải thích giả định, rồi sửa từng giả định sai. Đừng chấp nhận spec đầu tiên nếu nó tự bịa tên cột, quyền hoặc workflow bạn chưa xác nhận.
+
+## Tóm tắt và bước tiếp theo
+
+AI hiệu quả nhất khi bạn bắt nó phân tích trước khi viết code. Workflow đúng giúp biến yêu cầu mơ hồ thành spec rõ ràng, có schema, quyền, test và guardrails. Bài tiếp theo sẽ học cách viết prompt để AI tạo Apps Script đúng ngữ cảnh và ít lỗi hơn.

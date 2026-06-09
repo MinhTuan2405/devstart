@@ -1,0 +1,167 @@
+---
+title: "Tích hợp OpenAI với Apps Script bằng UrlFetchApp"
+description: "Học cách gọi OpenAI API từ Apps Script, lưu API key an toàn và chuẩn hóa response như AI provider khác."
+slug: "tich-hop-openai-voi-apps-script"
+course: "ai-apps-script"
+order: 28
+duration: "23 phút"
+difficulty: "Trung bình"
+keywords: ["OpenAI Apps Script", "tích hợp OpenAI với Apps Script", "UrlFetchApp OpenAI", "AI provider Apps Script", "ChatGPT Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Tích hợp OpenAI với Apps Script để làm gì?
+
+Tích hợp OpenAI với Apps Script giúp bạn gọi OpenAI API từ automation Google Workspace bằng `UrlFetchApp`, lưu API key trong PropertiesService và chuẩn hóa output giống các provider AI khác. Use case phù hợp là so sánh chất lượng model, dùng model team đã chuẩn hóa hoặc xây wrapper nhiều provider cho cùng một workflow.
+
+Về tư duy, OpenAI không làm Apps Script khác đi: bạn vẫn có prompt, payload JSON, HTTP response, parser, error handling và logging. Điểm khác là endpoint, format request/response, key và thông tin usage có thể khác Gemini hoặc Vertex AI.
+
+## Mental model: provider adapter
+
+Khi hỗ trợ nhiều AI provider, đừng để toàn bộ code gọi trực tiếp endpoint OpenAI ở khắp nơi. Hãy tạo một adapter như `callOpenAiText(prompt, options)` và một interface chung như `generateAiText(prompt, options)`. Business logic như phân loại feedback, tạo draft Gmail hoặc tóm tắt Docs không nên biết provider cụ thể.
+
+Một adapter tốt cần:
+
+- Đọc config từ PropertiesService.
+- Tạo payload đúng format provider.
+- Gọi `UrlFetchApp.fetch` với `muteHttpExceptions: true`.
+- Kiểm tra status code.
+- Parse text output và usage nếu có.
+- Throw lỗi có provider và status code nhưng không lộ API key.
+
+## Lưu API key và model trong PropertiesService
+
+Không hardcode key trong source code. Bạn có thể tạo một function setup chạy thủ công một lần, hoặc nhập trực tiếp trong Apps Script Project Settings.
+
+```javascript
+function saveOpenAiConfig() {
+  PropertiesService.getScriptProperties().setProperties({
+    AI_PROVIDER: 'openai',
+    OPENAI_API_KEY: 'replace-with-real-key',
+    OPENAI_MODEL: 'gpt-4.1-mini',
+  });
+}
+```
+
+Sau khi lưu key thật, không commit file chứa key và không log toàn bộ Script Properties. Trong dự án dùng clasp, hãy đảm bảo secret không nằm trong repo.
+
+## Gọi OpenAI API bằng UrlFetchApp
+
+Endpoint và model có thể thay đổi theo tài liệu OpenAI hiện hành, nhưng pattern Apps Script vẫn là HTTP POST JSON. Ví dụ dưới đây dùng Responses API dạng text đơn giản.
+
+```javascript
+function callOpenAiText(prompt, options) {
+  const props = PropertiesService.getScriptProperties();
+  const apiKey = props.getProperty('OPENAI_API_KEY');
+  const model = props.getProperty('OPENAI_MODEL') || 'gpt-4.1-mini';
+
+  if (!apiKey) throw new Error('Missing OPENAI_API_KEY');
+
+  const payload = {
+    model: model,
+    input: String(prompt || ''),
+    temperature: options && options.temperature !== undefined ? options.temperature : 0.3,
+  };
+
+  const response = UrlFetchApp.fetch('https://api.openai.com/v1/responses', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + apiKey },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+
+  return parseOpenAiResponse(response);
+}
+```
+
+Không log `headers`, payload đầy đủ nếu prompt có dữ liệu nhạy cảm, hoặc response lỗi chứa chi tiết không cần thiết. Log provider, model, status code và duration là đủ cho monitoring.
+
+## Parser response OpenAI
+
+Parser cần được viết riêng vì format API có thể khác provider khác. Bản đơn giản nhất đọc `output_text`, nhưng vẫn nên kiểm tra lỗi HTTP trước.
+
+```javascript
+function parseOpenAiResponse(response) {
+  const code = response.getResponseCode();
+  const body = response.getContentText();
+
+  if (code < 200 || code >= 300) {
+    throw new Error('OpenAI API failed with status ' + code);
+  }
+
+  const data = JSON.parse(body);
+  if (data.output_text) return data.output_text;
+
+  if (data.output && data.output.length) {
+    return data.output.map(function(item) {
+      return (item.content || []).map(function(content) {
+        return content.text || '';
+      }).join('');
+    }).join('\n');
+  }
+
+  throw new Error('OpenAI response did not include text output');
+}
+```
+
+Parser này cố gắng hỗ trợ cả `output_text` và cấu trúc output mảng. Bạn vẫn cần test với response thật của endpoint/model đang dùng.
+
+## Chuẩn hóa nhiều provider trong generateAiText
+
+Sau khi có adapter OpenAI, wrapper chung có thể route theo `AI_PROVIDER`. Các bài trước có thể dùng lại `generateAiText` mà không đổi business logic.
+
+```javascript
+function generateAiText(prompt, options) {
+  const provider = PropertiesService
+    .getScriptProperties()
+    .getProperty('AI_PROVIDER') || 'gemini';
+
+  if (provider === 'openai') {
+    return callOpenAiText(prompt, options || {});
+  }
+
+  if (provider === 'gemini') {
+    return callGeminiText(prompt, options || {});
+  }
+
+  throw new Error('Unsupported AI provider: ' + provider);
+}
+```
+
+Interface chung giúp bạn test cùng một prompt với nhiều provider. Tuy nhiên, đừng giả định mọi provider hỗ trợ cùng option, cùng temperature range hoặc cùng response usage.
+
+## Lỗi thường gặp khi dùng OpenAI trong Apps Script
+
+- Dùng API format cũ trong khi endpoint mới thay đổi.
+- Không kiểm tra status code, khiến lỗi API bị parse như thành công.
+- Hardcode API key trong source hoặc HTML.
+- Không chuẩn hóa output với provider khác, làm code nghiệp vụ bị phụ thuộc OpenAI.
+- Không kiểm soát chi phí khi chạy hàng loạt từ Sheets.
+- Log body lỗi quá chi tiết, vô tình lưu prompt nhạy cảm.
+
+## Bài tập thực hành
+
+Thêm config `AI_PROVIDER=openai`, `OPENAI_API_KEY` và `OPENAI_MODEL`. Viết `callOpenAiText`, `parseOpenAiResponse` và cập nhật `generateAiText` để route sang OpenAI khi provider là `openai`. Sau đó chạy lại một workflow cũ như sentiment feedback để xác nhận business logic không cần đổi.
+
+## Câu hỏi thường gặp về OpenAI Apps Script
+
+### Có nên hỗ trợ cả Gemini và OpenAI không?
+
+Chỉ khi có nhu cầu thật như so sánh chất lượng, fallback hoặc team đã dùng nhiều provider. Nếu mới học, chọn một provider trước để giảm độ phức tạp.
+
+### Có dùng được ChatGPT trực tiếp không?
+
+Bạn tích hợp qua OpenAI API, không phải giao diện ChatGPT web. Tài khoản, billing, model và policy của API có thể khác trải nghiệm ChatGPT.
+
+### OpenAI API key có nên nằm trong HTML không?
+
+Không. Key phải nằm ở server Apps Script, PropertiesService hoặc backend proxy. HTML client chỉ gọi server function qua `google.script.run`.
+
+### Có cần parser riêng cho từng provider không?
+
+Có. Prompt và nghiệp vụ có thể dùng chung, nhưng response format, usage và lỗi của mỗi provider khác nhau. Parser riêng giúp lỗi rõ hơn.
+
+## Tóm tắt và bước tiếp theo
+
+OpenAI integration trong Apps Script vẫn dựa trên `UrlFetchApp`, secret an toàn, parser và provider adapter. Bài tiếp theo chuyển sang Vertex AI, lựa chọn phù hợp hơn khi dự án cần Google Cloud governance, IAM và audit cấp doanh nghiệp.

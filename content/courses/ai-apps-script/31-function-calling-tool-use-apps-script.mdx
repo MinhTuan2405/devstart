@@ -1,0 +1,170 @@
+---
+title: "Function calling và tool-use pattern trong AI Apps Script"
+description: "Học cách thiết kế AI trả lệnh có cấu trúc để Apps Script gọi tool như đọc Sheets, tạo Docs hoặc gửi draft."
+slug: "function-calling-tool-use-apps-script"
+course: "ai-apps-script"
+order: 31
+duration: "24 phút"
+difficulty: "Khó"
+keywords: ["function calling Apps Script", "tool use AI Apps Script", "AI agent Apps Script", "structured commands Apps Script", "AI tools Google Workspace"]
+publishedAt: "2026-06-09"
+---
+
+## Function calling trong AI Apps Script là gì?
+
+Function calling, hay tool-use pattern, là cách yêu cầu AI trả về một lệnh có cấu trúc thay vì tự thực hiện mọi thứ. AI có thể đề xuất `{ "tool": "create_email_draft", "args": { ... } }`, còn Apps Script validate tool, kiểm tra tham số, ghi audit log và quyết định có thực thi hay cần người xác nhận.
+
+Pattern này biến AI từ “người trả lời bằng văn bản” thành “bộ định tuyến ý định”. Nó rất hợp với Google Workspace vì Apps Script có nhiều tool thật: đọc Sheets, tạo Docs, tạo Gmail draft, ghi Calendar, gọi Drive. Nhưng chính vì có side effect thật, bạn không được tin lệnh AI một cách mù quáng.
+
+## Mental model: AI đề xuất, Apps Script quyết định
+
+Hãy chia rõ trách nhiệm. AI đọc yêu cầu tự nhiên của người dùng và chọn tool phù hợp. Apps Script giữ allowlist tool, validate args, kiểm tra quyền, hỏi confirmation nếu cần, rồi mới gọi service Google.
+
+Luồng an toàn:
+
+- Người dùng nhập yêu cầu.
+- AI trả JSON command.
+- Parser làm sạch và parse JSON.
+- Validator kiểm tra `tool` và `args`.
+- Executor gọi function thật nếu tool an toàn.
+- Audit log ghi user, tool, args rút gọn và kết quả.
+
+Không bao giờ cho AI trả code string rồi `eval`. Không bao giờ cho AI tự quyết định quyền truy cập file, email người nhận hoặc thao tác xóa dữ liệu.
+
+## Prompt yêu cầu AI chọn tool
+
+Bạn có thể mô tả tool bằng text và yêu cầu JSON. Prompt nên nói rõ chỉ chọn tool trong danh sách.
+
+```javascript
+function buildToolRouterPrompt(userRequest) {
+  return [
+    'Choose exactly one tool for this Google Workspace request.',
+    'Return valid JSON only. No markdown.',
+    'Allowed tools:',
+    '- summarize_sheet: args {"sheetName":"string"}',
+    '- create_email_draft: args {"to":"email","subject":"string","body":"string"}',
+    '- create_doc: args {"title":"string","content":"string"}',
+    '- answer_only: args {"message":"string"}',
+    'Schema: {"tool":"tool_name","args":{},"needsConfirmation":true}',
+    'User request: ' + String(userRequest || '').slice(0, 2000),
+  ].join('\n');
+}
+```
+
+Tool `answer_only` rất hữu ích. Không phải yêu cầu nào cũng cần hành động. Nếu người dùng chỉ hỏi “làm thế nào”, AI nên trả lời thay vì tạo file hoặc email.
+
+## Parse command JSON từ AI
+
+Giống các bài JSON output trước, AI có thể trả markdown fence. Parser nên làm sạch và kiểm tra object cơ bản.
+
+```javascript
+function parseToolCommand(rawText) {
+  const cleaned = String(rawText || '')
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```$/i, '')
+    .trim();
+
+  const command = JSON.parse(cleaned);
+  if (!command || typeof command !== 'object') {
+    throw new Error('Tool command must be an object');
+  }
+  if (!command.tool || typeof command.tool !== 'string') {
+    throw new Error('Tool command missing tool');
+  }
+  if (!command.args || typeof command.args !== 'object') {
+    throw new Error('Tool command missing args');
+  }
+  return command;
+}
+```
+
+Parser chỉ đảm bảo cấu trúc JSON cơ bản. Validation nghiệp vụ nằm ở bước tiếp theo, vì mỗi tool có yêu cầu khác nhau.
+
+## Validate và execute tool allowlist
+
+Executor không nên dùng map động từ string sang global function nếu chưa kiểm soát. Dùng `switch` hoặc object allowlist rõ ràng.
+
+```javascript
+function executeToolCommand(command) {
+  const allowedTools = ['summarize_sheet', 'create_email_draft', 'create_doc', 'answer_only'];
+  if (!allowedTools.includes(command.tool)) {
+    throw new Error('Tool not allowed: ' + command.tool);
+  }
+
+  if (command.needsConfirmation === true && command.tool !== 'answer_only') {
+    return { ok: false, needsConfirmation: true, command: command };
+  }
+
+  switch (command.tool) {
+    case 'summarize_sheet':
+      return summarizeSheetTool(command.args);
+    case 'create_email_draft':
+      return createEmailDraftTool(command.args);
+    case 'create_doc':
+      return createDocTool(command.args);
+    case 'answer_only':
+      return { ok: true, text: command.args.message || '' };
+    default:
+      throw new Error('Tool not implemented: ' + command.tool);
+  }
+}
+```
+
+Với hành động nhạy cảm như gửi email thật, xóa dữ liệu hoặc chia sẻ Drive file, hãy bắt buộc confirmation thủ công. Tạo Gmail draft thường an toàn hơn gửi email.
+
+## Ví dụ tool tạo Gmail draft
+
+Tool cụ thể phải tự validate args, không dựa vào AI.
+
+```javascript
+function createEmailDraftTool(args) {
+  const to = String(args.to || '').trim();
+  const subject = String(args.subject || '').trim().slice(0, 150);
+  const body = String(args.body || '').trim();
+
+  if (!to.includes('@')) throw new Error('Invalid email');
+  if (!subject) throw new Error('Missing subject');
+  if (!body || body.length < 20) throw new Error('Missing body');
+
+  GmailApp.createDraft(to, subject, body);
+  return { ok: true, tool: 'create_email_draft', to: to, subject: subject };
+}
+```
+
+AI có thể đề xuất body, nhưng Apps Script vẫn kiểm tra độ dài, email và trạng thái. Với production, bạn có thể chỉ cho phép domain nội bộ hoặc whitelist người nhận.
+
+## Lỗi thường gặp với tool-use
+
+- Tin lệnh AI mà không validate tool và args.
+- Cho AI chọn email người nhận mà không kiểm tra whitelist.
+- Cho phép tool nguy hiểm như xóa sheet, xóa file hoặc gửi email thật.
+- Không ghi audit log tool call.
+- Không có bước confirmation cho hành động có side effect.
+- Không có tool `answer_only`, khiến AI cố ép mọi yêu cầu thành hành động.
+
+## Bài tập thực hành
+
+Thiết kế 3 tool an toàn cho trợ lý Workspace: `summarize_feedback`, `create_doc_summary`, `create_email_draft`. Viết prompt router, parser JSON và validator kiểm tra tool name, args bắt buộc. Với `create_email_draft`, chỉ tạo draft và trả kết quả, không gửi email thật.
+
+## Câu hỏi thường gặp về function calling
+
+### Apps Script có hỗ trợ function calling native không?
+
+Tùy provider AI. Nhưng bạn luôn có thể dùng JSON command pattern ở cấp ứng dụng. Đây là cách dễ học và hoạt động với nhiều provider.
+
+### Có nên để AI xóa dữ liệu không?
+
+Không nên trong giai đoạn đầu. Tool có side effect mạnh như xóa, chia sẻ hoặc gửi email thật cần confirmation, audit log và quyền hạn chế.
+
+### Tool-use khác prompt thường thế nào?
+
+Prompt thường trả text cho người đọc. Tool-use trả lệnh có cấu trúc để hệ thống thực thi có kiểm soát. Vì vậy tool-use cần validation code nghiêm ngặt hơn.
+
+### Có cần lưu command AI không?
+
+Nên lưu metadata như user, tool, thời gian, status và args đã rút gọn. Không nhất thiết lưu toàn bộ prompt nếu chứa dữ liệu nhạy cảm.
+
+## Tóm tắt và bước tiếp theo
+
+Function calling giúp AI Apps Script trở thành trợ lý hành động, nhưng Apps Script phải giữ quyền quyết định cuối cùng bằng allowlist, validation và confirmation. Bài tiếp theo xây RAG đơn giản bằng Google Sheets để trợ lý trả lời dựa trên knowledge base thay vì chỉ dựa vào prompt người dùng.

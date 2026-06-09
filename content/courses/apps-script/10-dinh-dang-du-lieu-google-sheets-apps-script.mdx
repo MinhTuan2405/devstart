@@ -1,0 +1,176 @@
+---
+title: "Định dạng dữ liệu Google Sheets bằng Apps Script"
+description: "Học cách dùng Apps Script để định dạng tiêu đề, màu nền, số tiền và độ rộng cột trong Google Sheets."
+slug: "dinh-dang-du-lieu-google-sheets-apps-script"
+course: "apps-script"
+order: 10
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["định dạng Google Sheets Apps Script", "setBackground Apps Script", "setNumberFormat Apps Script", "format sheet Apps Script", "SpreadsheetApp định dạng"]
+publishedAt: "2026-06-09"
+---
+
+## Định dạng Google Sheets bằng Apps Script để làm gì?
+
+Định dạng Google Sheets bằng Apps Script giúp báo cáo tự động dễ đọc hơn: tiêu đề nổi bật, số tiền đúng định dạng, cột vừa nội dung và dữ liệu quan trọng có màu riêng. Đây là bước cần thiết khi bạn tạo báo cáo định kỳ thay vì chỉ ghi dữ liệu thô.
+
+Một automation tốt không chỉ đúng về dữ liệu mà còn tạo kết quả người dùng có thể đọc ngay. Nếu báo cáo mỗi sáng vẫn cần người dùng tự tô màu header, chỉnh cột tiền, căn giữa tiêu đề, thì automation chưa hoàn chỉnh. Apps Script có thể làm các bước này ổn định và lặp lại được.
+
+## Mô hình định dạng trong Apps Script
+
+Hầu hết thao tác định dạng được gọi trên `Range`. Bạn chọn vùng cần định dạng, sau đó gọi các phương thức như `setBackground`, `setFontWeight`, `setFontColor`, `setNumberFormat`, `setHorizontalAlignment`. Nhiều phương thức trả lại chính range đó, nên bạn có thể chain nhiều lệnh.
+
+```javascript
+function formatHeaderRow() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const lastColumn = sheet.getLastColumn();
+
+  sheet.getRange(1, 1, 1, lastColumn)
+    .setBackground('#1d4ed8')
+    .setFontColor('#ffffff')
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center');
+}
+```
+
+Pattern này thường được gọi sau khi bạn ghi báo cáo bằng `setValues()`. Dòng 1 là header, số cột lấy từ `getLastColumn()` để tự thích nghi khi báo cáo có thêm cột.
+
+## Định dạng số tiền và ngày tháng
+
+Với báo cáo bán hàng, số tiền và ngày tháng cần format đúng để người đọc không phải tự chỉnh lại. `setNumberFormat()` chỉ đổi cách hiển thị, không đổi giá trị gốc trong ô.
+
+```javascript
+function formatSalesReport() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow < 2) {
+    Logger.log('No data rows to format');
+    return;
+  }
+
+  sheet.getRange(2, 1, lastRow - 1, 1).setNumberFormat('dd/mm/yyyy');
+  sheet.getRange(2, 4, lastRow - 1, 1).setNumberFormat('#,##0');
+  sheet.autoResizeColumns(1, sheet.getLastColumn());
+}
+```
+
+Trong ví dụ này, cột A là ngày, cột D là doanh thu. Bạn có thể đổi vị trí cột theo bảng thật. Nếu dữ liệu trong ô là chuỗi thay vì Date hoặc number, định dạng có thể không hoạt động như mong muốn.
+
+## Tô màu theo điều kiện đơn giản
+
+Với logic đơn giản, bạn có thể đọc dữ liệu và tô màu từng dòng cần chú ý. Ví dụ cột `Status` là `pending` thì tô vàng cả dòng để người dùng dễ nhận ra.
+
+```javascript
+function highlightPendingOrders() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow < 2) return;
+
+  const statuses = sheet.getRange(2, 5, lastRow - 1, 1).getValues();
+
+  statuses.forEach((row, index) => {
+    if (row[0] === 'pending') {
+      sheet.getRange(index + 2, 1, 1, 5).setBackground('#fef3c7');
+    }
+  });
+}
+```
+
+Với dữ liệu nhỏ, cách này dễ hiểu. Với dữ liệu lớn, gọi `setBackground()` trong vòng lặp có thể chậm. Khi cần định dạng theo điều kiện trên bảng lớn, bạn nên tìm hiểu conditional formatting rule hoặc gom thao tác theo vùng.
+
+## Tạo báo cáo có cả dữ liệu và format
+
+Trong thực tế, bạn thường viết dữ liệu và định dạng trong cùng một workflow. Có thể tách thành hai function: một function ghi dữ liệu, một function format báo cáo. Cách tách này giúp code dễ bảo trì.
+
+```javascript
+function buildSimpleReport() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Report');
+  const rows = [
+    ['Date', 'Metric', 'Value'],
+    [new Date(), 'Leads', 18],
+    [new Date(), 'Orders', 7],
+    [new Date(), 'Revenue', 3500000],
+  ];
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+  formatSimpleReport(sheet);
+}
+
+function formatSimpleReport(sheet) {
+  sheet.getRange('A1:C1')
+    .setFontWeight('bold')
+    .setBackground('#0f172a')
+    .setFontColor('#ffffff');
+
+  sheet.getRange('A2:A4').setNumberFormat('dd/mm/yyyy');
+  sheet.getRange('C2:C4').setNumberFormat('#,##0');
+  sheet.autoResizeColumns(1, 3);
+}
+```
+
+Đây là một pattern thực tế: function chính điều phối, function phụ lo định dạng. Sau này bạn có thể tái sử dụng `formatSimpleReport` cho báo cáo khác có cùng cấu trúc.
+
+## Một số phương thức định dạng hay dùng
+
+- `setBackground(color)` đổi màu nền một range.
+- `setFontColor(color)` đổi màu chữ.
+- `setFontWeight('bold')` in đậm.
+- `setHorizontalAlignment('center')` căn giữa ngang.
+- `setNumberFormat(format)` định dạng số, ngày, tiền.
+- `autoResizeColumn(column)` hoặc `autoResizeColumns(startColumn, numColumns)` tự co giãn cột.
+- `setWrap(true)` bật xuống dòng trong ô.
+
+Mã màu nên dùng dạng hex như `#1d4ed8`. Hãy giữ bảng màu nhất quán để báo cáo nhìn chuyên nghiệp hơn.
+
+## Lỗi thường gặp khi định dạng sheet
+
+- Dùng `clear()` trước khi ghi báo cáo rồi làm mất format, validation và note.
+- Gọi format từng ô trong bảng lớn khiến script chậm.
+- Chọn sai cột khi định dạng ngày hoặc tiền.
+- Quên kiểm tra `lastRow < 2` trước khi format vùng dữ liệu.
+- Dùng mã màu không hợp lệ hoặc thiếu dấu `#`.
+- Định dạng số nhưng dữ liệu trong ô đang là chuỗi.
+
+## Bài tập thực hành
+
+Tạo sheet `Sales` có cột `Date`, `Customer`, `Status`, `Amount`. Viết function định dạng header màu xanh, format cột ngày, format cột tiền và tô màu vàng cho dòng có `Status` là `pending`.
+
+```javascript
+function practiceFormatSales() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sales');
+
+  if (!sheet) {
+    Logger.log('Sheet Sales not found');
+    return;
+  }
+
+  sheet.getRange('A1:D1').setFontWeight('bold');
+}
+```
+
+Hoàn thiện function bằng các phương thức `setBackground`, `setNumberFormat`, `autoResizeColumns` và logic tô màu theo status.
+
+## Câu hỏi thường gặp về format Sheets
+
+### setNumberFormat có đổi giá trị không?
+
+Không. Nó chỉ đổi cách hiển thị. Giá trị gốc trong ô vẫn là số hoặc ngày. Vì vậy bạn vẫn có thể dùng dữ liệu đó để tính toán.
+
+### Có thể tự động co cột không?
+
+Có. Dùng `autoResizeColumn(columnPosition)` cho một cột hoặc `autoResizeColumns(startColumn, numColumns)` cho nhiều cột liên tiếp.
+
+### Có nên format trong cùng function ghi dữ liệu không?
+
+Có thể. Nhưng nếu báo cáo lớn, tách thành `writeReport()` và `formatReport()` sẽ dễ bảo trì hơn, nhất là khi bạn cần thay đổi giao diện mà không đụng logic dữ liệu.
+
+### Định dạng có bị mất khi ghi lại dữ liệu không?
+
+Nếu bạn dùng `clearContents()` rồi `setValues()`, định dạng thường vẫn giữ. Nếu dùng `clear()`, định dạng có thể bị xóa. Hãy chọn phương thức xóa phù hợp.
+
+## Tóm tắt
+
+Định dạng giúp automation tạo ra kết quả dùng được ngay, không chỉ dữ liệu thô. Bạn đã học cách format header, số tiền, ngày tháng, tự co cột và tô màu theo điều kiện đơn giản. Bài tiếp theo sẽ học data validation và dropdown để kiểm soát dữ liệu nhập vào Google Sheets.

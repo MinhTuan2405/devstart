@@ -1,0 +1,171 @@
+---
+title: "AI webhook với doPost trong Apps Script"
+description: "Học cách tạo endpoint doPost nhận dữ liệu, gọi AI và trả JSON cho hệ thống ngoài bằng Apps Script."
+slug: "ai-webhook-dopost-apps-script"
+course: "ai-apps-script"
+order: 27
+duration: "23 phút"
+difficulty: "Trung bình"
+keywords: ["AI webhook Apps Script", "doPost AI Apps Script", "Apps Script AI API", "ContentService AI", "webhook Google Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## AI webhook trong Apps Script là gì?
+
+AI webhook với `doPost` là Apps Script web app nhận HTTP POST từ hệ thống ngoài, parse JSON, gọi AI để xử lý dữ liệu và trả JSON response. Ví dụ: một form ngoài gửi feedback, Apps Script phân loại sentiment bằng AI, rồi trả tag để hệ thống nguồn lưu lại.
+
+Webhook khác với HtmlService chat ở chỗ không có giao diện người dùng. Client có thể là website, Zapier, Make, CRM, backend nội bộ hoặc một script khác. Vì endpoint có thể bị gọi tự động, bạn phải validate payload, kiểm tra token, giới hạn input và log lỗi cẩn thận.
+
+## Mental model: endpoint nhỏ, contract rõ
+
+Một webhook tốt nên có contract đơn giản. Request gồm token và dữ liệu cần xử lý. Response luôn là JSON có `ok`, `result` hoặc `error`. Apps Script web app không linh hoạt status code như backend đầy đủ, nên field `ok` rất quan trọng để client biết request thành công hay thất bại.
+
+Contract ví dụ:
+
+```json
+{
+  "token": "shared-secret",
+  "message": "The app is useful but billing is confusing"
+}
+```
+
+Response thành công:
+
+```json
+{
+  "ok": true,
+  "result": { "sentiment": "negative", "tag": "billing" }
+}
+```
+
+Response lỗi:
+
+```json
+{
+  "ok": false,
+  "error": "Missing message"
+}
+```
+
+## doPost nhận JSON và trả response
+
+`doPost(e)` nhận event object. Nội dung POST thường nằm ở `e.postData.contents`. Bạn nên bọc toàn bộ bằng `try/catch` để luôn trả JSON.
+
+```javascript
+function doPost(e) {
+  const startedAt = Date.now();
+
+  try {
+    const body = parseJsonBody(e);
+    verifyWebhookToken(body.token);
+
+    const result = classifyWebhookMessage(body.message);
+    logWebhookRequest('feedback_classify', 'success', Date.now() - startedAt);
+
+    return jsonResponse({ ok: true, result: result });
+  } catch (error) {
+    console.error({ message: 'Webhook failed', error: error.message });
+    logWebhookRequest('feedback_classify', 'error', Date.now() - startedAt);
+    return jsonResponse({ ok: false, error: error.message });
+  }
+}
+```
+
+Không trả stack trace, API key hoặc prompt đầy đủ trong response lỗi. Client chỉ cần lỗi ngắn để xử lý.
+
+## Helper parse JSON, token và response
+
+Token đơn giản trong payload đủ cho prototype. Với production, bạn nên dùng auth mạnh hơn hoặc proxy/backend riêng.
+
+```javascript
+function parseJsonBody(e) {
+  if (!e || !e.postData || !e.postData.contents) {
+    throw new Error('Missing request body');
+  }
+  return JSON.parse(e.postData.contents);
+}
+
+function verifyWebhookToken(token) {
+  const expected = PropertiesService.getScriptProperties().getProperty('WEBHOOK_TOKEN');
+  if (!expected) throw new Error('Webhook token is not configured');
+  if (token !== expected) throw new Error('Invalid token');
+}
+
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+Apps Script web app có một số giới hạn khi làm việc với header so với backend truyền thống. Vì vậy token trong payload là cách dễ học nhất, dù không phải giải pháp bảo mật mạnh nhất.
+
+## Xử lý message bằng AI
+
+Handler nghiệp vụ nên tách khỏi `doPost` để dễ test. Nó validate message, gọi prompt classification đã học ở bài sentiment và parse output.
+
+```javascript
+function classifyWebhookMessage(message) {
+  const text = String(message || '').trim();
+  if (!text) throw new Error('Missing message');
+  if (text.length > 2000) throw new Error('Message is too long');
+
+  const raw = generateAiText(buildFeedbackClassifyPrompt(text), { temperature: 0 });
+  return parseFeedbackClassification(raw);
+}
+
+function logWebhookRequest(jobName, status, durationMs) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('WebhookLog');
+  if (!sheet) return;
+  sheet.appendRow([new Date(), jobName, status, durationMs]);
+}
+```
+
+Log chỉ ghi metadata. Nếu cần lưu message gốc để audit, hãy ẩn danh hoặc hạn chế quyền sheet log.
+
+## Test webhook từ bên ngoài
+
+Sau khi deploy web app, bạn có thể test bằng `curl`. URL thật lấy từ Apps Script deployment.
+
+```bash
+curl -X POST "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec" \
+  -H "Content-Type: application/json" \
+  -d '{"token":"shared-secret","message":"Great product but billing failed twice"}'
+```
+
+Khi test, hãy dùng token riêng cho dev. Nếu token bị lộ, đổi trong Script Properties và redeploy nếu cần.
+
+## Lỗi thường gặp với AI webhook
+
+- Không validate JSON body, làm endpoint lỗi khó hiểu khi client gửi sai format.
+- Public endpoint bị abuse gọi AI tốn tiền vì không có token hoặc rate limit.
+- Không giới hạn input dài, khiến prompt quá lớn.
+- Không có timeout, retry hoặc cơ chế queue cho tác vụ lâu.
+- Không ghi log source request, status và duration.
+- Trả lỗi chứa dữ liệu nhạy cảm hoặc secret.
+
+## Bài tập thực hành
+
+Tạo endpoint `doPost` nhận JSON gồm `token` và `message`, trả `{ ok, result }` với sentiment và tag. Lưu `WEBHOOK_TOKEN` trong Script Properties, kiểm tra token trước khi gọi AI, giới hạn message 2.000 ký tự và ghi log vào sheet `WebhookLog`.
+
+## Câu hỏi thường gặp về AI webhook
+
+### Apps Script có làm API production được không?
+
+Phù hợp prototype, nội bộ nhỏ và automation đơn giản. Production lớn cần backend chuyên dụng hơn để có auth, rate limiting, status code, observability và retry tốt hơn.
+
+### Có đọc header trong doPost được không?
+
+Apps Script web app có giới hạn so với backend đầy đủ. Với bài học này, token trong payload dễ kiểm soát hơn. Nếu cần header auth chuẩn, cân nhắc Cloud Run proxy.
+
+### Có nên gọi AI đồng bộ trong webhook không?
+
+Nếu client cần kết quả ngay và tác vụ ngắn, có thể gọi đồng bộ. Nếu tác vụ lâu hoặc dễ timeout, hãy ghi job vào sheet/queue và xử lý bằng trigger, rồi cho client kiểm tra kết quả sau.
+
+### Làm sao tránh webhook bị gọi quá nhiều?
+
+Bắt đầu bằng token, giới hạn input và log request. Nâng cao hơn có thể lưu count theo ngày/user trong PropertiesService hoặc đưa endpoint sau proxy có rate limit.
+
+## Tóm tắt và bước tiếp theo
+
+AI webhook biến Apps Script thành endpoint xử lý ngôn ngữ đơn giản, nhưng phải có contract JSON, token, validation và log. Bài tiếp theo học tích hợp OpenAI bằng `UrlFetchApp`, để project có thể dùng nhiều AI provider thay vì chỉ một lựa chọn.

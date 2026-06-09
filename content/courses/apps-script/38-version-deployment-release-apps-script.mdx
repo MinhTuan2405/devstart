@@ -1,0 +1,164 @@
+---
+title: "Version, deployment và release trong Apps Script"
+description: "Học cách quản lý version, deployment và quy trình release web app hoặc add-on trong Apps Script."
+slug: "version-deployment-release-apps-script"
+course: "apps-script"
+order: 38
+duration: "22 phút"
+difficulty: "Khó"
+keywords: ["version Apps Script", "deployment Apps Script", "release Apps Script", "Apps Script web app version", "quản lý phát hành Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Trong Apps Script, version là snapshot bất biến của code tại một thời điểm, deployment là bản phát hành trỏ đến một version, còn release là quy trình đưa thay đổi đến người dùng một cách có kiểm soát. Hiểu ba khái niệm này giúp bạn test, rollback và tránh làm hỏng web app đang chạy thật.
+
+## Version và deployment khác nhau thế nào?
+
+Version giống ảnh chụp code. Khi tạo version, Apps Script lưu trạng thái project tại thời điểm đó. Bạn không sửa trực tiếp version cũ. Nếu muốn thay đổi, bạn sửa code hiện tại rồi tạo version mới.
+
+Deployment giống một cổng sử dụng. Web app URL `/exec`, add-on hoặc API executable deployment sẽ trỏ đến một version cụ thể. Khi cập nhật deployment từ version 1 sang version 2, người dùng đang dùng URL đó bắt đầu chạy code mới.
+
+Release là quy trình xung quanh việc cập nhật deployment: test, ghi chú thay đổi, xác nhận quyền, cập nhật version, theo dõi lỗi và có phương án rollback. Với script cá nhân, release có thể đơn giản. Với web app nội bộ có người dùng, release tùy tiện là nguồn lỗi rất phổ biến.
+
+## Vì sao không nên deploy tùy tiện?
+
+Apps Script thường kết nối trực tiếp với dữ liệu thật: Google Sheets, Gmail, Drive, Calendar. Một thay đổi nhỏ trong code có thể ghi sai dòng, gửi nhầm email hoặc làm trigger hằng ngày thất bại. Nếu không biết deployment đang chạy version nào, bạn sẽ khó debug khi người dùng báo lỗi.
+
+Quy trình tối thiểu nên là:
+
+- Test code mới bằng editor hoặc URL `/dev`.
+- Cập nhật biến version hoặc changelog.
+- Tạo version mới với mô tả rõ.
+- Cập nhật deployment chính thức sang version đó.
+- Test lại URL `/exec` bằng tài khoản người dùng thật.
+- Theo dõi execution log sau release.
+
+## Thêm version vào response để dễ kiểm tra
+
+Một cách rất thực dụng là cho web app trả version hiện tại. Khi người dùng báo lỗi, bạn có thể yêu cầu họ mở endpoint status và biết ngay deployment đang chạy bản nào.
+
+```javascript
+const APP_NAME = 'lead-tracker';
+const APP_VERSION = '1.2.0';
+
+function doGet(e) {
+  const action = e.parameter.action || 'home';
+
+  if (action === 'status') {
+    return jsonResponse({
+      ok: true,
+      app: APP_NAME,
+      version: APP_VERSION,
+      time: new Date().toISOString(),
+    });
+  }
+
+  return HtmlService.createHtmlOutput('<h1>Lead tracker</h1>');
+}
+
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+Khi chuẩn bị release, đổi `APP_VERSION`, test `/dev?action=status`, tạo version mới, rồi cập nhật deployment. Sau đó mở `/exec?action=status` để chắc chắn bản chính thức đã đổi.
+
+## Ghi changelog trong Google Sheets
+
+Với tool nội bộ, một sheet `ReleaseLog` là đủ để ghi version, người release, ghi chú và thời gian. Điều này giúp team không phải đoán thay đổi nào đã lên production.
+
+```javascript
+function writeReleaseLog(version, note) {
+  const sheet = getOrCreateSheet('ReleaseLog');
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['ReleasedAt', 'Version', 'User', 'Note']);
+  }
+
+  sheet.appendRow([
+    new Date(),
+    version,
+    Session.getActiveUser().getEmail() || 'unknown',
+    note,
+  ]);
+}
+
+function getOrCreateSheet(name) {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  return spreadsheet.getSheetByName(name) || spreadsheet.insertSheet(name);
+}
+```
+
+Bạn có thể chạy `writeReleaseLog('1.2.0', 'Add email validation')` trước hoặc sau khi cập nhật deployment. Quan trọng là changelog phải đủ rõ để rollback hoặc điều tra lỗi.
+
+## Kiểm tra cấu hình trước khi release
+
+Nhiều lỗi production không đến từ logic chính mà đến từ cấu hình thiếu: sheet chưa tồn tại, property chưa set, admin email rỗng, secret sai. Trước release, tạo function kiểm tra nhanh.
+
+```javascript
+function validateReleaseConfig() {
+  const requiredSheets = ['Leads', 'ErrorLog', 'ReleaseLog'];
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const missingSheets = requiredSheets.filter(function(name) {
+    return !spreadsheet.getSheetByName(name);
+  });
+
+  const props = PropertiesService.getScriptProperties();
+  const missingProps = ['ADMIN_EMAIL', 'WEBHOOK_SECRET'].filter(function(key) {
+    return !props.getProperty(key);
+  });
+
+  if (missingSheets.length || missingProps.length) {
+    throw new Error('Missing sheets: ' + missingSheets.join(', ') +
+      '; missing props: ' + missingProps.join(', '));
+  }
+
+  Logger.log('Release config is valid');
+}
+```
+
+Function này không thay thế test end-to-end, nhưng giúp bắt lỗi đơn giản trước khi người dùng gặp.
+
+## Rollback nên chuẩn bị từ trước
+
+Rollback nghĩa là đưa deployment chính thức về version cũ đang ổn định. Bạn chỉ rollback nhanh nếu biết version nào ổn, có changelog và không xóa deployment quan trọng. Nếu release mới thay đổi cấu trúc sheet hoặc dữ liệu, rollback code có thể chưa đủ; bạn cần nghĩ thêm về dữ liệu đã bị migrate.
+
+Nguyên tắc an toàn là không trộn quá nhiều thay đổi không liên quan trong một release. Nếu vừa đổi web app, vừa đổi trigger, vừa đổi schema sheet, khi lỗi xảy ra bạn sẽ khó biết phần nào gây vấn đề.
+
+## Lỗi thường gặp khi release Apps Script
+
+- Sửa code nhưng quên cập nhật deployment chính thức.
+- Test `/dev` thành công nhưng `/exec` vẫn chạy version cũ.
+- Không ghi version trong response hoặc changelog.
+- Test bằng owner nhưng người dùng thật lỗi OAuth hoặc quyền sheet.
+- Xóa version/deployment cũ làm rollback khó hơn.
+- Release thay đổi schema sheet mà không có kế hoạch dữ liệu.
+- Không theo dõi execution log sau khi release.
+
+## Bài tập thực hành
+
+Tạo web app trả JSON status gồm `version` và `time`. Deploy bản `1.0.0`. Sau đó đổi version thành `1.1.0`, thêm function `writeReleaseLog`, test bằng `/dev`, tạo version mới và cập nhật deployment chính thức. Cuối cùng mở `/exec?action=status` để xác nhận version production đã đổi và ghi changelog vào sheet.
+
+## Câu hỏi thường gặp về version và deployment
+
+### Version có sửa được không?
+
+Không. Version là snapshot bất biến. Muốn thay đổi, bạn sửa code hiện tại và tạo version mới.
+
+### Test deployment có ảnh hưởng production không?
+
+Không trực tiếp. Test deployment hoặc URL `/dev` giúp bạn chạy code mới nhất trước khi cập nhật deployment chính thức. Nhưng vẫn cần cẩn thận vì code test có thể ghi vào dữ liệu thật nếu dùng cùng spreadsheet.
+
+### Có nên tạo version cho mọi thay đổi nhỏ không?
+
+Nếu thay đổi chỉ đang thử local hoặc `/dev`, chưa cần. Nếu thay đổi được phát hành cho người dùng hoặc trigger production, nên tạo version để rollback và audit.
+
+### Rollback có khôi phục dữ liệu bị ghi sai không?
+
+Không. Rollback chỉ đổi code chạy. Nếu release đã ghi sai dữ liệu, bạn cần kế hoạch sửa dữ liệu riêng hoặc backup.
+
+## Tóm tắt và bước tiếp theo
+
+Version, deployment và release giúp Apps Script bớt rủi ro khi có người dùng thật. Hãy gắn version vào response, ghi changelog, test bằng `/dev` và `/exec`, đồng thời chuẩn bị rollback. Bài tiếp theo sẽ học Apps Script libraries để tái sử dụng code có version giữa nhiều project.

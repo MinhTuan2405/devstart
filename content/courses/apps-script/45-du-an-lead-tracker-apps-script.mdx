@@ -1,0 +1,294 @@
+---
+title: "Dự án thực hành Apps Script: Lead tracker tự động"
+description: "Xây dựng dự án tổng hợp Apps Script với web app nhận lead, Google Sheets lưu dữ liệu, email xác nhận và báo cáo hằng ngày."
+slug: "du-an-lead-tracker-apps-script"
+course: "apps-script"
+order: 45
+duration: "30 phút"
+difficulty: "Khó"
+keywords: ["dự án Apps Script", "lead tracker Apps Script", "web app Google Sheets", "Apps Script capstone", "tự động hóa lead bằng Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Dự án lead tracker là bài tổng hợp để bạn xây một hệ thống Apps Script nhỏ nhưng thực tế: web app nhận lead qua `doPost`, Google Sheets lưu dữ liệu, `MailApp` gửi email xác nhận, trigger gửi báo cáo hằng ngày, và error handling ghi log khi automation thất bại.
+
+## Lead tracker Apps Script gồm những phần nào?
+
+Mục tiêu dự án là biến một spreadsheet thành backend nhẹ cho team marketing hoặc sales. Bên ngoài gửi JSON lead vào web app. Apps Script validate dữ liệu, ghi vào sheet `Leads`, gửi email xác nhận cho lead, ghi lỗi vào `ErrorLog` nếu có vấn đề, và mỗi ngày gửi báo cáo tổng hợp cho admin.
+
+Mental model của dự án gồm năm lớp:
+
+- Web endpoint: `doPost(e)` nhận request.
+- Data layer: helper đọc ghi Google Sheets.
+- Notification layer: gửi email xác nhận và báo cáo.
+- Config layer: `PropertiesService` lưu admin email, secret, sender name.
+- Operations layer: logging, retry, trigger và release version.
+
+Đây không phải CRM hoàn chỉnh. Nó là capstone để bạn luyện cách ghép các kỹ năng Apps Script thành một automation có thể dùng thật ở quy mô nhỏ.
+
+## Chuẩn bị sheet và cấu hình
+
+Tạo spreadsheet mới, mở Apps Script từ spreadsheet đó, rồi chạy setup một lần. Function setup tạo hai sheet cần thiết và header nhất quán.
+
+```javascript
+function setupLeadTracker() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const leads = getOrCreateSheet_(spreadsheet, 'Leads');
+  const errors = getOrCreateSheet_(spreadsheet, 'ErrorLog');
+
+  leads.clearContents();
+  leads.getRange(1, 1, 1, 8).setValues([[
+    'CreatedAt', 'Name', 'Email', 'Phone', 'Source', 'Status', 'Score', 'ConfirmedAt'
+  ]]);
+
+  errors.clearContents();
+  errors.getRange(1, 1, 1, 4).setValues([[
+    'Time', 'Job', 'Message', 'Context'
+  ]]);
+
+  PropertiesService.getScriptProperties().setProperties({
+    ADMIN_EMAIL: 'admin@example.com',
+    WEBHOOK_SECRET: 'change-this-secret',
+  }, true);
+}
+
+function getOrCreateSheet_(spreadsheet, name) {
+  return spreadsheet.getSheetByName(name) || spreadsheet.insertSheet(name);
+}
+```
+
+Trong dự án thật, đừng để `WEBHOOK_SECRET` là giá trị mẫu. Hãy đổi bằng chuỗi khó đoán và không commit vào git nếu bạn quản lý code bằng clasp.
+
+## Nhận lead bằng doPost
+
+Endpoint chính nhận JSON. Code phải xử lý lỗi parse, kiểm tra secret, validate dữ liệu và trả JSON ổn định cho client. Dù client đã validate form, server vẫn phải validate lại.
+
+```javascript
+function doPost(e) {
+  try {
+    const payload = parseJsonBody_(e);
+    assertSecret_(payload.secret);
+
+    const lead = normalizeLead_(payload);
+    validateLead_(lead);
+    const savedLead = saveLead_(lead);
+    sendLeadConfirmation_(savedLead);
+
+    return jsonResponse_({ ok: true, data: savedLead });
+  } catch (error) {
+    logError_('doPost', error, { phase: 'receive-lead' });
+    return jsonResponse_({ ok: false, message: error.message });
+  }
+}
+
+function parseJsonBody_(e) {
+  if (!e.postData || !e.postData.contents) {
+    throw new Error('Missing request body');
+  }
+  return JSON.parse(e.postData.contents);
+}
+
+function assertSecret_(secret) {
+  const expected = PropertiesService.getScriptProperties().getProperty('WEBHOOK_SECRET');
+  if (!expected || secret !== expected) {
+    throw new Error('Invalid secret');
+  }
+}
+
+function jsonResponse_(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+Function `doPost` không nên chứa toàn bộ logic chi tiết. Nó là entry point, còn parse, validate, save và email được tách thành helper để dễ test và dễ đọc.
+
+## Validate, chấm điểm và lưu lead
+
+Tiếp theo là data layer. Ta chuẩn hóa email về chữ thường, đặt source mặc định, tính score đơn giản theo nguồn lead, rồi ghi một dòng vào sheet.
+
+```javascript
+function normalizeLead_(payload) {
+  return {
+    name: String(payload.name || '').trim(),
+    email: String(payload.email || '').trim().toLowerCase(),
+    phone: String(payload.phone || '').trim(),
+    source: String(payload.source || 'website').trim(),
+  };
+}
+
+function validateLead_(lead) {
+  if (!lead.name) {
+    throw new Error('Name is required');
+  }
+  if (!lead.email || lead.email.indexOf('@') === -1) {
+    throw new Error('Valid email is required');
+  }
+}
+
+function calculateScore_(lead) {
+  if (lead.source === 'event') return 90;
+  if (lead.source === 'referral') return 80;
+  if (lead.phone) return 70;
+  return 50;
+}
+
+function saveLead_(lead) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  if (!sheet) {
+    throw new Error('Sheet Leads not found');
+  }
+
+  const savedLead = Object.assign({}, lead, {
+    createdAt: new Date(),
+    status: 'new',
+    score: calculateScore_(lead),
+  });
+
+  sheet.appendRow([
+    savedLead.createdAt,
+    savedLead.name,
+    savedLead.email,
+    savedLead.phone,
+    savedLead.source,
+    savedLead.status,
+    savedLead.score,
+    '',
+  ]);
+
+  return {
+    email: savedLead.email,
+    status: savedLead.status,
+    score: savedLead.score,
+  };
+}
+```
+
+Nếu form có traffic cao hoặc có khả năng request đồng thời, bạn có thể bọc phần append bằng `LockService`. Với dự án nhỏ, `appendRow` đủ để bắt đầu, nhưng hãy nhớ bài performance và lock khi nâng cấp.
+
+## Gửi email xác nhận và ghi lỗi
+
+Email xác nhận nên ngắn gọn, không chứa thông tin nhạy cảm. Nếu gửi email lỗi, bạn cần log để biết vì sao lead đã lưu nhưng email chưa gửi.
+
+```javascript
+function sendLeadConfirmation_(lead) {
+  MailApp.sendEmail({
+    to: lead.email,
+    subject: 'We received your request',
+    body: 'Thanks. Our team will contact you soon. Lead score: ' + lead.score,
+  });
+}
+
+function logError_(jobName, error, context) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('ErrorLog');
+  if (!sheet) return;
+
+  sheet.appendRow([
+    new Date(),
+    jobName,
+    error.message,
+    JSON.stringify(context || {}),
+  ]);
+}
+```
+
+Trong bản production, bạn có thể quyết định: nếu email xác nhận lỗi thì endpoint có trả fail không, hay vẫn trả success vì lead đã lưu? Không có đáp án tuyệt đối. Với bài này, email lỗi làm request fail để bạn dễ quan sát.
+
+## Báo cáo hằng ngày bằng trigger
+
+Function báo cáo đọc sheet theo batch, đếm lead mới trong ngày và gửi cho admin. Bạn có thể tạo time-driven trigger chạy mỗi sáng.
+
+```javascript
+function sendDailyLeadReport() {
+  const props = PropertiesService.getScriptProperties();
+  const adminEmail = props.getProperty('ADMIN_EMAIL');
+  if (!adminEmail) {
+    throw new Error('ADMIN_EMAIL is not configured');
+  }
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  const values = sheet.getDataRange().getValues();
+  const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  let count = 0;
+
+  values.slice(1).forEach(function(row) {
+    const createdAt = row[0];
+    if (createdAt instanceof Date) {
+      const dateKey = Utilities.formatDate(createdAt, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+      if (dateKey === today) count++;
+    }
+  });
+
+  MailApp.sendEmail({
+    to: adminEmail,
+    subject: 'Daily lead report: ' + today,
+    body: 'New leads today: ' + count,
+  });
+}
+
+function createDailyReportTrigger() {
+  ScriptApp.newTrigger('sendDailyLeadReport')
+    .timeBased()
+    .everyDays(1)
+    .atHour(8)
+    .create();
+}
+```
+
+Chạy `createDailyReportTrigger` một lần. Đừng chạy nhiều lần nếu không kiểm tra trigger cũ, vì bạn có thể tạo nhiều trigger gửi trùng báo cáo.
+
+## Deploy và test end-to-end
+
+Trước khi deploy, chạy `setupLeadTracker`, đổi properties thật, kiểm tra scopes, rồi deploy web app. Với form bên ngoài, chọn quyền truy cập theo nhu cầu và bảo vệ bằng secret. Test bằng request JSON có đủ field.
+
+```javascript
+function buildSamplePayload() {
+  return {
+    secret: PropertiesService.getScriptProperties().getProperty('WEBHOOK_SECRET'),
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+    phone: '0900000000',
+    source: 'event',
+  };
+}
+```
+
+Bạn có thể dùng Postman hoặc một script khác để gửi payload đến URL `/exec`. Sau khi gửi, kiểm tra sheet `Leads`, inbox email test, sheet `ErrorLog` và execution log.
+
+## Lỗi thường gặp trong dự án lead tracker
+
+- Quên chạy setup nên thiếu sheet hoặc header.
+- Dùng secret mẫu hoặc để endpoint public không kiểm tra secret.
+- Quên deploy lại sau khi sửa code.
+- Test bằng `/dev` rồi tích hợp form ngoài với `/exec` cũ.
+- Tạo nhiều daily trigger trùng nhau.
+- Không validate email trước khi gửi MailApp.
+- Không ghi log lỗi nên không biết request nào thất bại.
+- Đọc ghi từng ô khi báo cáo dữ liệu lớn thay vì batch.
+
+## Bài tập thực hành
+
+Hoàn thiện lead tracker theo các bước trên. Sau khi chạy được happy path, thêm ba cải tiến: dùng `LockService` trong `saveLead_`, thêm field `utmCampaign`, và viết function `markLeadContacted(email)` cập nhật status từ `new` sang `contacted`. Cuối cùng deploy version mới và ghi changelog vào sheet `ReleaseLog`.
+
+## Câu hỏi thường gặp về dự án Apps Script này
+
+### Có thể dùng lead tracker này cho production không?
+
+Có thể dùng cho quy mô nhỏ hoặc nội bộ nếu bạn bảo vệ endpoint, kiểm soát quyền, test quota và có người theo dõi lỗi. Với traffic lớn hoặc dữ liệu nhạy cảm, nên cân nhắc backend chuyên dụng.
+
+### Có nên gửi email xác nhận ngay trong doPost không?
+
+Được với lượng request thấp. Nếu email nhiều hoặc API cần phản hồi rất nhanh, bạn có thể chỉ lưu lead rồi dùng trigger xử lý email theo batch.
+
+### Làm sao tránh lead trùng email?
+
+Trước khi append, đọc cột email hiện có bằng batch, kiểm tra email đã tồn tại chưa, rồi quyết định bỏ qua, cập nhật dòng cũ hoặc ghi bản mới với trạng thái duplicate.
+
+### Có thể thay Google Sheets bằng CRM thật không?
+
+Có. Bạn có thể thay `saveLead_` bằng hàm gọi CRM API qua `UrlFetchApp`, dùng retry và error handling từ bài trước. Sheet vẫn có thể làm log dự phòng.
+
+## Tóm tắt và hướng đi tiếp
+
+Dự án lead tracker kết hợp hầu hết kỹ năng Apps Script quan trọng: web app, JSON API, Sheets, MailApp, PropertiesService, trigger, logging, deploy và best practices. Sau bài này, hãy thử biến dự án thành nhu cầu thật của bạn: form đăng ký sự kiện, báo cáo nội bộ, đồng bộ CRM hoặc hệ thống cảnh báo tự động.

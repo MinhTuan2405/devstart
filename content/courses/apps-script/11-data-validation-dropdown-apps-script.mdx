@@ -1,0 +1,174 @@
+---
+title: "Tạo data validation và dropdown trong Sheets bằng Apps Script"
+description: "Học cách tạo dropdown, giới hạn số và đặt quy tắc nhập liệu trong Google Sheets bằng Apps Script."
+slug: "data-validation-dropdown-apps-script"
+course: "apps-script"
+order: 11
+duration: "19 phút"
+difficulty: "Dễ"
+keywords: ["data validation Apps Script", "dropdown Google Sheets Apps Script", "newDataValidation Apps Script", "requireValueInList Apps Script", "validate dữ liệu Sheets"]
+publishedAt: "2026-06-09"
+---
+
+## Data validation trong Apps Script là gì?
+
+Data validation là quy tắc kiểm soát dữ liệu người dùng nhập vào Google Sheets. Bằng Apps Script, bạn có thể tự động tạo dropdown trạng thái, giới hạn số trong khoảng, bắt buộc ngày hợp lệ hoặc hướng dẫn người dùng nhập đúng định dạng để automation phía sau ít lỗi hơn.
+
+Khi Sheets được dùng như một giao diện nhập liệu, dữ liệu sai là nguyên nhân làm script hỏng nhiều nhất. Ví dụ người dùng nhập `Done`, `done`, `xong`, `DONE` cho cùng một trạng thái; automation lọc `done` sẽ bỏ sót các dòng còn lại. Dropdown và validation giúp chuẩn hóa dữ liệu ngay từ lúc nhập.
+
+## Mô hình tạo validation rule
+
+Trong Apps Script, bạn không viết validation trực tiếp vào ô bằng chuỗi. Bạn dùng `SpreadsheetApp.newDataValidation()` để tạo builder, thêm điều kiện, thêm tùy chọn, gọi `build()` để tạo rule, rồi gán rule vào range bằng `setDataValidation()`.
+
+Luồng cần nhớ là: chọn range, tạo rule, build rule, áp dụng rule. Range có thể là một cột, một vùng nhập liệu hoặc một ô cấu hình.
+
+```javascript
+function createStatusDropdown() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const range = sheet.getRange('D2:D100');
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['new', 'processing', 'done'], true)
+    .setAllowInvalid(false)
+    .setHelpText('Choose a valid status')
+    .build();
+
+  range.setDataValidation(rule);
+}
+```
+
+Tham số `true` trong `requireValueInList` hiển thị dropdown trong ô. `setAllowInvalid(false)` chặn giá trị ngoài danh sách. `setHelpText()` hiển thị hướng dẫn khi người dùng chọn ô.
+
+## Giới hạn số trong một khoảng
+
+Validation không chỉ dành cho dropdown. Bạn có thể yêu cầu người dùng nhập số trong một khoảng, phù hợp cho điểm số, mức ưu tiên, phần trăm hoàn thành hoặc số lượng.
+
+```javascript
+function createScoreValidation() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const range = sheet.getRange('E2:E100');
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireNumberBetween(1, 100)
+    .setAllowInvalid(false)
+    .setHelpText('Score must be from 1 to 100')
+    .build();
+
+  range.setDataValidation(rule);
+}
+```
+
+Nếu người dùng nhập `150`, Sheets sẽ từ chối hoặc cảnh báo tùy theo `setAllowInvalid`. Với automation, nên dùng `false` cho các cột quan trọng để dữ liệu sai không đi tiếp vào quy trình.
+
+## Tạo dropdown từ một range cấu hình
+
+Với danh sách có thể thay đổi, không nên hard-code trực tiếp trong code. Bạn có thể tạo sheet `Config`, đặt danh sách trạng thái ở `A2:A`, rồi dùng `requireValueInRange()`.
+
+```javascript
+function createDropdownFromConfig() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const taskSheet = spreadsheet.getSheetByName('Tasks');
+  const configSheet = spreadsheet.getSheetByName('Config');
+
+  if (!taskSheet || !configSheet) {
+    Logger.log('Missing Tasks or Config sheet');
+    return;
+  }
+
+  const listRange = configSheet.getRange('A2:A5');
+  const inputRange = taskSheet.getRange('C2:C200');
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireValueInRange(listRange, true)
+    .setAllowInvalid(false)
+    .build();
+
+  inputRange.setDataValidation(rule);
+}
+```
+
+Cách này giúp người quản lý chỉ cần sửa danh sách trong sheet `Config`, không cần mở Apps Script editor. Đây là thiết kế tốt cho file dùng lâu dài.
+
+## Xóa hoặc cập nhật validation
+
+Khi quy trình thay đổi, bạn có thể xóa validation cũ bằng `clearDataValidations()` rồi áp dụng rule mới. Hãy phân biệt xóa validation với xóa dữ liệu.
+
+```javascript
+function resetTaskValidations() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Tasks');
+
+  if (!sheet) return;
+
+  sheet.getRange('C2:D200').clearDataValidations();
+  createTaskValidations(sheet);
+}
+
+function createTaskValidations(sheet) {
+  const statusRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['todo', 'doing', 'done'], true)
+    .setAllowInvalid(false)
+    .build();
+
+  sheet.getRange('C2:C200').setDataValidation(statusRule);
+}
+```
+
+Không dùng `clear()` nếu bạn chỉ muốn xóa validation, vì `clear()` có thể xóa cả dữ liệu, định dạng và ghi chú.
+
+## Data validation không thay thế kiểm tra trong code
+
+Validation giúp giảm lỗi nhập liệu, nhưng automation vẫn nên kiểm tra dữ liệu trước khi gửi email, ghi báo cáo hoặc gọi API. Người dùng có thể copy dữ liệu từ nơi khác, sheet có thể có dữ liệu cũ trước khi validation được áp dụng, hoặc rule có thể bị xóa.
+
+Vì vậy, trước khi xử lý dòng quan trọng, vẫn nên kiểm tra `status`, `email`, `amount` trong code. Validation là lớp bảo vệ đầu tiên, không phải lớp bảo vệ duy nhất.
+
+## Lỗi thường gặp với data validation
+
+- Đặt range quá ngắn nên dòng mới không có dropdown.
+- Cho phép giá trị invalid nên dữ liệu vẫn bị nhập sai.
+- Quên cập nhật danh sách dropdown khi quy trình thay đổi.
+- Xóa validation bằng `clear()` rồi mất cả dữ liệu hoặc format.
+- Dùng text tiếng Việt có dấu trong code nhưng không thống nhất với dữ liệu so sánh.
+- Hard-code danh sách trong code dù người dùng cần tự cập nhật danh sách.
+
+## Bài tập thực hành
+
+Tạo sheet `Tasks` có cột `Task`, `Owner`, `Status`, `Priority`. Viết function tạo dropdown `Status` gồm `todo`, `doing`, `done` và validation `Priority` từ 1 đến 5.
+
+```javascript
+function practiceTaskValidation() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Tasks');
+
+  if (!sheet) {
+    Logger.log('Sheet Tasks not found');
+    return;
+  }
+
+  const statusRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['todo', 'doing', 'done'], true)
+    .setAllowInvalid(false)
+    .build();
+
+  sheet.getRange('C2:C100').setDataValidation(statusRule);
+}
+```
+
+Hoàn thiện bài bằng cách thêm rule cho cột `Priority` từ 1 đến 5 và thêm help text cho cả hai cột.
+
+## Câu hỏi thường gặp về data validation
+
+### Data validation có thay thế kiểm tra trong code không?
+
+Không hoàn toàn. Nó giúp giảm lỗi nhập liệu, nhưng automation vẫn nên kiểm tra dữ liệu trước khi gửi email, ghi báo cáo hoặc gọi API. Hãy coi validation là hàng rào đầu tiên.
+
+### Có thể lấy danh sách dropdown từ một range khác không?
+
+Có. Bạn có thể dùng `requireValueInRange(range, true)` để lấy danh sách từ vùng ô. Cách này phù hợp khi danh sách trạng thái, phòng ban hoặc người phụ trách thay đổi thường xuyên.
+
+### Có thể áp dụng validation cho cả cột không?
+
+Có thể chọn range dài như `D2:D1000`. Với sheet phát triển liên tục, bạn nên chọn vùng đủ lớn hoặc có function mở rộng validation khi thêm dòng mới.
+
+### Vì sao dropdown không hiện ở dòng mới?
+
+Thường là do range validation chỉ áp dụng tới một số dòng, ví dụ `D2:D100`. Nếu dữ liệu mới nằm ở dòng 101, bạn cần mở rộng range hoặc áp dụng validation cho vùng lớn hơn.
+
+## Tóm tắt
+
+Data validation giúp bảng tính trở thành giao diện nhập liệu đáng tin cậy hơn. Bạn đã học cách tạo dropdown, giới hạn số, lấy danh sách từ sheet cấu hình, xóa validation đúng cách và tránh lỗi phổ biến. Bài tiếp theo sẽ học custom menu để người dùng chạy script ngay trong Google Sheets.

@@ -1,0 +1,151 @@
+---
+title: "Workflow local với git và clasp cho Apps Script"
+description: "Học quy trình làm việc an toàn với git, clasp pull, clasp push và review diff khi phát triển Apps Script."
+slug: "workflow-local-git-clasp"
+course: "apps-script"
+order: 41
+duration: "22 phút"
+difficulty: "Khó"
+keywords: ["git clasp Apps Script", "workflow Apps Script", "clasp pull push", "phát triển Apps Script với git", "Apps Script team workflow"]
+publishedAt: "2026-06-09"
+---
+
+Workflow local với git và clasp là cách làm Apps Script an toàn hơn khi dự án có nhiều file, nhiều người sửa hoặc đang phục vụ người dùng thật. Nguyên tắc chính là luôn pull trước khi sửa, review diff trước khi push, commit theo mốc rõ ràng và không trộn editor online với local một cách tùy tiện.
+
+## Vì sao Apps Script cần workflow nghiêm túc?
+
+Apps Script thường bắt đầu bằng một file `Code.gs` nhỏ trong Google Sheets. Nhưng khi có web app, trigger, email, API, library và deployment production, việc sửa trực tiếp trong editor có thể gây rủi ro. Bạn khó biết ai sửa gì, khó rollback và dễ push đè thay đổi của người khác.
+
+Git giải quyết lịch sử thay đổi. Clasp giải quyết đồng bộ với Apps Script. Kết hợp hai công cụ này, bạn có thể làm việc giống dự án phần mềm nhỏ: branch, diff, commit, review, push lên script dev, test, rồi release.
+
+Mental model nên nhớ: git là nguồn kiểm soát lịch sử local, clasp là cầu nối đến Apps Script. Đừng xem `clasp push` là thay thế commit. Push chỉ cập nhật code trên Google, còn commit mới giúp bạn quay lại trạng thái cũ.
+
+## Quy trình an toàn trước khi sửa
+
+Trước khi bắt đầu, đảm bảo thư mục sạch và code Apps Script mới nhất đã được kéo về. Nếu có người trong team vẫn sửa trên editor, `clasp pull` giúp bạn thấy thay đổi đó trước khi bạn ghi đè.
+
+```bash
+git status
+clasp pull
+git status
+git diff
+```
+
+Nếu `clasp pull` tạo thay đổi bất ngờ, đừng vội sửa tiếp. Hãy đọc diff và xác định đó là thay đổi của ai, có cần commit riêng hay cần trao đổi với team không. Trong workflow tốt, thay đổi từ editor online nên ít xảy ra hoặc chỉ dùng cho hotfix có ghi chú.
+
+## Quy trình sau khi sửa local
+
+Sau khi sửa code bằng VS Code hoặc editor local, review diff trước khi push. Đây là bước bắt lỗi đơn giản nhưng hiệu quả: file nào đổi, function nào đổi, manifest có đổi scope không, có secret nào bị thêm nhầm không.
+
+```bash
+git diff
+git status
+clasp push
+clasp open-script
+```
+
+Sau khi `clasp push`, mở Apps Script editor để chạy function test hoặc test deployment `/dev`. Nếu ổn, commit thay đổi bằng git với message rõ ràng.
+
+```bash
+git add Code.js appsscript.json
+git commit -m "Add lead validation to web app"
+```
+
+Thứ tự commit trước hay push trước tùy team. Nhiều người thích commit trước để lưu mốc local rồi mới push. Điều quan trọng là không push khi chưa hiểu diff.
+
+## Gợi ý cấu trúc thư mục cho project lớn
+
+Một project Apps Script dễ bảo trì nên tách file theo trách nhiệm. Không cần quá nhiều lớp, nhưng đừng để mọi thứ trong một file dài hàng nghìn dòng.
+
+```text
+appsscript.json
+src/
+  webapp.js
+  sheets.js
+  email.js
+  triggers.js
+  config.js
+  errors.js
+html/
+  Index.html
+  Sidebar.html
+.clasp.json
+.gitignore
+```
+
+Nếu dùng `rootDir` trong `.clasp.json`, hãy đảm bảo clasp push đúng thư mục. Với người mới, cấu trúc phẳng cũng được. Khi project đã ổn, tách file theo chức năng sẽ giúp review diff nhanh hơn.
+
+## .gitignore và dữ liệu nhạy cảm
+
+Git rất hữu ích nhưng cũng dễ làm lộ token nếu bạn commit sai file. Token đăng nhập clasp thường nằm ngoài project, nhưng các file local, log, export hoặc config tự tạo có thể chứa dữ liệu nhạy cảm.
+
+```text
+node_modules/
+.clasprc.json
+*.log
+.env
+credentials.json
+local-settings.json
+```
+
+Không lưu `WEBHOOK_SECRET`, API key hoặc email list nhạy cảm trong code nếu project dùng git chung. Với Apps Script, hãy dùng `PropertiesService` cho cấu hình runtime và ghi rõ cách set property trong README nội bộ.
+
+## Tách môi trường dev và prod
+
+Một lỗi nghiêm trọng là `.clasp.json` trỏ thẳng vào project production, rồi bạn push code chưa test. Với dự án quan trọng, nên có script dev và script prod riêng, hoặc ít nhất có deployment test rõ ràng.
+
+Cách đơn giản là giữ hai thư mục hoặc hai file cấu hình được quản lý cẩn thận. Dù chọn cách nào, trước khi push hãy xác nhận scriptId và mở đúng project bằng `clasp open-script`.
+
+```bash
+clasp open-script
+clasp deployments
+```
+
+Lệnh `clasp deployments` giúp bạn xem deployment hiện có. Nó không thay thế quy trình release, nhưng hữu ích để xác nhận bạn đang làm đúng project.
+
+## Xử lý khi có thay đổi từ editor online
+
+Nếu ai đó sửa trực tiếp trên Apps Script editor, bạn nên pull về và commit riêng thay đổi đó trước khi làm tiếp. Đừng sửa chồng lên ngay vì diff sẽ lẫn lộn.
+
+Quy tắc thực tế cho team:
+
+- Chỉ một nguồn sửa chính: local workflow hoặc editor.
+- Nếu cần hotfix trên editor, phải thông báo và pull về git ngay sau đó.
+- Không dùng `clasp push --force` trừ khi team đã đồng ý.
+- Mọi thay đổi manifest scopes phải được review kỹ.
+
+## Lỗi thường gặp với git và clasp workflow
+
+- Không `clasp pull` trước khi sửa nên ghi đè code người khác.
+- Push nhầm project vì `.clasp.json` trỏ dev/prod sai.
+- Commit quá lớn, trộn bugfix, refactor và thay đổi scope trong cùng một commit.
+- Không commit nên không rollback được khi web app lỗi.
+- Sửa production trực tiếp để debug rồi quên đồng bộ về git.
+- Commit secret, token hoặc dữ liệu khách hàng.
+- Không test `/exec` sau khi cập nhật deployment.
+
+## Bài tập thực hành
+
+Tạo repository git cho một project Apps Script test. Clone bằng clasp, commit trạng thái ban đầu. Tạo branch `lead-validation`, sửa function validate lead, chạy `git diff`, push bằng `clasp push`, test trong editor, rồi commit. Sau đó sửa một dòng trực tiếp trên Apps Script editor, chạy `clasp pull` về local và quan sát git diff để hiểu rủi ro khi team trộn hai cách sửa.
+
+## Câu hỏi thường gặp về workflow git và clasp
+
+### Có nên commit .clasp.json không?
+
+Tùy team. Nếu mọi người dùng cùng project dev, commit giúp setup nhanh. Nếu mỗi người có script riêng hoặc có dev/prod riêng, commit `.clasp.json` có thể gây push nhầm. Hãy có quy ước rõ.
+
+### Nên commit trước hay clasp push trước?
+
+Không có một đáp án duy nhất. Quan trọng là review diff trước cả hai. Với production, nên commit mốc đã test, rồi push/release theo quy trình có kiểm soát.
+
+### Có cần branch cho Apps Script nhỏ không?
+
+Không bắt buộc. Nhưng khi sửa tính năng có rủi ro, branch giúp tách thay đổi và review rõ hơn. Với script cá nhân nhỏ, commit trực tiếp trên main vẫn chấp nhận được nếu bạn có kỷ luật.
+
+### Làm sao tránh push nhầm production?
+
+Kiểm tra `.clasp.json`, chạy `clasp open-script`, đặt tên project rõ `dev`/`prod`, và không dùng chung thư mục local cho nhiều scriptId nếu bạn dễ nhầm.
+
+## Tóm tắt và bước tiếp theo
+
+Workflow local tốt giúp Apps Script có lịch sử, review và rollback như một dự án phần mềm thật. Hãy pull trước, diff kỹ, push đúng project, commit rõ và quản lý dev/prod cẩn thận. Bài tiếp theo sẽ đi xa hơn vào Apps Script REST API và Execution API, nơi bạn có thể quản lý hoặc gọi script bằng API programmatic.

@@ -1,0 +1,157 @@
+---
+title: "PropertiesService trong Apps Script để lưu cấu hình"
+description: "Học cách dùng PropertiesService để lưu email, API key, trạng thái và cấu hình trong Apps Script."
+slug: "propertiesservice-luu-cau-hinh-apps-script"
+course: "apps-script"
+order: 18
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["PropertiesService Apps Script", "Script Properties Apps Script", "User Properties Apps Script", "lưu cấu hình Apps Script", "API key Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`PropertiesService` là nơi lưu cấu hình nhỏ dạng key-value cho Apps Script. Thay vì hardcode email nhận báo cáo, API token, sheet ID hoặc thời điểm đồng bộ cuối cùng trong code, bạn lưu chúng vào properties để script dễ cấu hình, dễ đổi và ít rủi ro hơn.
+
+## PropertiesService là gì?
+
+Trong Apps Script, nhiều giá trị không nên nằm trực tiếp trong code. Ví dụ: email người nhận báo cáo hôm nay có thể đổi, API token cần thay khi hết hạn, hoặc lần đồng bộ cuối cùng phải được cập nhật sau mỗi lần chạy. Nếu viết cứng các giá trị này trong nhiều function, mỗi lần đổi bạn phải sửa code và dễ bỏ sót. `PropertiesService` giải quyết vấn đề đó bằng một kho lưu trữ đơn giản: mỗi dữ liệu có một key và một value.
+
+Mô hình tư duy là “ngăn kéo cấu hình”. Code hỏi ngăn kéo: `REPORT_EMAIL` là gì, `API_TOKEN` là gì, `LAST_SYNC_AT` là gì. Khi cần đổi, bạn đổi giá trị trong ngăn kéo, không phải rải thay đổi khắp code. Tuy vậy, properties không phải database. Nó phù hợp cho cấu hình nhỏ, trạng thái nhỏ, không phù hợp để lưu hàng nghìn dòng dữ liệu nghiệp vụ.
+
+## Ba loại properties trong Apps Script
+
+Apps Script có ba phạm vi lưu trữ phổ biến:
+
+- Script properties: dùng chung cho cả project, phù hợp cho cấu hình hệ thống như API base URL hoặc email admin.
+- User properties: riêng cho từng người dùng đang chạy script, phù hợp cho tùy chọn cá nhân.
+- Document properties: gắn với document trong một số bound script, phù hợp khi cấu hình thuộc về file hiện tại.
+
+Người mới thường dùng script properties trước vì dễ hiểu nhất. Khi mọi người trong team dùng chung một script gửi báo cáo về cùng một địa chỉ, script properties là lựa chọn hợp lý. Khi mỗi người dùng cần một email nhận riêng, hãy nghĩ tới user properties.
+
+## Cú pháp lưu và đọc cấu hình đơn giản
+
+Các method chính là `setProperty`, `getProperty`, `deleteProperty` và `getProperties`. Giá trị lưu trong properties luôn là chuỗi, kể cả khi bạn truyền số hoặc boolean.
+
+```javascript
+function saveReportConfig() {
+  const props = PropertiesService.getScriptProperties();
+
+  props.setProperty('REPORT_EMAIL', 'admin@example.com');
+  props.setProperty('REPORT_HOUR', '8');
+  props.setProperty('SEND_ENABLED', 'true');
+}
+
+function readReportConfig() {
+  const props = PropertiesService.getScriptProperties();
+  const email = props.getProperty('REPORT_EMAIL');
+  const hour = Number(props.getProperty('REPORT_HOUR') || '8');
+  const enabled = props.getProperty('SEND_ENABLED') === 'true';
+
+  Logger.log('Email: ' + email);
+  Logger.log('Hour: ' + hour);
+  Logger.log('Enabled: ' + enabled);
+}
+```
+
+Điểm quan trọng là chuyển kiểu khi đọc. `REPORT_HOUR` đọc ra là chuỗi `'8'`, nên nếu cần so sánh số học, hãy dùng `Number()`. `SEND_ENABLED` đọc ra là chuỗi `'true'`, không phải boolean `true`.
+
+## Lưu object bằng JSON
+
+Khi cấu hình có nhiều trường liên quan với nhau, lưu từng key riêng vẫn được, nhưng có thể khó quản lý. Một pattern phổ biến là lưu object dưới dạng JSON string. Khi đọc ra, dùng `JSON.parse` để chuyển lại thành object.
+
+```javascript
+function saveApiConfig() {
+  const config = {
+    baseUrl: 'https://api.example.com',
+    retryCount: 3,
+    enabled: true,
+  };
+
+  PropertiesService.getScriptProperties()
+    .setProperty('API_CONFIG', JSON.stringify(config));
+}
+
+function getApiConfig() {
+  const raw = PropertiesService.getScriptProperties().getProperty('API_CONFIG');
+
+  if (!raw) {
+    return {
+      baseUrl: '',
+      retryCount: 0,
+      enabled: false,
+    };
+  }
+
+  return JSON.parse(raw);
+}
+```
+
+Luôn xử lý trường hợp key chưa tồn tại. Nếu bạn gọi `JSON.parse(null)` hoặc parse một chuỗi rỗng, function sẽ lỗi. Dự án thật nên có giá trị mặc định rõ ràng để script không dừng bất ngờ.
+
+## Ví dụ thực tế: lưu lần đồng bộ cuối cùng
+
+Giả sử bạn gọi API lấy đơn hàng mới. Thay vì lần nào cũng lấy toàn bộ dữ liệu, bạn lưu thời điểm chạy cuối cùng để lần sau chỉ lấy dữ liệu mới hơn.
+
+```javascript
+function updateLastSyncTime() {
+  const props = PropertiesService.getScriptProperties();
+  props.setProperty('LAST_SYNC_AT', new Date().toISOString());
+}
+
+function getLastSyncTime() {
+  const value = PropertiesService.getScriptProperties().getProperty('LAST_SYNC_AT');
+
+  if (!value) {
+    return new Date('2026-01-01T00:00:00Z');
+  }
+
+  return new Date(value);
+}
+```
+
+Pattern này rất hay gặp trong automation: đọc thời điểm cũ, lấy dữ liệu mới, xử lý thành công, rồi cập nhật thời điểm mới. Không nên cập nhật `LAST_SYNC_AT` trước khi xử lý xong vì nếu script lỗi giữa chừng, bạn có thể bỏ sót dữ liệu.
+
+## Khi nào dùng PropertiesService?
+
+- Lưu email người nhận báo cáo hoặc tên sheet cấu hình.
+- Lưu API token, API base URL, webhook URL ở mức đơn giản.
+- Lưu thời điểm chạy cuối để đồng bộ tăng dần.
+- Lưu cờ bật tắt tính năng như `SEND_ENABLED`.
+- Lưu tùy chọn riêng cho từng người dùng bằng user properties.
+
+Với secret cực kỳ nhạy cảm hoặc hệ thống doanh nghiệp lớn, bạn nên cân nhắc giải pháp quản lý secret chuyên dụng. Nhưng với automation nội bộ nhỏ, properties thường đủ tiện và an toàn hơn hardcode trong code.
+
+## Lỗi thường gặp với PropertiesService
+
+- Quên rằng mọi giá trị đọc ra đều là chuỗi.
+- Lưu object trực tiếp mà không dùng `JSON.stringify`.
+- `JSON.parse` giá trị rỗng hoặc sai định dạng mà không có kiểm tra.
+- Đặt tên key không nhất quán, lúc `REPORT_EMAIL`, lúc `reportEmail`.
+- Lưu dữ liệu nghiệp vụ lớn vào properties thay vì Sheets hoặc database.
+- Log token hoặc secret ra Execution log khi debug.
+
+## Bài tập thực hành
+
+Viết function `saveReportSettings()` lưu `REPORT_EMAIL`, `SHEET_NAME`, `SEND_ENABLED` và `LAST_SYNC_AT`. Viết tiếp `loadReportSettings()` đọc các giá trị này, chuyển `SEND_ENABLED` thành boolean, chuyển `LAST_SYNC_AT` thành `Date`, rồi log thông báo `Report sending is enabled` nếu cấu hình đang bật.
+
+## Câu hỏi thường gặp về PropertiesService
+
+### PropertiesService có giống database không?
+
+Không. Nó là kho key-value nhỏ cho cấu hình và trạng thái ngắn. Nếu cần lưu nhiều dòng dữ liệu, hãy dùng Google Sheets, BigQuery, database hoặc API phù hợp.
+
+### Có thể lưu số và boolean không?
+
+Có thể lưu, nhưng khi đọc ra bạn nhận chuỗi. Hãy chuyển kiểu bằng `Number()`, so sánh với `'true'`, hoặc lưu object JSON rồi parse lại.
+
+### User properties dùng khi nào?
+
+Dùng khi mỗi người dùng cần cấu hình riêng, ví dụ email cá nhân, timezone, bộ lọc mặc định hoặc tùy chọn giao diện trong sidebar.
+
+### Có nên lưu API key trong code không?
+
+Không nên. Lưu trong script properties tốt hơn hardcode vì dễ thay đổi và giảm rủi ro lộ key khi chia sẻ code.
+
+## Tóm tắt và chuyển tiếp
+
+`PropertiesService` giúp script linh hoạt hơn vì cấu hình và trạng thái không bị rải trong code. Hãy nhớ properties lưu chuỗi, xử lý giá trị thiếu, đặt tên key nhất quán và tránh log secret. Bài tiếp theo sẽ học `CacheService`, một công cụ khác cũng lưu key-value nhưng dùng cho dữ liệu tạm thời nhằm tăng tốc script.

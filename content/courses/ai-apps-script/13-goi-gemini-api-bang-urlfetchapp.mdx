@@ -1,0 +1,181 @@
+---
+title: "Gọi Gemini API bằng UrlFetchApp trong Apps Script"
+description: "Học cách gọi Gemini API từ Apps Script bằng UrlFetchApp, API key, JSON payload và xử lý response."
+slug: "goi-gemini-api-bang-urlfetchapp"
+course: "ai-apps-script"
+order: 13
+duration: "23 phút"
+difficulty: "Trung bình"
+keywords: ["Gemini API Apps Script", "UrlFetchApp Gemini", "tích hợp Gemini với Apps Script", "AI Apps Script Gemini", "Google AI API Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Gọi Gemini API trong Apps Script như thế nào?
+
+Bạn có thể gọi Gemini API từ Apps Script bằng `UrlFetchApp.fetch`, gửi JSON payload chứa prompt, đọc JSON response và lấy text từ candidate đầu tiên. API key nên được lưu trong `PropertiesService`, không hardcode trong code và không log ra màn hình.
+
+Đây là bước đầu tiên để đưa AI vào automation thật. Sau bài này, bạn sẽ hiểu request gồm endpoint, model, API key, payload, status code và parser. Dù dùng Gemini hay provider khác, mental model này vẫn tương tự.
+
+## Mental model của một request Gemini
+
+Một request AI từ Apps Script thường có bảy bước:
+
+- Đọc API key và model từ cấu hình.
+- Tạo endpoint từ model.
+- Tạo payload theo format của API.
+- Gửi HTTP POST bằng `UrlFetchApp.fetch`.
+- Kiểm tra status code.
+- Parse JSON response.
+- Trả text đã kiểm tra cho code nghiệp vụ.
+
+Không nên trộn tất cả vào job đọc Sheets. Ở bài này ta viết function gọi cơ bản, bài sau sẽ đóng gói thành wrapper sạch hơn.
+
+## Function gọi Gemini cơ bản
+
+Ví dụ dưới đây minh họa pattern request. Endpoint, model và payload có thể thay đổi theo tài liệu Gemini API hiện hành, nên hãy kiểm tra tài liệu chính thức khi triển khai production.
+
+```javascript
+function callGeminiText(prompt) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  if (!apiKey) throw new Error('Missing GEMINI_API_KEY');
+
+  const model = 'gemini-2.5-flash';
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/'
+    + model + ':generateContent?key=' + encodeURIComponent(apiKey);
+
+  const payload = {
+    contents: [
+      {
+        parts: [{ text: String(prompt || '') }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.2,
+    },
+  };
+
+  const response = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+
+  return parseGeminiTextResponse(response);
+}
+```
+
+`muteHttpExceptions: true` rất quan trọng. Nếu không có, Apps Script có thể throw ngay khi API trả lỗi HTTP, và bạn khó đọc body lỗi để biết key sai, quota hết hay payload không hợp lệ.
+
+## Parse response Gemini an toàn
+
+Đừng trả raw response cho mọi nơi tự parse. Hãy có parser riêng để kiểm tra status code, JSON parse và field text.
+
+```javascript
+function parseGeminiTextResponse(response) {
+  const code = response.getResponseCode();
+  const body = response.getContentText();
+
+  if (code < 200 || code >= 300) {
+    throw new Error('Gemini API failed ' + code + ': ' + body.slice(0, 500));
+  }
+
+  let data;
+  try {
+    data = JSON.parse(body);
+  } catch (error) {
+    throw new Error('Gemini response is not valid JSON: ' + error.message);
+  }
+
+  const text = data.candidates
+    && data.candidates[0]
+    && data.candidates[0].content
+    && data.candidates[0].content.parts
+    && data.candidates[0].content.parts[0]
+    && data.candidates[0].content.parts[0].text;
+
+  if (!text) {
+    throw new Error('Gemini response does not contain text');
+  }
+
+  return text;
+}
+```
+
+Parser hơi dài nhưng rõ ràng. Bạn có thể test parser bằng response giả trước khi gọi API thật.
+
+## Test request nhỏ trước khi gắn vào Sheets
+
+Hãy tạo function test thủ công, prompt ngắn và không chứa dữ liệu nhạy cảm. Mục tiêu là xác nhận key, endpoint và parser hoạt động.
+
+```javascript
+function testGeminiText() {
+  const result = callGeminiText('Explain Google Apps Script in one short sentence.');
+  console.log({
+    message: 'Gemini test completed',
+    preview: result.slice(0, 200),
+  });
+}
+```
+
+Chỉ sau khi test này chạy ổn, bạn mới nên tích hợp vào job đọc Sheets. Nếu test đơn giản đã lỗi, đừng debug trong workflow phức tạp.
+
+## Ví dụ prompt thực tế cho Apps Script
+
+Sau khi có `callGeminiText`, bạn có thể dùng nó để phân loại feedback mẫu:
+
+```javascript
+function classifyFeedbackWithGemini(message) {
+  const prompt = [
+    'Classify this customer feedback into one tag:',
+    'bug, billing, feature, other.',
+    'Return only the tag.',
+    '',
+    String(message || ''),
+  ].join('\n');
+
+  const tag = callGeminiText(prompt).trim().toLowerCase();
+  if (!['bug', 'billing', 'feature', 'other'].includes(tag)) {
+    throw new Error('Invalid tag from Gemini: ' + tag);
+  }
+  return tag;
+}
+```
+
+Dù prompt yêu cầu "return only the tag", code vẫn validate. Đây là nguyên tắc bắt buộc với AI output.
+
+## Lỗi thường gặp khi gọi Gemini
+
+- API key rỗng, sai hoặc bị giới hạn.
+- Endpoint model không đúng phiên bản tài liệu.
+- Không bật `muteHttpExceptions`, nên khó đọc body lỗi.
+- Không kiểm tra status code trước khi parse JSON.
+- Parse response theo cấu trúc quá cứng nhưng không xử lý field thiếu.
+- Gửi prompt quá dài hoặc chứa dữ liệu nhạy cảm không cần thiết.
+- Gọi Gemini trực tiếp cho từng dòng lớn mà không có quota guard.
+
+## Bài tập thực hành
+
+Lưu `GEMINI_API_KEY` trong script properties. Viết `testGeminiText()` gọi `callGeminiText('Summarize Apps Script in one sentence')` và log preview kết quả. Sau đó cố tình đổi key sai để xem lỗi status code. Cuối cùng viết `classifyFeedbackWithGemini(message)` và test với ba feedback mẫu.
+
+## Câu hỏi thường gặp về Gemini API
+
+### Có nên gọi Gemini trực tiếp từ Apps Script không?
+
+Có thể với project nhỏ và nội bộ. Với production lớn, web app public hoặc dữ liệu nhạy cảm, cân nhắc proxy backend để quản lý key, quota, abuse và audit tốt hơn.
+
+### Có thể dùng model khác không?
+
+Có, tùy API và quyền của bạn. Hãy lưu model trong PropertiesService để đổi dễ hơn thay vì hardcode ở nhiều function.
+
+### Gemini response có luôn có text không?
+
+Không. API có thể trả lỗi, response bị chặn, candidate rỗng hoặc cấu trúc khác. Luôn validate response trước khi dùng.
+
+### Có nên log payload gửi Gemini không?
+
+Không mặc định. Payload có thể chứa dữ liệu người dùng. Nếu cần debug, log độ dài prompt, loại tác vụ và bản preview đã ẩn danh.
+
+## Tóm tắt và bước tiếp theo
+
+Gọi Gemini bằng `UrlFetchApp` gồm cấu hình key, endpoint, payload, fetch, status check và parser. Bạn đã có function gọi cơ bản và ví dụ validate output. Bài tiếp theo sẽ tạo AI client wrapper để code sạch, tái sử dụng và dễ mở rộng hơn.

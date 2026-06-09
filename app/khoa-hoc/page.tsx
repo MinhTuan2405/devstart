@@ -5,12 +5,12 @@ import { getAllCourseSummaries } from '@/lib/courses'
 export const metadata: Metadata = {
   title: 'Khóa học lập trình miễn phí',
   description:
-    'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning, Claude Code, SQL và Git cho người mới.',
-  keywords: ['khóa học lập trình', 'học python miễn phí', 'học c++ miễn phí', 'học html css', 'học machine learning', 'học claude code', 'học sql', 'học git'],
+    'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning, Claude Code, SQL, Git, Apps Script và AI Apps Script.',
+  keywords: ['khóa học lập trình', 'học python miễn phí', 'học c++ miễn phí', 'học html css', 'học machine learning', 'học claude code', 'học sql', 'học git', 'học apps script', 'học AI Apps Script'],
   openGraph: {
     title: 'Khóa học lập trình miễn phí | DevStart',
     description:
-      'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning, Claude Code, SQL và Git cho người mới.',
+      'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning, Claude Code, SQL, Git, Apps Script và AI Apps Script.',
     url: '/khoa-hoc',
     siteName: 'DevStart',
     locale: 'vi_VN',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Khóa học lập trình miễn phí | DevStart',
     description:
-      'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning, Claude Code, SQL và Git cho người mới.',
+      'Danh sách khóa học lập trình miễn phí: Python, C++, HTML/CSS, Machine Learning, Claude Code, SQL, Git, Apps Script và AI Apps Script.',
   },
   alternates: {
     canonical: '/khoa-hoc',

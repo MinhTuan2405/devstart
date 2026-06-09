@@ -1,0 +1,166 @@
+---
+title: "Thiết lập dự án AI Apps Script an toàn từ đầu"
+description: "Học cách tạo project AI Apps Script có config, secret, dry run, logging và file helper rõ ràng."
+slug: "thiet-lap-du-an-ai-apps-script"
+course: "ai-apps-script"
+order: 6
+duration: "21 phút"
+difficulty: "Trung bình"
+keywords: ["thiết lập AI Apps Script", "AI Apps Script project", "PropertiesService AI key", "Apps Script secret", "AI automation setup"]
+publishedAt: "2026-06-09"
+---
+
+## Dự án AI Apps Script cần thiết lập gì?
+
+Dự án AI Apps Script nên được thiết lập với cấu hình model, secret, dry run, logging, helper gọi API và ranh giới file rõ ràng ngay từ đầu. Nếu bỏ qua bước này, code có thể chạy được lúc demo nhưng dễ lộ API key, khó đổi model và khó debug khi trigger chạy tự động.
+
+Khác với script nhỏ chỉ đọc sheet rồi ghi ô, dự án AI thường có thêm nhiều rủi ro: gọi API tốn tiền, gửi dữ liệu ra ngoài Google Workspace, output không ổn định, quota giới hạn và lỗi response khó đoán. Vì vậy setup ban đầu không phải thủ tục rườm rà, mà là lớp bảo vệ giúp bạn phát triển nhanh hơn về sau.
+
+## Mental model: tách cấu hình, secret và logic nghiệp vụ
+
+Hãy tách project thành ba lớp. Lớp cấu hình trả lời câu hỏi: dùng provider nào, model nào, dry run hay production. Lớp AI client biết cách gọi API, parse response và xử lý lỗi. Lớp nghiệp vụ biết đọc Sheets, tạo prompt và ghi kết quả.
+
+Khi ba lớp này tách nhau, bạn có thể đổi model mà không sửa logic Sheets, test prompt mà không gửi email thật, và debug API mà không động vào trigger production. Đây cũng là cấu trúc giúp AI coding assistant hiểu project tốt hơn.
+
+## Lưu cấu hình bằng PropertiesService
+
+Không hardcode API key trong code. Với dự án nhỏ hoặc nội bộ, `PropertiesService.getScriptProperties()` là nơi phù hợp để lưu cấu hình cấp script. Bạn có thể tạo function setup chạy một lần, sau đó xóa key giả khỏi code hoặc thay bằng thao tác nhập thủ công trong Apps Script settings.
+
+```javascript
+function setupAiConfig() {
+  PropertiesService.getScriptProperties().setProperties({
+    AI_PROVIDER: 'gemini',
+    AI_MODEL: 'gemini-2.5-flash',
+    AI_API_KEY: 'PASTE_KEY_HERE',
+    DRY_RUN: 'true',
+    MAX_ROWS_PER_RUN: '20',
+  });
+}
+```
+
+Khi thay `PASTE_KEY_HERE` bằng key thật, đừng commit code đó lên git. Cách an toàn hơn là dùng Apps Script project settings để nhập script properties thủ công. Nếu dùng clasp, hãy đặc biệt chú ý không commit file credential local.
+
+## Helper đọc cấu hình bắt buộc
+
+Project nên fail sớm nếu thiếu key hoặc cấu hình quan trọng. Lỗi rõ như `Missing AI_API_KEY` dễ sửa hơn nhiều so với lỗi API mơ hồ sau vài giây fetch.
+
+```javascript
+function getRequiredAiConfig() {
+  const props = PropertiesService.getScriptProperties();
+  const apiKey = props.getProperty('AI_API_KEY');
+
+  if (!apiKey) {
+    throw new Error('Missing AI_API_KEY in script properties');
+  }
+
+  return {
+    provider: props.getProperty('AI_PROVIDER') || 'gemini',
+    model: props.getProperty('AI_MODEL') || 'gemini-2.5-flash',
+    apiKey: apiKey,
+    dryRun: props.getProperty('DRY_RUN') === 'true',
+    maxRowsPerRun: Number(props.getProperty('MAX_ROWS_PER_RUN') || 20),
+  };
+}
+```
+
+Đừng log object config này nguyên vẹn, vì nó chứa API key. Nếu cần debug, chỉ log provider, model, dry run và max rows.
+
+## Cấu trúc file đề xuất cho dự án AI
+
+Một project nhỏ có thể bắt đầu với các file sau:
+
+- `config.gs`: đọc và ghi cấu hình.
+- `aiClient.gs`: gọi AI API và parse response.
+- `promptTemplates.gs`: build prompt từ dữ liệu.
+- `sheetsService.gs`: đọc ghi Google Sheets.
+- `jobs.gs`: function entry point cho menu, trigger hoặc chạy thủ công.
+- `debug.gs`: function test thủ công, smoke test và log mẫu.
+
+Nếu dùng clasp local, tên file có thể là `.js`, nhưng khi push lên Apps Script vẫn chạy trong cùng runtime. Điều quan trọng không phải đuôi file, mà là ranh giới trách nhiệm.
+
+## Tạo smoke test trước khi viết job thật
+
+Smoke test là function nhỏ kiểm tra cấu hình và kết nối tối thiểu. Nó giúp bạn biết project đã sẵn sàng trước khi viết workflow phức tạp.
+
+```javascript
+function smokeTestAiConfig() {
+  const config = getRequiredAiConfig();
+  console.log({
+    message: 'AI config loaded',
+    provider: config.provider,
+    model: config.model,
+    dryRun: config.dryRun,
+    maxRowsPerRun: config.maxRowsPerRun,
+  });
+}
+```
+
+Sau khi chạy setup, hãy chạy `smokeTestAiConfig`. Nếu thiếu key hoặc sai property, lỗi sẽ xuất hiện ngay trong Executions dashboard.
+
+## Thiết lập guard cho sheet và cột
+
+Nhiều lỗi Apps Script không đến từ AI API mà đến từ sheet sai tên hoặc thiếu cột. Hãy tạo helper kiểm tra sớm.
+
+```javascript
+function getRequiredSheetByName(sheetName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+  if (!sheet) throw new Error('Missing sheet: ' + sheetName);
+  return sheet;
+}
+
+function assertRequiredColumns(headers, requiredColumns) {
+  requiredColumns.forEach(function (column) {
+    if (headers.indexOf(column) === -1) {
+      throw new Error('Missing required column: ' + column);
+    }
+  });
+}
+```
+
+Khi AI viết job xử lý Sheets, hãy yêu cầu nó dùng các helper này thay vì giả định sheet luôn đúng.
+
+## Quy trình setup thực tế
+
+- Tạo Apps Script project hoặc bound script trong Google Sheets.
+- Thêm file `config`, `aiClient`, `promptTemplates`, `sheetsService`, `jobs`, `debug`.
+- Lưu `AI_PROVIDER`, `AI_MODEL`, `AI_API_KEY`, `DRY_RUN`, `MAX_ROWS_PER_RUN` trong script properties.
+- Chạy smoke test cấu hình.
+- Tạo sheet dữ liệu mẫu với 5 đến 10 dòng.
+- Viết job ở chế độ dry run trước.
+- Chỉ tắt dry run sau khi log, output và trạng thái xử lý đúng.
+
+## Lỗi thường gặp khi setup
+
+- Đưa API key vào prompt nhờ AI debug.
+- Log toàn bộ config có chứa secret.
+- Không có `DRY_RUN` cho job gửi email, ghi dữ liệu hoặc gọi AI hàng loạt.
+- Không tách helper gọi API nên code lặp khắp nơi.
+- Không đặt model mặc định nên mỗi function tự chọn model khác nhau.
+- Không kiểm tra sheet/cột trước khi xử lý.
+- Dùng trigger production trước khi có dữ liệu test.
+
+## Bài tập thực hành
+
+Tạo project Apps Script mới. Thêm `setupAiConfig`, `getRequiredAiConfig`, `smokeTestAiConfig`, `getRequiredSheetByName` và `assertRequiredColumns`. Chạy setup bằng key giả, chạy smoke test để thấy lỗi thiếu key hoặc key giả, sau đó sửa property và chạy lại. Ghi lại log an toàn không chứa secret.
+
+## Câu hỏi thường gặp về setup AI Apps Script
+
+### Có nên lưu API key trong Google Sheets không?
+
+Không nên nếu nhiều người có quyền xem sheet. Script properties phù hợp hơn cho project nhỏ. Với môi trường doanh nghiệp, cân nhắc Secret Manager hoặc proxy backend.
+
+### Có cần dry run cho mọi project không?
+
+Có, nếu project ghi dữ liệu, gửi email hoặc gọi API tốn tiền. Dry run giúp bạn kiểm tra logic mà không tạo side effect nguy hiểm.
+
+### Có nên tách nhiều file không?
+
+Có với dự án AI. Prompt, API client, config và job nghiệp vụ thay đổi với nhịp khác nhau. Tách file giúp review dễ hơn và AI assistant ít sửa nhầm hơn.
+
+### Có cần setup clasp ngay không?
+
+Không bắt buộc ở bài này. Bạn có thể bắt đầu trong Apps Script editor. Tuy nhiên với project dài hạn, VS Code và clasp sẽ giúp quản lý version tốt hơn.
+
+## Tóm tắt và bước tiếp theo
+
+Setup tốt giúp dự án AI Apps Script an toàn, dễ debug và dễ mở rộng. Bạn đã có cấu hình, secret, dry run, smoke test và guard cơ bản. Bài tiếp theo sẽ chuyển sang VS Code và clasp để phát triển chuyên nghiệp hơn.

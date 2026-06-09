@@ -1,0 +1,191 @@
+---
+title: "AI agent workflow trong Apps Script: planner, executor, reviewer"
+description: "Học cách thiết kế workflow agent an toàn trong Apps Script với bước lập kế hoạch, thực thi và review."
+slug: "ai-agent-workflow-apps-script"
+course: "ai-apps-script"
+order: 34
+duration: "24 phút"
+difficulty: "Khó"
+keywords: ["AI agent Apps Script", "agent workflow Apps Script", "planner executor reviewer", "AI automation agent", "Google Workspace agent Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## AI agent workflow trong Apps Script là gì?
+
+AI agent workflow trong Apps Script là cách chia một yêu cầu phức tạp thành các bước có kiểm soát: planner lập kế hoạch, executor gọi tool allowlist, reviewer kiểm tra kết quả và hệ thống ghi audit log. Pattern này giúp AI làm việc với Sheets, Gmail, Docs an toàn hơn thay vì nhận một lệnh mơ hồ rồi hành động ngay.
+
+Ví dụ yêu cầu “tóm tắt feedback tuần này và tạo email gửi team” thực ra gồm nhiều việc: đọc sheet, lọc tuần này, tóm tắt, tạo draft email, review nội dung. Nếu làm tất cả trong một prompt, bạn khó kiểm soát lỗi. Agent workflow biến nó thành pipeline rõ ràng.
+
+## Mental model: planner, executor, reviewer
+
+Planner chỉ lập kế hoạch, không gọi tool. Executor chỉ chạy tool đã được allowlist và validate. Reviewer kiểm tra kết quả có đáp ứng yêu cầu, có rủi ro hoặc thiếu thông tin không. Với hành động nhạy cảm, human approval vẫn là bước cuối.
+
+Ba vai trò này có thể đều dùng cùng một model AI, nhưng prompt và trách nhiệm khác nhau. Quan trọng nhất là không để một bước tự vượt quyền. Planner không được gửi email. Reviewer không được bỏ qua validation. Executor không được chạy tool ngoài allowlist.
+
+## Planner tạo kế hoạch JSON
+
+Planner prompt nên yêu cầu JSON có các bước, tool đề xuất và rủi ro. Kế hoạch giúp bạn kiểm tra trước khi executor chạy.
+
+```javascript
+function buildPlannerPrompt(request) {
+  return [
+    'Plan how to handle this Google Workspace request.',
+    'Do not execute anything. Do not write code.',
+    'Return valid JSON only.',
+    'Allowed actions: read_feedback_sheet, summarize_feedback, create_email_draft, answer_only.',
+    'Schema: {"steps":[{"action":"","reason":"","needsConfirmation":false}],"risks":[]}',
+    'Request: ' + String(request || '').slice(0, 2000),
+  ].join('\n');
+}
+```
+
+Nếu planner trả action ngoài danh sách, workflow phải dừng. Đây là dấu hiệu prompt chưa đủ rõ hoặc user request nằm ngoài phạm vi.
+
+## Parse và validate plan
+
+Plan cũng là output AI nên cần parse và validate. Không để executor chạy trực tiếp từ JSON chưa kiểm tra.
+
+```javascript
+function parseAgentPlan(rawText) {
+  const cleaned = String(rawText || '')
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```$/i, '')
+    .trim();
+
+  const plan = JSON.parse(cleaned);
+  const allowedActions = ['read_feedback_sheet', 'summarize_feedback', 'create_email_draft', 'answer_only'];
+
+  if (!Array.isArray(plan.steps) || plan.steps.length === 0) {
+    throw new Error('Plan must include steps');
+  }
+
+  plan.steps.forEach(function(step) {
+    if (!allowedActions.includes(step.action)) {
+      throw new Error('Action not allowed: ' + step.action);
+    }
+  });
+
+  return plan;
+}
+```
+
+Validation ở đây mới kiểm tra action name. Khi executor chạy từng tool, vẫn cần validate args và quyền cụ thể.
+
+## Executor chạy tool allowlist
+
+Executor có thể nhận plan và chạy từng bước, nhưng nên dừng trước bước cần confirmation. Ví dụ tạo Gmail draft có side effect nhẹ, gửi email thật là side effect mạnh và không nên có trong allowlist ban đầu.
+
+```javascript
+function executeAgentPlan(plan, context) {
+  const results = [];
+
+  plan.steps.forEach(function(step) {
+    if (step.needsConfirmation) {
+      results.push({ action: step.action, status: 'waiting_confirmation' });
+      return;
+    }
+
+    if (step.action === 'read_feedback_sheet') {
+      results.push({ action: step.action, data: readWeeklyFeedback(context.sheetName) });
+    } else if (step.action === 'summarize_feedback') {
+      results.push({ action: step.action, data: summarizeFeedbackForAgent(context.feedbackRows) });
+    } else if (step.action === 'create_email_draft') {
+      results.push({ action: step.action, data: createTeamDraft(context.emailDraft) });
+    } else if (step.action === 'answer_only') {
+      results.push({ action: step.action, data: context.answer || '' });
+    }
+  });
+
+  return results;
+}
+```
+
+Ví dụ này đơn giản để minh họa. Trong code thật, context cần được cập nhật sau mỗi bước, hoặc bạn dùng state object rõ ràng hơn.
+
+## Reviewer kiểm tra output
+
+Reviewer có thể phát hiện output thiếu phần, quá dài, sai tone hoặc có rủi ro. Nó không thay thế test code và human review, nhưng là lớp kiểm tra bổ sung trước khi ghi/gửi.
+
+```javascript
+function buildReviewerPrompt(originalRequest, draftResult) {
+  return [
+    'Review whether the draft result satisfies the original request.',
+    'Return valid JSON only.',
+    'Schema: {"approved":true,"issues":[{"severity":"high|medium|low","message":""}],"fixSuggestion":""}',
+    'Original request: ' + String(originalRequest || '').slice(0, 2000),
+    'Draft result:',
+    String(draftResult || '').slice(0, 6000),
+  ].join('\n');
+}
+```
+
+Với draft email gửi team, reviewer nên kiểm tra: có tóm tắt đúng phạm vi tuần này không, có nêu số lượng feedback không, có bịa metric không, có action items rõ không.
+
+## Ví dụ workflow tổng hợp ở chế độ dry run
+
+Trước khi cho agent chạy tool thật, hãy có `DRY_RUN` để xem plan và review.
+
+```javascript
+function runWorkspaceAgentDryRun(request) {
+  const planText = generateAiText(buildPlannerPrompt(request), { temperature: 0 });
+  const plan = parseAgentPlan(planText);
+
+  const draftResult = JSON.stringify({
+    plan: plan,
+    note: 'Dry run only. No tools executed.',
+  });
+
+  const reviewText = generateAiText(buildReviewerPrompt(request, draftResult), { temperature: 0 });
+  logAgentRun(request, plan, reviewText, 'dry_run');
+
+  return { plan: plan, review: reviewText };
+}
+```
+
+Dry run là cách tốt để kiểm tra planner có hiểu đúng yêu cầu không trước khi bạn nối executor vào workflow thật.
+
+## Nguyên tắc agent an toàn
+
+- Planner không được thực thi tool.
+- Executor chỉ chạy tool allowlist.
+- Reviewer không được bỏ qua validation code.
+- Hành động nhạy cảm cần confirmation thủ công.
+- Mọi tool call cần audit log.
+- Agent phải có giới hạn số bước và thời gian chạy.
+- Không cho agent tự tạo trigger hoặc tự mở rộng quyền.
+
+## Lỗi thường gặp với AI agent
+
+- Agent có quyền quá rộng ngay từ bản đầu.
+- Không có allowlist tool và action.
+- Không phân biệt plan và execute.
+- Không lưu audit log.
+- Cho agent tự gửi email hoặc xóa dữ liệu không confirmation.
+- Không có dry run nên khó debug planner sai.
+
+## Bài tập thực hành
+
+Thiết kế agent workflow cho yêu cầu: “Tóm tắt feedback tuần này và tạo draft email gửi team”. Viết planner prompt, danh sách action allowlist, parser plan và reviewer prompt. Chạy dry run trước, sau đó mới nối tool `summarize_feedback` và `create_email_draft` nhưng không gửi email thật.
+
+## Câu hỏi thường gặp về agent Apps Script
+
+### Apps Script có đủ làm agent không?
+
+Đủ cho workflow nhỏ, nội bộ và số tool ít. Agent phức tạp, nhiều user, cần queue hoặc chạy lâu nên có backend riêng.
+
+### Reviewer AI có đảm bảo đúng không?
+
+Không. Reviewer là lớp hỗ trợ, không thay thế validation code, test và human approval. Nó giúp bắt lỗi dễ thấy, không đảm bảo an toàn tuyệt đối.
+
+### Có nên để agent chạy trigger tự động không?
+
+Chỉ với hành động an toàn và đã có guardrails. Hành động nhạy cảm như gửi email thật, chia sẻ Drive file hoặc xóa dữ liệu cần review.
+
+### Nên bắt đầu với bao nhiêu tool?
+
+Bắt đầu với 2-3 tool an toàn như tóm tắt sheet, tạo draft và tạo doc. Khi log ổn định và lỗi thấp, mới thêm tool mạnh hơn.
+
+## Tóm tắt và bước tiếp theo
+
+Agent workflow giúp AI Apps Script có cấu trúc và an toàn hơn bằng cách tách planner, executor và reviewer. Bài tiếp theo học dùng AI để review code Apps Script trước khi deploy, một bước quan trọng khi automation đã có nhiều side effect thật.

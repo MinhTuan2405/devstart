@@ -1,0 +1,164 @@
+---
+title: "Retry, quota và rate limit khi gọi AI API từ Apps Script"
+description: "Học cách xử lý lỗi tạm thời, quota, rate limit và chi phí khi gọi AI API trong Apps Script."
+slug: "retry-quota-rate-limit-ai-api"
+course: "ai-apps-script"
+order: 17
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["AI API quota Apps Script", "retry AI Apps Script", "rate limit Apps Script", "UrlFetchApp retry", "AI automation quota"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao AI API cần retry và quota guard?
+
+AI API cần retry và quota guard vì request có thể lỗi tạm thời, bị rate limit, timeout, hết quota hoặc vượt ngân sách. Apps Script cũng có giới hạn thời gian chạy. Nếu gọi model cho từng dòng trong Sheets mà không kiểm soát, job dễ thất bại hoặc tốn chi phí khó đoán.
+
+Retry không phải là gọi lại mọi lỗi. Retry đúng nghĩa là chỉ thử lại khi lỗi có khả năng tạm thời. Quota guard là giới hạn số request, số dòng, thời gian chạy và dữ liệu gửi đi để workflow bền hơn.
+
+## Mental model: phân loại lỗi trước khi retry
+
+Bạn nên chia lỗi HTTP thành nhóm:
+
+- 2xx: thành công, parse response.
+- 400: request sai, thường không retry.
+- 401 hoặc 403: key, quyền hoặc policy sai, không retry liên tục.
+- 429: rate limit, có thể retry với backoff.
+- 500, 502, 503, 504: lỗi tạm thời phía server, có thể retry.
+
+Nếu retry lỗi 401 do key sai, bạn chỉ tốn thời gian và làm log nhiễu. Nếu retry lỗi 429 quá nhanh, bạn càng gây áp lực lên API.
+
+## Retry cho lỗi tạm thời
+
+Backoff đơn giản giúp giảm tần suất request sau mỗi lần fail. Trong Apps Script, dùng `Utilities.sleep`, nhưng nhớ rằng sleep cũng tính vào thời gian chạy.
+
+```javascript
+function shouldRetryStatus(code) {
+  return [429, 500, 502, 503, 504].includes(code);
+}
+
+function sleepBeforeRetry(attempt) {
+  const delayMs = Math.min(1000 * attempt * attempt, 10000);
+  Utilities.sleep(delayMs);
+}
+```
+
+Backoff bình phương ở đây đơn giản: lần 1 chờ 1 giây, lần 2 chờ 4 giây, lần 3 tối đa 9 giây. Bạn có thể thêm jitter nếu hệ thống nhiều request đồng thời.
+
+## Wrapper retry cho UrlFetchApp
+
+Wrapper retry nên trả response cuối cùng. Parser phía sau vẫn phải kiểm tra status code và throw lỗi nếu thất bại.
+
+```javascript
+function fetchWithAiRetry(url, options, maxAttempts) {
+  const attempts = maxAttempts || 3;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const startedAt = Date.now();
+    const response = UrlFetchApp.fetch(url, {
+      ...options,
+      muteHttpExceptions: true,
+    });
+    const code = response.getResponseCode();
+
+    console.log({
+      message: 'AI request attempt completed',
+      attempt: attempt,
+      statusCode: code,
+      durationMs: Date.now() - startedAt,
+    });
+
+    if (code >= 200 && code < 300) return response;
+    if (!shouldRetryStatus(code) || attempt === attempts) return response;
+
+    sleepBeforeRetry(attempt);
+  }
+
+  throw new Error('Unexpected retry state');
+}
+```
+
+Không log prompt đầy đủ trong retry wrapper. Nếu lỗi xảy ra nhiều lần, log status code, attempt và duration là đủ để phân tích bước đầu.
+
+## Giới hạn số dòng mỗi lần chạy
+
+Quota guard quan trọng nhất trong Sheets là chỉ xử lý một số dòng mỗi lần chạy. Điều này tránh vượt thời gian Apps Script và tránh gửi hàng nghìn request ngoài ý muốn.
+
+```javascript
+function getRowsToProcess(rows, maxRowsPerRun) {
+  return rows
+    .filter(function (row) {
+      return row.status === 'pending' && row.message;
+    })
+    .slice(0, maxRowsPerRun);
+}
+
+function getMaxRowsPerRun() {
+  const value = PropertiesService.getScriptProperties().getProperty('MAX_ROWS_PER_RUN');
+  return Number(value || 20);
+}
+```
+
+Khi job chạy bằng trigger mỗi 10 phút, xử lý 20 dòng mỗi lần thường an toàn hơn cố xử lý cả sheet trong một execution.
+
+## Tránh xử lý lặp và giảm chi phí
+
+Mỗi dòng nên có trạng thái rõ: `pending`, `processing`, `done`, `error`. Với Apps Script đơn giản, bạn có thể cập nhật sau mỗi dòng hoặc sau batch nhỏ. Nếu job bị lỗi giữa chừng, trạng thái giúp bạn biết dòng nào đã xử lý.
+
+```javascript
+function markRowResult(sheet, rowNumber, status, errorMessage) {
+  sheet.getRange(rowNumber, 5).setValue(status);
+  sheet.getRange(rowNumber, 6).setValue(new Date());
+  sheet.getRange(rowNumber, 7).setValue(String(errorMessage || '').slice(0, 200));
+}
+```
+
+Với workflow gọi AI từng dòng, cập nhật trạng thái sau từng dòng có thể chậm hơn nhưng an toàn hơn. Với batch lớn, bạn có thể gom update, nhưng phải xử lý lỗi cẩn thận.
+
+## Chiến lược giảm số lần gọi AI
+
+- Gom nhiều dòng thành batch nếu use case chỉ cần insight tổng hợp.
+- Cache kết quả cho input giống nhau, nếu dữ liệu không nhạy cảm.
+- Chỉ gọi AI cho dòng `Status = pending`.
+- Có cột `ProcessedAt`, `Error` hoặc `PromptVersion`.
+- Giới hạn `MAX_ROWS_PER_RUN` trong script properties.
+- Dùng model nhanh/rẻ cho phân loại đơn giản.
+- Không retry lỗi cấu hình như key sai hoặc payload sai.
+
+CacheService có thể hữu ích cho custom function hoặc input lặp, nhưng không nên cache dữ liệu nhạy cảm quá lâu.
+
+## Lỗi thường gặp về quota và rate limit
+
+- Trigger chạy quá thường xuyên.
+- Không có max rows per run.
+- Gọi AI lại cho dòng đã xử lý.
+- Retry mọi lỗi, kể cả lỗi API key sai.
+- Không log số request đã gửi.
+- Không có cột trạng thái, nên không biết dòng nào bị lỗi.
+- Batch prompt quá lớn, làm response chậm hoặc thiếu chính xác.
+
+## Bài tập thực hành
+
+Viết function xử lý tối đa 20 dòng feedback mỗi lần chạy. Chỉ gọi AI cho dòng `Status = pending`, cập nhật `Status = done` nếu thành công hoặc `Status = error` nếu lỗi. Thêm `fetchWithAiRetry` chỉ retry status 429 và 5xx. Log tổng số dòng xử lý và số lỗi.
+
+## Câu hỏi thường gặp về quota AI API
+
+### Có nên xử lý cả sheet trong một lần chạy không?
+
+Không với sheet lớn. Hãy xử lý theo batch nhỏ và dùng trigger chạy tiếp. Cách này dễ kiểm soát thời gian, quota và lỗi hơn.
+
+### Lỗi 429 là gì?
+
+Thường là rate limit. Bạn nên retry có backoff, giảm tần suất request hoặc giảm số dòng mỗi lần chạy.
+
+### Cache có giảm chi phí không?
+
+Có nếu nhiều input lặp lại. Nhưng không nên cache dữ liệu nhạy cảm quá lâu, và phải chấp nhận kết quả có thể cũ.
+
+### Có nên retry JSON output sai không?
+
+Có thể retry một lần, nhưng đừng retry nhiều. JSON sai thường là vấn đề prompt, schema hoặc model, không phải lỗi tạm thời thuần túy.
+
+## Tóm tắt và bước tiếp theo
+
+Retry và quota guard giúp AI automation bền hơn. Hãy retry có chọn lọc, giới hạn số dòng, tránh xử lý lặp và log request an toàn. Bài tiếp theo sẽ học custom function AI trong Google Sheets.

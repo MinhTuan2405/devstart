@@ -1,0 +1,175 @@
+---
+title: "Range, Sheet và Spreadsheet trong Apps Script"
+description: "Hiểu rõ Range, Sheet, Spreadsheet và cách chọn vùng dữ liệu chính xác khi dùng Apps Script với Google Sheets."
+slug: "range-sheet-spreadsheet-trong-apps-script"
+course: "apps-script"
+order: 9
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["Range Apps Script", "Sheet Apps Script", "Spreadsheet Apps Script", "getRange Apps Script", "Google Sheets Apps Script cơ bản"]
+publishedAt: "2026-06-09"
+---
+
+## Range, Sheet và Spreadsheet khác nhau thế nào?
+
+Trong Apps Script, `Spreadsheet` là cả file Google Sheets, `Sheet` là một tab trong file, còn `Range` là một ô hoặc vùng ô. Hiểu đúng ba lớp này giúp bạn đọc, ghi, xóa, định dạng và bảo vệ dữ liệu chính xác hơn.
+
+Nếu bạn hay gặp lỗi ghi nhầm ô, đọc nhầm sheet hoặc range không khớp với dữ liệu, nguyên nhân thường là chưa nắm chắc mô hình này. Hãy luôn tự hỏi: mình đang thao tác với file nào, tab nào, vùng ô nào?
+
+## Cây đối tượng trong Google Sheets
+
+Một spreadsheet có thể chứa nhiều sheet. Một sheet có nhiều range. Một range có thể là một ô, một hàng, một cột hoặc một bảng nhiều dòng nhiều cột. Apps Script buộc bạn chọn đúng đối tượng trước khi thao tác.
+
+```javascript
+function inspectHierarchy() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getSheetByName('Data');
+
+  if (!sheet) {
+    Logger.log('Sheet Data not found');
+    return;
+  }
+
+  const range = sheet.getRange('A1:C5');
+  Logger.log(spreadsheet.getName());
+  Logger.log(sheet.getName());
+  Logger.log(range.getA1Notation());
+}
+```
+
+Đọc code từ trái sang phải: lấy spreadsheet đang mở, lấy sheet tên `Data`, rồi lấy range `A1:C5`. Nếu một bước thất bại, các bước sau không nên chạy.
+
+## Chọn range bằng A1 notation
+
+A1 notation là cách viết quen thuộc như `A1`, `B2:D10`, `Orders!A1:C5`. Cách này dễ đọc và phù hợp với vùng cố định, ví dụ header, ô cấu hình hoặc vùng báo cáo có kích thước không đổi.
+
+```javascript
+function readFixedRange() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const range = sheet.getRange('A1:C5');
+  const values = range.getValues();
+
+  Logger.log(values);
+}
+```
+
+Ưu điểm của A1 notation là dễ hiểu với người dùng Sheets. Nhược điểm là kém linh hoạt khi số dòng thay đổi. Nếu dữ liệu tăng mỗi ngày, bạn nên dùng dạng số kết hợp `getLastRow()`.
+
+## Chọn range bằng dòng và cột
+
+Dạng `getRange(row, column, numRows, numColumns)` rất hữu ích khi bạn tính toán dòng cuối hoặc số cột. Hãy nhớ dòng và cột trong `getRange` bắt đầu từ `1`, không phải `0`.
+
+```javascript
+function clearDataRowsOnly() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+
+  if (lastRow <= 1) {
+    Logger.log('No data rows to clear');
+    return;
+  }
+
+  sheet.getRange(2, 1, lastRow - 1, lastColumn).clearContent();
+}
+```
+
+Ví dụ này giữ lại hàng tiêu đề ở dòng 1 và chỉ xóa dữ liệu bên dưới. `clearContent()` chỉ xóa giá trị, không xóa định dạng hoặc validation.
+
+## Làm việc với nhiều sheet trong cùng spreadsheet
+
+Một spreadsheet thực tế thường có nhiều tab như `RawData`, `Orders`, `Report`, `Config`. Bạn nên lấy sheet theo tên để code rõ ràng, thay vì phụ thuộc vào sheet đang active.
+
+```javascript
+function prepareReportSheet() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = spreadsheet.getSheetByName('Report');
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet('Report');
+  }
+
+  sheet.clearContents();
+  sheet.getRange('A1:B1').setValues([['Metric', 'Value']]);
+  sheet.getRange('A2:B2').setValues([['Updated at', new Date()]]);
+}
+```
+
+Đây là pattern an toàn: kiểm tra sheet tồn tại trước, nếu chưa có thì tạo mới. Pattern này đặc biệt hữu ích khi bạn chia sẻ file cho người khác hoặc sao chép template.
+
+## Range có thể đọc, ghi, xóa và định dạng
+
+`Range` không chỉ dùng để đọc và ghi giá trị. Bạn còn có thể đổi màu nền, font, căn lề, number format, data validation, note và nhiều thuộc tính khác. Vì vậy chọn range đúng là điều kiện trước khi làm bất cứ thao tác nào.
+
+```javascript
+function updateStatusCell() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Tasks');
+
+  if (!sheet) return;
+
+  const statusCell = sheet.getRange(2, 4);
+  statusCell.setValue('done');
+  statusCell.setBackground('#dcfce7');
+  statusCell.setNote('Updated by Apps Script');
+}
+```
+
+Ví dụ này chọn ô D2 bằng `getRange(2, 4)`, ghi giá trị, tô màu và thêm ghi chú. Một range có thể nhận nhiều thao tác liên tiếp.
+
+## getLastRow và getLastColumn cần hiểu đúng
+
+`getLastRow()` trả về dòng cuối có nội dung trong sheet. `getLastColumn()` trả về cột cuối có nội dung. Nếu sheet có dữ liệu rác ở dòng rất xa, kết quả có thể lớn hơn mong đợi. Khi script đọc quá nhiều dòng trống, hãy kiểm tra sheet hoặc giới hạn vùng đọc rõ ràng.
+
+Với bảng có header ở dòng 1, pattern quen thuộc là nếu `lastRow < 2` thì chưa có dữ liệu. Nếu có dữ liệu, đọc từ dòng 2 với số dòng `lastRow - 1`.
+
+## Lỗi thường gặp khi dùng Range
+
+- Nhầm dòng và cột trong `getRange` bắt đầu từ `1`, không phải `0` như mảng JavaScript.
+- Gọi `clear()` làm mất cả định dạng khi chỉ muốn xóa nội dung.
+- Chọn range rộng hơn hoặc hẹp hơn mảng truyền vào `setValues()`.
+- Dùng tên sheet sai chính tả hoặc thừa khoảng trắng.
+- Xóa hàng tiêu đề do không kiểm tra `lastRow`.
+- Dùng active sheet trong automation cần sheet cố định, dẫn đến chạy nhầm tab.
+
+## Bài tập thực hành
+
+Tạo spreadsheet có sheet `Data` và `Report`. Trong `Data`, tạo cột `Name`, `Email`, `Status`. Viết function đọc dữ liệu từ `Data!A2:C`, đếm số dòng có status `active`, sau đó ghi kết quả vào `Report!A1:B2`.
+
+```javascript
+function practiceRangeReport() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const dataSheet = spreadsheet.getSheetByName('Data');
+  const reportSheet = spreadsheet.getSheetByName('Report');
+
+  if (!dataSheet || !reportSheet) {
+    Logger.log('Missing Data or Report sheet');
+    return;
+  }
+
+  Logger.log(dataSheet.getLastRow());
+}
+```
+
+Hoàn thiện function bằng cách đọc range dữ liệu, lọc status `active` và ghi bảng kết quả vào sheet `Report`.
+
+## Câu hỏi thường gặp về Range
+
+### clear và clearContent khác gì nhau?
+
+`clear()` xóa cả nội dung, định dạng, ghi chú và validation. `clearContent()` chỉ xóa giá trị trong ô. Khi làm báo cáo có định dạng sẵn, thường nên dùng `clearContent()`.
+
+### getLastRow có luôn chính xác không?
+
+Nó trả dòng cuối có nội dung trong sheet. Nếu có dữ liệu rác, công thức hoặc ghi chú ở dưới xa, kết quả có thể lớn hơn bạn nghĩ. Hãy kiểm tra sheet khi thấy script đọc quá nhiều dòng.
+
+### Có thể lấy nhiều range rời rạc không?
+
+Có, bạn có thể dùng `getRangeList()` cho nhiều vùng rời rạc. Tuy nhiên người mới nên thành thạo `getRange()` trước vì hầu hết bài toán cơ bản dùng một vùng liên tục.
+
+### Nên dùng active sheet hay getSheetByName?
+
+Dùng active sheet cho thao tác thủ công đang phụ thuộc tab người dùng chọn. Dùng `getSheetByName` cho automation cần ổn định và tránh chạy nhầm sheet.
+
+## Tóm tắt
+
+`Spreadsheet`, `Sheet` và `Range` là mô hình cốt lõi của Sheets trong Apps Script. Bạn đã biết chọn range bằng A1 notation, bằng dòng cột, làm việc với nhiều sheet và tránh lỗi chọn vùng. Bài tiếp theo sẽ học định dạng dữ liệu để báo cáo dễ đọc hơn.

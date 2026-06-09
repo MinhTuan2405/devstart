@@ -1,0 +1,162 @@
+---
+title: "Nút bấm, drawing và macro trong Google Sheets với Apps Script"
+description: "Học cách chạy Apps Script từ nút, drawing và macro để thao tác nhanh trong Google Sheets."
+slug: "nut-drawing-macro-trong-google-sheets"
+course: "apps-script"
+order: 13
+duration: "17 phút"
+difficulty: "Dễ"
+keywords: ["button Apps Script", "drawing Google Sheets Apps Script", "macro Apps Script", "gán script cho nút Google Sheets", "chạy Apps Script từ nút"]
+publishedAt: "2026-06-09"
+---
+
+## Chạy Apps Script từ nút trong Sheets như thế nào?
+
+Bạn có thể chạy Apps Script từ nút hoặc drawing trong Google Sheets bằng cách tạo hình vẽ, chọn Assign script và nhập tên function. Cách này phù hợp cho người dùng cuối vì họ chỉ cần bấm nút thay vì mở menu hoặc Apps Script editor.
+
+Nút bấm đặc biệt hữu ích khi có một thao tác chính trên sheet, ví dụ `Cập nhật báo cáo`, `Gửi nhắc việc`, `Tạo phiếu`, `Đồng bộ dữ liệu`. Nếu custom menu phù hợp với nhiều tác vụ, thì button phù hợp với một hành động nổi bật và thường xuyên.
+
+## Mô hình function dùng cho nút bấm
+
+Nút bấm chỉ trỏ đến tên function. Function nên không có tham số, vì drawing không truyền tham số trực tiếp. Nếu cần biết người dùng đang chọn dòng nào, function có thể đọc `getActiveRange()` hoặc `getActiveCell()` tại thời điểm bấm.
+
+```javascript
+function runReport() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  sheet.appendRow(['Report created at', new Date()]);
+
+  SpreadsheetApp.getUi().alert('Report created');
+}
+```
+
+Sau khi tạo drawing trong Google Sheets, bạn chọn drawing, bấm menu ba chấm, chọn Assign script và nhập `runReport`. Không nhập `runReport()` vì Assign script chỉ cần tên function.
+
+## Tạo nút gửi nhắc việc cho dòng đang chọn
+
+Một ví dụ thực tế là người dùng chọn một dòng task rồi bấm nút `Send reminder`. Function sẽ đọc dòng đang chọn, lấy email và task, ghi log hoặc gửi email.
+
+```javascript
+function sendReminderForActiveRow() {
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const activeRange = sheet.getActiveRange();
+
+  if (!activeRange || activeRange.getRow() === 1) {
+    SpreadsheetApp.getUi().alert('Please select a data row');
+    return;
+  }
+
+  const row = activeRange.getRow();
+  const values = sheet.getRange(row, 1, 1, 4).getValues()[0];
+  const task = values[0];
+  const email = values[1];
+  const status = values[2];
+
+  Logger.log('Reminder target: ' + email + ' / ' + task + ' / ' + status);
+  SpreadsheetApp.getUi().alert('Reminder prepared for ' + email);
+}
+```
+
+Ví dụ này chưa gửi email thật để tránh xin quyền Gmail ngay. Khi đã chắc dữ liệu đúng, bạn có thể thay `Logger.log` bằng `GmailApp.sendEmail` trong bài sau về Gmail.
+
+## Macro trong Google Sheets là gì?
+
+Macro là cách ghi lại thao tác trong Sheets và lưu thành Apps Script. Bạn có thể dùng macro để học cách Sheets tạo code định dạng, sắp xếp hoặc thao tác lặp. Macro phù hợp khi bạn đã có thao tác thủ công rõ ràng và muốn biến nó thành code nhanh.
+
+```javascript
+function formatHeaderMacro() {
+  const spreadsheet = SpreadsheetApp.getActive();
+  const sheet = spreadsheet.getActiveSheet();
+
+  sheet.getRange('A1:D1')
+    .setFontWeight('bold')
+    .setBackground('#e0f2fe')
+    .setHorizontalAlignment('center');
+}
+```
+
+Sau khi ghi macro, bạn nên đọc lại code và đổi tên function cho rõ nghĩa. Macro tạo code nhanh, nhưng không phải lúc nào cũng tối ưu. Nó có thể dùng active range quá nhiều, tạo code dài hoặc phụ thuộc vào vị trí bạn đang chọn khi ghi macro.
+
+## Khi nào dùng menu, nút hay macro?
+
+Custom menu phù hợp khi bạn có nhiều tác vụ và muốn gom chúng vào một nơi. Nút bấm phù hợp với một tác vụ nổi bật ngay trên sheet. Macro phù hợp để ghi lại thao tác thủ công rồi chuyển thành Apps Script.
+
+Không nên đặt quá nhiều nút trên sheet. Một sheet có 10 nút sẽ nhanh chóng rối và khó dùng, đặc biệt trên màn hình nhỏ. Nếu có nhiều hành động, hãy dùng custom menu hoặc sidebar trong các bài nâng cao.
+
+## Gắn nút với function an toàn
+
+Function chạy từ nút nên kiểm tra dữ liệu trước khi làm việc quan trọng. Nếu nút xóa dữ liệu, hãy xác nhận. Nếu nút xử lý dòng đang chọn, hãy kiểm tra người dùng không chọn header. Nếu nút gửi email, hãy log danh sách người nhận trước khi gửi thật.
+
+```javascript
+function clearDataWithButton() {
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.alert('Clear data', 'Clear rows from row 2?', ui.ButtonSet.YES_NO);
+
+  if (response !== ui.Button.YES) {
+    return;
+  }
+
+  const sheet = SpreadsheetApp.getActiveSheet();
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow <= 1) {
+    ui.alert('No data to clear');
+    return;
+  }
+
+  sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
+  ui.alert('Data cleared');
+}
+```
+
+Đây là ví dụ tốt vì có xác nhận, kiểm tra dữ liệu rỗng và chỉ xóa nội dung, không xóa header hoặc định dạng.
+
+## Lỗi thường gặp khi gán script cho nút
+
+- Nhập `runReport()` thay vì `runReport` trong Assign script.
+- Function có tham số, trong khi nút không truyền tham số.
+- Đổi tên function nhưng quên cập nhật nút.
+- Người dùng không có quyền chạy script hoặc chưa cấp quyền.
+- Nút nằm trên sheet bị bảo vệ hoặc khó bấm trên mobile.
+- Function phụ thuộc active range nhưng người dùng chưa chọn dòng phù hợp.
+
+## Bài tập thực hành
+
+Tạo một drawing trong Google Sheets với chữ `Send reminder`. Viết function `sendReminder` ghi một dòng log vào sheet `Logs` và hiển thị alert. Gán function đó cho drawing, sau đó bấm thử.
+
+```javascript
+function sendReminder() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = spreadsheet.getSheetByName('Logs');
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet('Logs');
+  }
+
+  sheet.appendRow([new Date(), 'Reminder button clicked']);
+  SpreadsheetApp.getUi().alert('Reminder logged');
+}
+```
+
+Sau khi chạy được, thử sửa function để đọc dòng đang chọn và ghi thêm số dòng vào sheet `Logs`.
+
+## Câu hỏi thường gặp về button và macro
+
+### Nút có truyền được dữ liệu dòng đang chọn không?
+
+Không trực tiếp, nhưng function có thể dùng `getActiveRange()` hoặc `getActiveCell()` để biết vùng người dùng đang chọn tại thời điểm bấm. Hãy luôn kiểm tra người dùng không chọn header.
+
+### Macro có nên dùng trong dự án nghiêm túc không?
+
+Có thể dùng làm điểm khởi đầu. Sau đó nên refactor code để tên hàm rõ ràng, bớt thao tác thừa, tránh phụ thuộc active range và xử lý lỗi tốt hơn.
+
+### Nút có chạy được trên mọi tài khoản không?
+
+Người dùng cần quyền mở file và quyền chạy script. Một số domain Workspace có thể hạn chế script theo chính sách admin, đặc biệt với Gmail hoặc Drive.
+
+### Nên dùng nút hay custom menu?
+
+Dùng nút cho hành động chính, dễ thấy và chạy thường xuyên. Dùng custom menu khi có nhiều hành động hoặc bạn muốn giao diện gọn hơn.
+
+## Tóm tắt
+
+Nút, drawing và macro giúp Apps Script gần hơn với người dùng không biết code. Bạn đã học cách gán function cho drawing, đọc active range, dùng alert xác nhận và hiểu khi nào dùng macro. Bài tiếp theo sẽ học custom function để dùng Apps Script như công thức trong Google Sheets.

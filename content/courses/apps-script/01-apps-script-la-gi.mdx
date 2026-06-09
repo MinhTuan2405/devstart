@@ -1,0 +1,138 @@
+---
+title: "Apps Script là gì? Học Google Apps Script từ đầu"
+description: "Giải thích Apps Script là gì, dùng để làm gì và vì sao nên học để tự động hóa Google Workspace."
+slug: "apps-script-la-gi"
+course: "apps-script"
+order: 1
+duration: "16 phút"
+difficulty: "Dễ"
+keywords: ["Apps Script là gì", "học Google Apps Script", "Google Apps Script cơ bản", "Apps Script cho người mới", "tự động hóa Google Workspace"]
+publishedAt: "2026-06-09"
+---
+
+## Apps Script là gì?
+
+Apps Script là nền tảng lập trình JavaScript của Google dùng để tự động hóa và mở rộng Google Workspace. Nói đơn giản, nếu bạn đang lặp lại thao tác trong Google Sheets, Docs, Drive, Gmail, Forms hoặc Calendar, Apps Script giúp biến thao tác đó thành mã chạy tự động.
+
+Điểm quan trọng nhất với người mới là Apps Script không giống việc cài một phần mềm lập trình nặng trên máy. Bạn viết code trong trình duyệt, lưu project trong Google Drive, chạy trên hạ tầng của Google và dùng các service có sẵn như `SpreadsheetApp`, `DocumentApp`, `GmailApp`, `DriveApp`. Vì vậy Apps Script đặc biệt phù hợp cho công việc văn phòng, báo cáo, xử lý dữ liệu, vận hành nội bộ và các automation nhỏ đến vừa.
+
+## Mô hình tư duy khi học Google Apps Script
+
+Hãy hình dung Apps Script là một lớp điều khiển nằm giữa JavaScript và dữ liệu Google Workspace của bạn. JavaScript xử lý logic: biến, hàm, điều kiện, vòng lặp, mảng, object. Các service của Google thực hiện hành động thật: đọc Sheet, tạo Docs, gửi email, lấy file Drive hoặc tạo sự kiện Calendar.
+
+Một automation Apps Script thường đi theo luồng sau:
+
+- Chọn nơi chứa dữ liệu, ví dụ Google Sheets.
+- Viết một function mô tả việc cần làm.
+- Dùng service Google để đọc hoặc ghi dữ liệu.
+- Chạy thủ công, bằng nút, bằng menu hoặc bằng trigger.
+- Cấp quyền khi script cần truy cập dữ liệu trong tài khoản Google.
+
+Ví dụ nhỏ nhất là một function ghi log:
+
+```javascript
+function helloAppsScript() {
+  Logger.log('Hello Apps Script');
+}
+```
+
+Khi chạy hàm này trong Apps Script editor, bạn mở Execution log để xem dòng `Hello Apps Script`. Tuy đơn giản, ví dụ này đã có đủ ba phần cơ bản: function, lệnh xử lý và kết quả quan sát được.
+
+## Apps Script dùng để làm gì trong thực tế?
+
+Apps Script mạnh nhất khi công việc của bạn nằm trong hệ sinh thái Google. Một số bài toán rất thực tế gồm tạo báo cáo hàng ngày từ Sheets, gửi email nhắc việc, kiểm tra dữ liệu nhập sai, tạo file Docs từ mẫu, gom file trong Drive, hoặc tạo web app nội bộ để nhận dữ liệu từ form riêng.
+
+Ví dụ sau tạo một Google Sheets mới, ghi hàng tiêu đề và log đường dẫn file:
+
+```javascript
+function createTaskTracker() {
+  const spreadsheet = SpreadsheetApp.create('Task Tracker');
+  const sheet = spreadsheet.getActiveSheet();
+
+  sheet.appendRow(['Date', 'Task', 'Owner', 'Status']);
+  sheet.getRange('A1:D1').setFontWeight('bold');
+
+  Logger.log(spreadsheet.getUrl());
+}
+```
+
+Lần đầu chạy, Google có thể yêu cầu cấp quyền vì script đang tạo file trong Drive và chỉnh sửa Sheets. Đây không phải lỗi. Đây là cơ chế bảo vệ tài khoản: script chỉ được làm việc với dữ liệu khi bạn đồng ý.
+
+Một ví dụ khác là tạo tài liệu và gửi đường dẫn cho chính bạn:
+
+```javascript
+function createDocAndEmailMe() {
+  const doc = DocumentApp.create('Weekly Notes');
+  const body = doc.getBody();
+
+  body.appendParagraph('Weekly automation note');
+  body.appendParagraph('Created at: ' + new Date());
+
+  const email = Session.getActiveUser().getEmail();
+  GmailApp.sendEmail(email, 'New document created', doc.getUrl());
+}
+```
+
+Đoạn mã này cho thấy sức mạnh của Apps Script: cùng một function có thể dùng `DocumentApp`, `Session` và `GmailApp`. Bạn không cần tự xử lý OAuth phức tạp cho từng API ở giai đoạn cơ bản; Apps Script cung cấp service thân thiện hơn.
+
+## Cú pháp và thành phần cần nhớ
+
+Ở mức nhập môn, bạn chỉ cần nắm vài khái niệm nền:
+
+- Script project là nơi chứa mã, cấu hình và lịch sử thực thi.
+- File `.gs` là nơi viết JavaScript chạy phía máy chủ Google.
+- Function là điểm bắt đầu để bạn chạy một tác vụ.
+- Service là nhóm lệnh làm việc với sản phẩm Google, ví dụ `SpreadsheetApp`.
+- Authorization là bước cấp quyền cho script.
+- Trigger là cơ chế tự chạy function khi có sự kiện hoặc lịch.
+
+Tên function nên viết bằng tiếng Anh không dấu, dùng chữ cái, số và gạch dưới khi cần. Ví dụ `sendDailyReport`, `formatOrderSheet`, `syncFormResponses`. Tên rõ ràng giúp bạn chọn đúng hàm trong editor và bảo trì project lâu dài.
+
+## Những lỗi thường gặp khi mới học Apps Script
+
+- Nghĩ Apps Script chạy trong trình duyệt như JavaScript frontend. Thực tế code `.gs` chạy trên máy chủ Google, không có `window` hoặc DOM.
+- Gọi service cần quyền rồi tưởng code sai khi Google yêu cầu authorization.
+- Đọc ghi từng ô trong vòng lặp lớn, khiến script chậm và dễ đụng quota.
+- Đặt tên function có dấu tiếng Việt hoặc dấu cách, làm khó chạy từ menu, trigger hoặc nút.
+- Không xem Execution log nên không biết script đã chạy đến đâu.
+- Viết automation quá lớn ngay từ đầu thay vì kiểm tra từng bước nhỏ.
+
+## Bài tập thực hành
+
+Tạo một Apps Script project mới và viết function `createLearningLog`. Function này tạo một Google Sheets tên `Apps Script Learning Log`, ghi hàng tiêu đề gồm `Date`, `Topic`, `Note`, sau đó ghi thêm một dòng với chủ đề bạn đang học.
+
+```javascript
+function createLearningLog() {
+  const spreadsheet = SpreadsheetApp.create('Apps Script Learning Log');
+  const sheet = spreadsheet.getActiveSheet();
+
+  sheet.appendRow(['Date', 'Topic', 'Note']);
+  sheet.appendRow([new Date(), 'Introduction', 'First Apps Script lesson']);
+
+  Logger.log(spreadsheet.getUrl());
+}
+```
+
+Sau khi chạy, mở URL trong log và kiểm tra dữ liệu. Nếu được yêu cầu cấp quyền, hãy đọc quyền được yêu cầu rồi cho phép để hoàn tất bài tập.
+
+## Câu hỏi thường gặp về Apps Script
+
+### Apps Script có phải JavaScript không?
+
+Có. Apps Script dùng JavaScript trên V8 runtime, nhưng bổ sung các service riêng của Google như `SpreadsheetApp`, `DriveApp`, `GmailApp`. Bạn học JavaScript để xử lý logic và học Apps Script service để thao tác với Google Workspace.
+
+### Có cần biết lập trình trước khi học Apps Script không?
+
+Không bắt buộc, nhưng biết biến, hàm, điều kiện, mảng và object sẽ giúp học nhanh hơn. Nếu bạn là người mới hoàn toàn, hãy bắt đầu bằng các script ngắn trong Sheets vì kết quả rất dễ nhìn thấy.
+
+### Apps Script có miễn phí không?
+
+Bạn có thể dùng Apps Script với tài khoản Google, nhưng có quota và giới hạn theo loại tài khoản. Khi automation gửi nhiều email, gọi API nhiều lần hoặc xử lý bảng lớn, bạn cần kiểm tra giới hạn dịch vụ.
+
+### Apps Script phù hợp với dự án lớn không?
+
+Apps Script phù hợp nhất cho automation Google Workspace, công cụ nội bộ và workflow vừa phải. Với hệ thống lớn, bạn vẫn có thể dùng Apps Script ở một phần quy trình, nhưng cần thiết kế quota, quyền truy cập, logging và triển khai cẩn thận hơn.
+
+## Tóm tắt
+
+Apps Script giúp bạn tự động hóa Google Workspace bằng JavaScript và các service có sẵn của Google. Bạn đã biết Apps Script là gì, mô hình project, service, function, authorization và trigger. Ở bài tiếp theo, bạn sẽ tạo dự án Apps Script đầu tiên trong editor, chạy function, xem log và hiểu sự khác nhau giữa bound script và standalone script.

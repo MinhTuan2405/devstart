@@ -1,0 +1,139 @@
+---
+title: "Chọn mô hình AI cho Apps Script: Gemini, Vertex AI hay OpenAI"
+description: "So sánh Gemini API, Vertex AI, OpenAI và cách chọn model phù hợp khi tích hợp AI vào Apps Script."
+slug: "chon-mo-hinh-ai-cho-apps-script"
+course: "ai-apps-script"
+order: 2
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["chọn mô hình AI Apps Script", "Gemini Apps Script", "Vertex AI Apps Script", "OpenAI Apps Script", "AI API Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Chọn mô hình AI cho Apps Script như thế nào?
+
+Bạn nên chọn mô hình AI cho Apps Script theo bài toán, dữ liệu, chi phí, độ trễ, cách xác thực và mức quản trị cần thiết. Gemini API thường dễ bắt đầu, Vertex AI phù hợp môi trường Google Cloud/doanh nghiệp, còn OpenAI hoặc provider khác phù hợp khi team đã dùng sẵn hệ sinh thái đó.
+
+Sai lầm phổ biến là hỏi "model nào thông minh nhất?" rồi dùng một model mạnh cho mọi tác vụ. Trong automation, câu hỏi đúng hơn là: tác vụ này cần độ chính xác nào, dữ liệu nhạy cảm đến đâu, chạy bao nhiêu lần mỗi ngày, output cần text hay JSON, và ai chịu trách nhiệm vận hành khi quota hoặc billing có vấn đề?
+
+## Hiểu provider, model và endpoint
+
+Provider là nhà cung cấp API, ví dụ Google Gemini API, Google Vertex AI hoặc OpenAI. Model là phiên bản cụ thể bạn gọi, ví dụ một model nhanh cho phân loại hoặc một model mạnh hơn cho phân tích dài. Endpoint là URL hoặc service mà Apps Script gửi request tới.
+
+Trong Apps Script, các lựa chọn này thường được lưu thành cấu hình. Code nghiệp vụ không nên hardcode model ở mọi nơi, vì sau này bạn sẽ muốn đổi model mà không sửa hàng chục function.
+
+```javascript
+function saveAiProviderConfig() {
+  PropertiesService.getScriptProperties().setProperties({
+    AI_PROVIDER: 'gemini',
+    AI_MODEL: 'gemini-2.5-flash',
+    AI_REGION: 'global',
+  });
+}
+
+function getAiConfig() {
+  const props = PropertiesService.getScriptProperties();
+  return {
+    provider: props.getProperty('AI_PROVIDER') || 'gemini',
+    model: props.getProperty('AI_MODEL') || 'gemini-2.5-flash',
+    region: props.getProperty('AI_REGION') || 'global',
+  };
+}
+```
+
+Đoạn này chưa gọi API, nhưng nó tạo một thói quen quan trọng: model là cấu hình vận hành, không phải chi tiết rải rác trong logic đọc Sheets hay gửi Gmail.
+
+## So sánh Gemini API, Vertex AI và OpenAI
+
+Gemini API phù hợp khi bạn muốn bắt đầu nhanh với Apps Script bằng API key. Nó thường hợp cho prototype, công cụ nội bộ nhỏ, custom function thử nghiệm hoặc job phân loại/tóm tắt trong Sheets. Điểm cần lưu ý là bạn vẫn phải tự quản lý key, quota, retry và chính sách dữ liệu.
+
+Vertex AI phù hợp khi dự án nằm trong Google Cloud, cần IAM, billing tập trung, audit, service account, region, quản trị model và quy trình doanh nghiệp. Với Apps Script, tích hợp Vertex AI có thể cần thiết lập phức tạp hơn, nhưng đổi lại phù hợp hơn cho hệ thống nhiều người dùng hoặc dữ liệu cần kiểm soát chặt.
+
+OpenAI hoặc provider khác phù hợp khi tổ chức đã có billing, proxy, policy hoặc backend dùng provider đó. Khi dùng từ Apps Script, bạn cần chuẩn hóa request/response vì mỗi provider có format riêng. Không nên viết code nghiệp vụ phụ thuộc sâu vào cấu trúc response của một provider nếu bạn dự kiến đổi sau này.
+
+## Mental model: chọn model theo loại tác vụ
+
+Hãy chia tác vụ thành nhóm trước khi chọn model:
+
+- Phân loại ngắn: sentiment, tag support, priority. Ưu tiên model nhanh, rẻ, temperature thấp.
+- Tóm tắt: cần model xử lý ngữ cảnh tốt, nhưng có thể batch vừa phải.
+- Trích xuất JSON: cần model tuân thủ format tốt và parser nghiêm ngặt.
+- Soạn nội dung: cần kiểm soát giọng văn, template và review con người.
+- Hỏi đáp từ tài liệu: cần thêm RAG, nguồn dữ liệu và kiểm tra trích dẫn.
+
+Bạn có thể mã hóa quyết định này thành helper đơn giản:
+
+```javascript
+function chooseModelForTask(taskType) {
+  const config = getAiConfig();
+
+  if (taskType === 'classification') {
+    return { provider: config.provider, model: config.model, temperature: 0 };
+  }
+
+  if (taskType === 'summary') {
+    return { provider: config.provider, model: config.model, temperature: 0.2 };
+  }
+
+  if (taskType === 'draft') {
+    return { provider: config.provider, model: config.model, temperature: 0.5 };
+  }
+
+  throw new Error('Unsupported AI task: ' + taskType);
+}
+```
+
+Helper này không quyết định thay bạn, nhưng buộc project có ngôn ngữ chung: classification khác summary, summary khác draft. Khi AI tạo code, bạn cũng có thể yêu cầu nó dùng helper này thay vì tự chọn model.
+
+## Ví dụ thực tế: chọn model cho ba workflow
+
+Với sheet `Feedback`, bạn chỉ cần gán tag `bug`, `billing`, `feature`, `other`. Đây là phân loại ngắn, nên ưu tiên model nhanh, nhiệt độ thấp, output một từ hoặc JSON nhỏ. Không cần model lớn nhất.
+
+Với Google Docs dài 20 trang cần tóm tắt thành biên bản họp, bạn cần chú ý context length, chi phí và cách chia tài liệu thành đoạn. Nếu dùng model nhanh nhưng context quá dài, kết quả có thể thiếu ý quan trọng.
+
+Với Gmail assistant soạn nháp trả lời khách hàng, bạn cần kiểm soát dữ liệu gửi đi, template giọng văn, bước review trước khi gửi thật và có thể cần model chất lượng cao hơn vì output trực tiếp ảnh hưởng người nhận.
+
+## Tiêu chí chọn model trước khi viết code
+
+- Dữ liệu có chứa thông tin cá nhân, tài chính, y tế hoặc bí mật nội bộ không.
+- Output cần text tự nhiên, JSON, enum hay email draft.
+- Automation chạy thủ công, theo trigger hằng giờ hay theo mỗi lần submit form.
+- Mỗi ngày dự kiến bao nhiêu request và chi phí tối đa là bao nhiêu.
+- Có cần Google Cloud IAM, audit log, billing tập trung hoặc region không.
+- Team có cần đổi provider sau này không.
+- Người dùng cuối có cần cấp quyền Google hay script chạy bằng owner.
+
+## Lỗi thường gặp khi chọn model
+
+- Chọn model mạnh nhất cho mọi tác vụ, làm chi phí tăng mà chất lượng không cải thiện đáng kể.
+- Không phân biệt môi trường thử nghiệm và production.
+- Không đặt timeout, retry, quota guard hoặc giới hạn số dòng mỗi lần chạy.
+- Không đọc chính sách xử lý dữ liệu của provider.
+- Không chuẩn hóa response, khiến mỗi job parse một kiểu.
+- Đánh giá model bằng một ví dụ đẹp thay vì test trên dữ liệu xấu, rỗng, dài và mơ hồ.
+
+## Bài tập thực hành
+
+Tạo một sheet so sánh ba lựa chọn: Gemini API, Vertex AI và OpenAI. Với mỗi lựa chọn, ghi: cách xác thực, nơi lưu secret, model mặc định, tác vụ phù hợp, dữ liệu được phép gửi, chi phí dự kiến, rủi ro quota và lý do chọn hoặc không chọn cho project đầu tiên của bạn.
+
+## Câu hỏi thường gặp về chọn model
+
+### Gemini API và Vertex AI khác gì nhau?
+
+Gemini API thường dễ bắt đầu bằng API key. Vertex AI nằm trong Google Cloud, phù hợp khi cần IAM, billing, audit, policy và quản trị doanh nghiệp. Cùng là model Google, nhưng cách vận hành và kiểm soát khác nhau.
+
+### Có nên hỗ trợ nhiều provider ngay từ đầu không?
+
+Không nên nếu chưa có nhu cầu rõ. Hỗ trợ nhiều provider làm code phức tạp hơn vì mỗi API có payload, response, lỗi và quota khác nhau. Ban đầu hãy viết wrapper tốt cho một provider.
+
+### Model nhỏ có đủ dùng không?
+
+Nhiều tác vụ như phân loại, đặt nhãn, tóm tắt ngắn và chuẩn hóa nội dung dùng model nhanh là đủ. Hãy test trên dữ liệu thật trước khi nâng lên model lớn hơn.
+
+### Có cần lưu model trong PropertiesService không?
+
+Có. Lưu model trong cấu hình giúp bạn đổi model khi test hoặc khi provider cập nhật mà không phải sửa nhiều function nghiệp vụ.
+
+## Tóm tắt và bước tiếp theo
+
+Chọn model là quyết định kỹ thuật và vận hành, không chỉ là chọn AI nào thông minh nhất. Hãy bắt đầu từ loại tác vụ, độ nhạy dữ liệu, chi phí, quota và yêu cầu quản trị. Bài tiếp theo sẽ học workflow dùng AI để phân tích yêu cầu Apps Script trước khi viết code.

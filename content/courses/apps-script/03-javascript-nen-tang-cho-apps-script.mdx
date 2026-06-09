@@ -1,0 +1,180 @@
+---
+title: "JavaScript nền tảng cần biết khi học Apps Script"
+description: "Ôn biến, kiểu dữ liệu, hàm và điều kiện JavaScript cần dùng trong Google Apps Script."
+slug: "javascript-nen-tang-cho-apps-script"
+course: "apps-script"
+order: 3
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["JavaScript cho Apps Script", "Apps Script JavaScript", "biến trong Apps Script", "hàm Apps Script", "Google Apps Script cơ bản"]
+publishedAt: "2026-06-09"
+---
+
+## Cần biết JavaScript gì để học Apps Script?
+
+Để học Apps Script hiệu quả, bạn cần nắm biến, kiểu dữ liệu, hàm, điều kiện, vòng lặp, mảng và object trong JavaScript. Bạn không cần học toàn bộ JavaScript frontend ngay, vì Apps Script chủ yếu dùng JavaScript để xử lý dữ liệu và gọi service Google.
+
+Hãy xem JavaScript trong Apps Script như ngôn ngữ mô tả quy trình: lấy dữ liệu từ đâu, kiểm tra điều kiện gì, biến đổi dữ liệu thế nào, rồi gọi service nào để tạo kết quả. Bạn sẽ ít dùng DOM, `window` hoặc sự kiện trình duyệt trong file `.gs`; những phần đó chỉ xuất hiện khi học HtmlService sau này.
+
+## Biến và kiểu dữ liệu trong Apps Script
+
+Trong Apps Script hiện đại, hãy ưu tiên `const` cho giá trị không gán lại và `let` cho giá trị cần thay đổi. Tránh dùng `var` trong code mới vì phạm vi của `var` dễ gây nhầm lẫn cho người mới.
+
+Các kiểu dữ liệu thường gặp gồm string, number, boolean, array, object, Date và giá trị rỗng. Khi đọc từ Google Sheets, mỗi ô có thể trả về chuỗi, số, ngày tháng, boolean hoặc chuỗi rỗng, nên bạn cần kiểm tra trước khi xử lý.
+
+```javascript
+function logBasicValues() {
+  const customerName = 'Hoa';
+  const totalAmount = 250000;
+  const isPaid = true;
+  const createdAt = new Date();
+
+  Logger.log(customerName);
+  Logger.log(totalAmount);
+  Logger.log(isPaid);
+  Logger.log(createdAt);
+}
+```
+
+Mô hình tư duy rất đơn giản: biến là nhãn đặt tên cho một giá trị. Tên biến tốt giúp code tự giải thích. `totalAmount` rõ hơn `x`, `customerName` rõ hơn `name` nếu project có nhiều loại tên khác nhau.
+
+## Hàm, tham số và return
+
+Function giúp bạn đóng gói một việc nhỏ. Function có thể nhận tham số, xử lý và trả kết quả bằng `return`. Trong Apps Script, bạn nên viết function tính toán riêng, rồi viết function khác để đọc ghi Sheets hoặc gửi email. Cách tách này giúp debug dễ hơn.
+
+```javascript
+function calculateFinalPrice(price, discountRate) {
+  const discount = price * discountRate;
+  return price - discount;
+}
+
+function testCalculateFinalPrice() {
+  const finalPrice = calculateFinalPrice(200000, 0.15);
+  Logger.log(finalPrice);
+}
+```
+
+Function `calculateFinalPrice` không phụ thuộc Google Sheets nên rất dễ kiểm tra. Function `testCalculateFinalPrice` chỉ dùng để chạy thử trong editor. Đây là thói quen tốt: trước khi áp dụng logic vào dữ liệu thật, hãy test bằng vài giá trị đơn giản.
+
+## Điều kiện if else trong automation
+
+Điều kiện giúp script quyết định hành động. Bạn sẽ dùng `if` để bỏ qua dòng rỗng, chỉ gửi email cho người chưa thanh toán, cảnh báo khi thiếu dữ liệu hoặc chọn format theo trạng thái.
+
+```javascript
+function getOrderMessage(status) {
+  if (status === 'paid') {
+    return 'Paid order';
+  }
+
+  if (status === 'pending') {
+    return 'Waiting for payment';
+  }
+
+  if (status === '') {
+    return 'Missing status';
+  }
+
+  return 'Need review';
+}
+```
+
+Hãy dùng so sánh nghiêm ngặt `===` thay vì `==`. Trong dữ liệu Sheets, số và chuỗi đôi khi dễ bị lẫn. So sánh nghiêm ngặt buộc bạn nghĩ rõ kiểu dữ liệu đang xử lý.
+
+## Vòng lặp và xử lý nhiều dòng
+
+Automation hiếm khi chỉ xử lý một dòng. Bạn thường đọc nhiều dòng từ Sheets bằng `getValues()`, sau đó dùng vòng lặp hoặc array methods để xử lý từng dòng.
+
+```javascript
+function countPaidOrders() {
+  const rows = [
+    ['An', 120000, 'paid'],
+    ['Binh', 90000, 'pending'],
+    ['Chi', 300000, 'paid'],
+  ];
+
+  let paidCount = 0;
+
+  rows.forEach(row => {
+    const status = row[2];
+    if (status === 'paid') {
+      paidCount = paidCount + 1;
+    }
+  });
+
+  Logger.log('Paid orders: ' + paidCount);
+}
+```
+
+Trong bài sau, bạn sẽ học kỹ hơn về mảng và object. Ở đây chỉ cần nhớ: dữ liệu bảng thường được xử lý từng dòng, và mỗi dòng thường là một mảng.
+
+## Ví dụ thực tế: kiểm tra phí vận chuyển
+
+Ví dụ sau kết hợp biến, function, điều kiện và log. Đây là kiểu logic bạn có thể dùng trước khi ghi kết quả vào Sheets.
+
+```javascript
+function getShippingFee(totalAmount) {
+  if (totalAmount >= 500000) {
+    return 0;
+  }
+
+  return 30000;
+}
+
+function testShippingFee() {
+  const totals = [100000, 500000, 800000];
+
+  totals.forEach(total => {
+    const fee = getShippingFee(total);
+    Logger.log(total + ' => ' + fee);
+  });
+}
+```
+
+Điểm cần học không chỉ là cú pháp, mà là cách chia bài toán. `getShippingFee` chỉ tính phí. `testShippingFee` chỉ kiểm tra. Sau này, một function khác có thể đọc đơn hàng từ Sheets và gọi lại `getShippingFee`.
+
+## Lỗi thường gặp khi dùng JavaScript trong Apps Script
+
+- Dùng `var` theo ví dụ cũ, trong khi `let` và `const` rõ ràng hơn.
+- Quên `return` trong function tính toán nên kết quả là `undefined`.
+- So sánh bằng `=` thay vì `===`. Dấu `=` là gán giá trị, không phải so sánh.
+- Gọi biến ngoài phạm vi của nó, ví dụ khai báo trong `if` rồi dùng bên ngoài.
+- Nghĩ có thể dùng `window`, `document` hoặc DOM trong file `.gs`.
+- Không chuyển kiểu dữ liệu khi cần, ví dụ cộng chuỗi `'100'` với số `50`.
+
+## Bài tập thực hành
+
+Viết function `getShippingFee(total)` trả về `0` nếu đơn hàng từ `500000` trở lên, ngược lại trả `30000`. Sau đó viết function `testGetShippingFee` để log kết quả với ba giá trị `100000`, `500000`, `800000`. Mở Execution log và kiểm tra kết quả có đúng mong đợi không.
+
+```javascript
+function getShippingFee(total) {
+  if (total >= 500000) {
+    return 0;
+  }
+
+  return 30000;
+}
+```
+
+Nâng cao nhẹ: thêm điều kiện nếu `total` nhỏ hơn `0` thì trả về thông báo `Invalid total`.
+
+## Câu hỏi thường gặp về JavaScript trong Apps Script
+
+### Apps Script có dùng ES6 không?
+
+Có. V8 runtime hỗ trợ nhiều cú pháp JavaScript hiện đại như `const`, `let`, arrow function, class, template string và array methods. Tuy vậy, hãy ưu tiên cú pháp dễ đọc khi mới học.
+
+### Có cần học DOM không?
+
+Không cần cho file `.gs`. DOM chỉ liên quan khi bạn tạo giao diện HTML bằng HtmlService. Phần lớn automation Sheets, Gmail, Drive chỉ cần JavaScript xử lý dữ liệu.
+
+### Vì sao nên viết function nhỏ?
+
+Function nhỏ dễ test, dễ tái sử dụng và dễ debug. Khi automation lỗi, bạn có thể chạy từng function để biết vấn đề nằm ở đọc dữ liệu, xử lý logic hay ghi kết quả.
+
+### Khi nào cần chuyển kiểu dữ liệu?
+
+Khi dữ liệu đến từ Sheets, form hoặc API, bạn nên kiểm tra kiểu. Nếu cần tính toán, dùng `Number(value)`. Nếu cần nối chuỗi, dùng `String(value)` để ý định rõ ràng.
+
+## Tóm tắt
+
+JavaScript là nền móng của Apps Script. Bạn đã ôn biến, kiểu dữ liệu, hàm, điều kiện và vòng lặp ở mức đủ dùng cho automation đầu tiên. Bài tiếp theo sẽ tập trung vào mảng và object, hai cấu trúc xuất hiện liên tục khi đọc dữ liệu từ Google Sheets bằng `getValues()`.

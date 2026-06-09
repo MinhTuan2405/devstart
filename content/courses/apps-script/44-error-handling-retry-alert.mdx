@@ -1,0 +1,204 @@
+---
+title: "Error handling, retry và alert trong Apps Script"
+description: "Học cách bắt lỗi, retry khi gọi API, ghi log và gửi cảnh báo khi automation Apps Script thất bại."
+slug: "error-handling-retry-alert"
+course: "apps-script"
+order: 44
+duration: "24 phút"
+difficulty: "Khó"
+keywords: ["error handling Apps Script", "retry Apps Script", "Apps Script alert", "try catch Apps Script", "automation failed Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Error handling trong Apps Script là cách bạn làm cho automation thất bại một cách có kiểm soát: bắt lỗi có ngữ cảnh, retry lỗi tạm thời, ghi log đủ để debug và gửi alert khi job quan trọng hỏng. Nếu không làm phần này, trigger có thể lỗi nhiều ngày mà bạn không biết.
+
+## Vì sao automation cần error handling nghiêm túc?
+
+Apps Script thường chạy tự động bằng time-driven trigger, web app request hoặc event trigger. Khi bạn không ngồi trước màn hình, lỗi vẫn có thể xảy ra: sheet bị đổi tên, API ngoài timeout, quota tạm thời, email sai format, quyền OAuth bị thu hồi. Nếu code chỉ chạy thẳng và lỗi ở giữa, dữ liệu có thể ghi dở dang và người phụ trách không nhận cảnh báo.
+
+Mental model nên nhớ: không phải lỗi nào cũng giống nhau. Lỗi tạm thời như HTTP 503 có thể retry. Lỗi dữ liệu như thiếu email không nên retry. Lỗi cấu hình như thiếu sheet cần alert để người quản trị sửa. Error handling tốt là phân loại đủ để phản ứng đúng.
+
+## Bọc job chính bằng try catch có ngữ cảnh
+
+Đừng bắt lỗi quá sâu rồi nuốt mất lỗi. Với trigger hằng ngày, hãy có một function entry point bọc toàn bộ job, log context, gửi alert, rồi `throw error` lại để execution được đánh dấu thất bại.
+
+```javascript
+function runDailyLeadReport() {
+  const jobName = 'runDailyLeadReport';
+
+  try {
+    const summary = buildLeadSummary();
+    sendSummaryEmail(summary);
+    Logger.log(jobName + ' completed: ' + JSON.stringify(summary));
+  } catch (error) {
+    logError(jobName, error, { phase: 'daily-report' });
+    notifyAdmin(jobName, error);
+    throw error;
+  }
+}
+
+function buildLeadSummary() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  if (!sheet) {
+    throw new Error('Sheet Leads not found');
+  }
+
+  const count = Math.max(sheet.getLastRow() - 1, 0);
+  return { leadCount: count, generatedAt: new Date().toISOString() };
+}
+```
+
+`throw error` sau khi alert là chủ ý. Nếu bạn nuốt lỗi, Apps Script có thể xem execution là thành công, khiến dashboard và trigger history đánh lừa bạn.
+
+## Ghi log lỗi vào sheet riêng
+
+Logger hữu ích khi debug, nhưng với dự án nội bộ, sheet `ErrorLog` giúp người không vào Apps Script editor vẫn xem được lỗi gần đây. Chỉ log dữ liệu nhận diện không nhạy cảm, tránh ghi token hoặc thông tin cá nhân quá mức.
+
+```javascript
+function logError(jobName, error, context) {
+  const sheet = getOrCreateSheet('ErrorLog');
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Time', 'Job', 'Message', 'Context']);
+  }
+
+  sheet.appendRow([
+    new Date(),
+    jobName,
+    error.message,
+    JSON.stringify(context || {}),
+  ]);
+}
+
+function getOrCreateSheet(name) {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  return spreadsheet.getSheetByName(name) || spreadsheet.insertSheet(name);
+}
+```
+
+Với hệ thống lớn hơn, bạn có thể dùng Cloud Logging hoặc gửi log sang hệ thống monitoring. Nhưng sheet log là bước thực dụng cho dự án Apps Script nhỏ.
+
+## Retry khi gọi API ngoài
+
+Retry chỉ nên áp dụng cho lỗi tạm thời: HTTP 429, 500, 502, 503, 504 hoặc exception mạng. Không retry lỗi 400 do payload sai, 401 do thiếu quyền, hoặc 403 do bị cấm, vì retry chỉ làm tốn quota.
+
+```javascript
+function fetchWithRetry(url, options) {
+  const maxAttempts = 3;
+  const retryableCodes = [429, 500, 502, 503, 504];
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = UrlFetchApp.fetch(url, Object.assign({}, options, {
+        muteHttpExceptions: true,
+      }));
+
+      const code = response.getResponseCode();
+      if (code >= 200 && code < 300) {
+        return response;
+      }
+
+      if (retryableCodes.indexOf(code) === -1 || attempt === maxAttempts) {
+        throw new Error('HTTP ' + code + ': ' + response.getContentText());
+      }
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+    }
+
+    Utilities.sleep(attempt * 1000);
+  }
+
+  throw new Error('Request failed without response');
+}
+```
+
+Đây là retry tuyến tính đơn giản. Với hệ thống thật, bạn có thể dùng exponential backoff, thêm jitter và giới hạn tổng thời gian ngủ để tránh vượt thời gian execution.
+
+## Gửi alert cho admin nhưng tránh spam
+
+Alert giúp bạn biết job lỗi, nhưng nếu trigger chạy mỗi 5 phút và lỗi kéo dài, admin có thể nhận hàng trăm email. Một cách đơn giản là throttle alert bằng Script Properties.
+
+```javascript
+function notifyAdmin(jobName, error) {
+  const props = PropertiesService.getScriptProperties();
+  const adminEmail = props.getProperty('ADMIN_EMAIL');
+  if (!adminEmail) return;
+
+  const key = 'LAST_ALERT_' + jobName;
+  const lastAlert = Number(props.getProperty(key) || 0);
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000;
+
+  if (now - lastAlert < oneHour) {
+    Logger.log('Skip alert for ' + jobName + ' to avoid spam');
+    return;
+  }
+
+  MailApp.sendEmail({
+    to: adminEmail,
+    subject: 'Apps Script job failed: ' + jobName,
+    body: 'Message: ' + error.message + '\nTime: ' + new Date().toISOString(),
+  });
+
+  props.setProperty(key, String(now));
+}
+```
+
+Throttle không nên che giấu lỗi nghiêm trọng mãi mãi. Nó chỉ giúp giảm spam. Bạn vẫn cần log mọi lỗi và có dashboard hoặc kiểm tra định kỳ.
+
+## Thiết kế lỗi thân thiện cho web app
+
+Với `doPost`, bạn thường không muốn throw stack trace ra client. Hãy log chi tiết ở server, trả JSON ngắn gọn cho client, và chỉ throw lại với trigger/job nội bộ nếu cần đánh dấu execution failed.
+
+```javascript
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents || '{}');
+    saveLead(payload);
+    return jsonResponse({ ok: true });
+  } catch (error) {
+    logError('doPost', error, { source: 'webapp' });
+    return jsonResponse({ ok: false, message: 'Request could not be processed' });
+  }
+}
+```
+
+Client không cần biết tên sheet nội bộ hoặc stack trace. Admin cần biết, nên log server phải đủ rõ.
+
+## Lỗi thường gặp khi xử lý lỗi
+
+- Bắt lỗi rồi không log, không alert và không throw lại.
+- Retry mọi lỗi, kể cả lỗi dữ liệu sai hoặc thiếu quyền.
+- Gửi alert cho từng lỗi trong vòng lặp, gây spam email.
+- Log token, secret hoặc dữ liệu nhạy cảm vào sheet.
+- Không thêm context như job name, phase, row number nên khó debug.
+- Không dùng `muteHttpExceptions`, khiến không đọc được body lỗi từ API.
+- Không test đường lỗi, chỉ test happy path.
+
+## Bài tập thực hành
+
+Viết job `syncLeadsToCrm` gọi một API giả bằng `UrlFetchApp`. Tạo helper `fetchWithRetry` retry tối đa 3 lần cho HTTP 429 và 5xx. Nếu vẫn lỗi, ghi vào sheet `ErrorLog`, gửi email admin có throttle 1 giờ, rồi throw lại lỗi. Test bằng URL trả 500 hoặc bằng cách cố tình gọi endpoint sai.
+
+## Câu hỏi thường gặp về error handling Apps Script
+
+### Có nên dùng try catch ở mọi function không?
+
+Không. Hãy bọc ở entry point quan trọng như trigger, web app handler hoặc job chính. Helper nhỏ có thể throw lỗi để caller xử lý với context tốt hơn.
+
+### Retry bao nhiêu lần là đủ?
+
+Thường 2-3 lần là điểm bắt đầu tốt cho Apps Script vì execution có giới hạn thời gian. Retry quá nhiều có thể làm chạm timeout và quota.
+
+### Có nên gửi email cho mọi lỗi không?
+
+Không. Chỉ alert lỗi cần người xử lý. Lỗi validate từng dòng nên log và tổng hợp, tránh spam admin.
+
+### Vì sao phải throw lại lỗi sau khi đã notify?
+
+Với trigger/job nội bộ, throw lại giúp Apps Script đánh dấu execution là failed. Với web app public, thường trả JSON lỗi thân thiện thay vì throw ra client.
+
+## Tóm tắt và bước tiếp theo
+
+Error handling tốt giúp automation Apps Script đáng tin cậy hơn: log có ngữ cảnh, retry đúng lỗi tạm thời, alert không spam và không nuốt lỗi quan trọng. Bài tiếp theo là dự án tổng hợp lead tracker, nơi bạn sẽ kết hợp web app, Sheets, email, trigger, logging và các best practices đã học.

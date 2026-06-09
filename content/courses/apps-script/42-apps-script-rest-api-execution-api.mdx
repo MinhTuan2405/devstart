@@ -1,0 +1,164 @@
+---
+title: "Apps Script REST API và Execution API"
+description: "Giới thiệu Apps Script REST API, Execution API và cách quản lý hoặc gọi script programmatically."
+slug: "apps-script-rest-api-execution-api"
+course: "apps-script"
+order: 42
+duration: "24 phút"
+difficulty: "Khó"
+keywords: ["Apps Script REST API", "Execution API Apps Script", "script.googleapis.com", "quản lý Apps Script bằng API", "run Apps Script API"]
+publishedAt: "2026-06-09"
+---
+
+Apps Script REST API cho phép quản lý project, content, version, deployment và execution bằng HTTP API. Execution API là phần cho phép hệ thống bên ngoài gọi một function Apps Script đã được cấu hình phù hợp. Đây là chủ đề nâng cao, chỉ nên dùng khi web app `doGet`/`doPost` hoặc clasp không đủ.
+
+## Apps Script REST API dùng để làm gì?
+
+Ở các bài trước, bạn đã deploy web app, dùng clasp và quản lý version. Apps Script REST API mở thêm khả năng tự động hóa những việc đó từ hệ thống khác: đọc source project, tạo version, quản lý deployment, xem process hoặc gọi function programmatically.
+
+Mental model nên nhớ: web app là endpoint do bạn tự viết bằng `doGet`/`doPost`; Execution API là endpoint Google cung cấp để chạy function trong Apps Script project; REST API quản lý project là API điều khiển metadata/source/deployment. Ba thứ này liên quan nhưng không thay thế nhau hoàn toàn.
+
+Nếu chỉ cần một form gửi lead vào Sheets, web app đơn giản hơn. Nếu bạn cần backend nội bộ gọi một function Apps Script đã có, hoặc hệ thống quản trị nhiều script project, REST API và Execution API mới đáng cân nhắc.
+
+## Bật API và chuẩn bị quyền
+
+Trước khi gọi Apps Script API, thường cần bật Apps Script API cho tài khoản hoặc Google Cloud project liên quan. Caller phải có OAuth token hợp lệ. Nếu gọi từ Apps Script bằng `UrlFetchApp`, script gọi cũng cần scope gọi request ngoài và các scope API liên quan.
+
+Đừng nhầm các ID:
+
+- Script ID: ID của Apps Script project, dùng trong endpoint `/projects/{scriptId}` hoặc `/scripts/{scriptId}:run`.
+- Deployment ID: ID của một deployment cụ thể, dùng cho web app/deployment management.
+- Function name: tên function global trong target script.
+
+Nhầm ID là lỗi rất phổ biến vì cả ba đều xuất hiện trong quá trình deploy.
+
+## Gọi Apps Script API để đọc project content
+
+Ví dụ sau minh họa cách một Apps Script project quản trị gọi API để lấy content của project khác. Bạn cần token có quyền phù hợp và target project phải cho phép tài khoản caller truy cập.
+
+```javascript
+function getProjectContent() {
+  const scriptId = 'PASTE_SCRIPT_ID_HERE';
+  const url = 'https://script.googleapis.com/v1/projects/' + scriptId + '/content';
+  const token = ScriptApp.getOAuthToken();
+
+  const response = UrlFetchApp.fetch(url, {
+    method: 'get',
+    headers: {
+      Authorization: 'Bearer ' + token,
+    },
+    muteHttpExceptions: true,
+  });
+
+  const status = response.getResponseCode();
+  const text = response.getContentText();
+
+  Logger.log('Status: ' + status);
+  Logger.log(text);
+}
+```
+
+Nếu response là 403, hãy kiểm tra API đã bật chưa, scope có đủ không, tài khoản có quyền với script không và Cloud project có đúng không. Với API quản lý project, lỗi quyền thường mất thời gian debug hơn lỗi cú pháp.
+
+## Execution API chạy function như thế nào?
+
+Execution API nhận JSON gồm tên function, tham số và tùy chọn `devMode`. Function target phải là function global trong Apps Script project. Kết quả trả về nằm trong `response.result` nếu chạy thành công, hoặc `error` nếu function lỗi.
+
+Trong target script, giả sử có function:
+
+```javascript
+function calculateLeadScore(email, source) {
+  if (!email) {
+    throw new Error('Email is required');
+  }
+
+  const score = source === 'event' ? 80 : 50;
+  return {
+    email: email,
+    source: source || 'unknown',
+    score: score,
+  };
+}
+```
+
+Từ project quản trị hoặc hệ thống có OAuth token, bạn có thể gửi request đến endpoint `scripts.run`.
+
+```javascript
+function runLeadScoreByExecutionApi() {
+  const scriptId = 'PASTE_TARGET_SCRIPT_ID_HERE';
+  const url = 'https://script.googleapis.com/v1/scripts/' + scriptId + ':run';
+  const payload = {
+    function: 'calculateLeadScore',
+    parameters: ['ada@example.com', 'event'],
+    devMode: false,
+  };
+
+  const response = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      Authorization: 'Bearer ' + ScriptApp.getOAuthToken(),
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+
+  const body = JSON.parse(response.getContentText());
+
+  if (body.error) {
+    throw new Error(JSON.stringify(body.error));
+  }
+
+  Logger.log(JSON.stringify(body.response.result));
+}
+```
+
+Đây là ví dụ minh họa cấu trúc request. Trong triển khai thật, bạn phải cấu hình target script để có thể được gọi qua API, bật Apps Script API, đảm bảo caller có quyền và scope target function yêu cầu.
+
+## Khi nào dùng Execution API thay web app?
+
+Execution API phù hợp khi caller là một hệ thống đã có OAuth với Google và cần chạy function Apps Script như một thao tác nội bộ. Nó cũng hữu ích khi bạn không muốn tự thiết kế endpoint web app, nhưng chấp nhận cấu hình OAuth phức tạp hơn.
+
+Web app phù hợp hơn khi bạn muốn endpoint HTTP dễ gọi bằng form, webhook hoặc service bên ngoài không tích hợp sâu OAuth Google. Với web app, bạn tự thiết kế auth bằng token, secret hoặc quyền truy cập deployment. Với Execution API, bạn đi theo mô hình OAuth và quyền project.
+
+## Quản lý version và deployment bằng API
+
+Apps Script API cũng có endpoint tạo version và deployment. Điều này hữu ích cho CLI nội bộ hoặc pipeline release. Tuy nhiên, nếu team chưa có nhu cầu tự động hóa release, dùng clasp và giao diện Deploy sẽ dễ hiểu hơn.
+
+Trước khi tự động hóa deployment, hãy có quy trình thủ công ổn định: version rõ, changelog rõ, test `/dev` và `/exec`, rollback được. API chỉ nên tự động hóa quy trình đã đúng, không nên che giấu quy trình chưa rõ.
+
+## Lỗi thường gặp với Apps Script API
+
+- Chưa bật Apps Script API cho tài khoản hoặc Cloud project.
+- Nhầm Script ID với Deployment ID hoặc URL web app.
+- Target function không nằm ở global scope hoặc sai tên.
+- Caller không có quyền truy cập target script.
+- Thiếu OAuth scopes mà target function cần khi chạy.
+- Cố dùng Execution API cho use case web app đơn giản.
+- Không đọc `body.error` nên tưởng response HTTP 200 là function đã thành công.
+
+## Bài tập thực hành
+
+Tạo một target script có function `calculateLeadScore(email, source)` trả object đơn giản. Ghi lại Script ID. Trong một project test khác, viết function tạo payload Execution API như ví dụ, nhưng trước khi chạy thật hãy liệt kê các điều kiện cần có: API đã bật, target function global, caller có quyền, scopes cần thiết. Nếu chưa muốn cấu hình OAuth đầy đủ, chỉ cần log URL, payload và checklist quyền.
+
+## Câu hỏi thường gặp về Execution API
+
+### Execution API có thay thế web app không?
+
+Không hoàn toàn. Execution API phù hợp gọi function bằng OAuth Google. Web app phù hợp endpoint HTTP do bạn kiểm soát, đặc biệt với form hoặc webhook đơn giản.
+
+### Function được gọi có cần return JSON string không?
+
+Không. Function target có thể return object đơn giản, array, string hoặc number. Execution API sẽ đóng gói kết quả trong response JSON. Nhưng object phải serialize được.
+
+### Có gọi được function private không?
+
+Function cần là global function có tên đúng. Nếu bạn giấu logic trong helper cục bộ, hãy tạo function global làm entry point và gọi helper bên trong.
+
+### Vì sao response có HTTP 200 nhưng body lại có error?
+
+API request có thể thành công ở tầng HTTP nhưng function target lỗi ở tầng execution. Luôn kiểm tra field `error` trong body.
+
+## Tóm tắt và bước tiếp theo
+
+Apps Script REST API và Execution API giúp quản lý hoặc gọi script programmatically, nhưng đổi lại là cấu hình OAuth, quyền và ID phức tạp hơn. Hãy dùng web app cho endpoint đơn giản và chỉ dùng Execution API khi có nhu cầu rõ. Bài tiếp theo sẽ quay về vận hành thực tế: quota, performance và best practices để script chạy nhanh và ổn định hơn.

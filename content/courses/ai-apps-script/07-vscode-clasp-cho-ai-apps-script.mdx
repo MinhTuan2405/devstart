@@ -1,0 +1,144 @@
+---
+title: "VS Code với Apps Script và clasp cho dự án AI"
+description: "Học cách dùng VS Code, clasp và git để phát triển AI Apps Script local, review code và push lên Apps Script."
+slug: "vscode-clasp-cho-ai-apps-script"
+course: "ai-apps-script"
+order: 7
+duration: "22 phút"
+difficulty: "Trung bình"
+keywords: ["VS Code Apps Script", "clasp AI Apps Script", "debug Apps Script VS Code", "phát triển Apps Script local", "Apps Script với VS Code"]
+publishedAt: "2026-06-09"
+---
+
+## Vì sao dùng VS Code với AI Apps Script?
+
+VS Code giúp bạn phát triển AI Apps Script như một dự án phần mềm thật: có git, tìm kiếm toàn project, review diff, AI coding assistant, cấu trúc file rõ và lịch sử thay đổi. Với dự án AI, điều này rất quan trọng vì code thường có prompt template, API wrapper, secret config và nhiều guardrails.
+
+Apps Script editor trên trình duyệt đủ tốt cho script nhỏ. Nhưng khi dự án có nhiều file, nhiều helper và nhiều lần refactor bằng AI, bạn cần một môi trường giúp kiểm soát thay đổi. VS Code kết hợp clasp cho phép bạn sửa local, kiểm tra diff, commit, rồi push lên Apps Script.
+
+## Mental model: local project và Apps Script server
+
+clasp là công cụ đồng bộ giữa folder local và project Apps Script trên server Google. Bạn viết file trong VS Code, dùng `clasp push` để đẩy lên Apps Script, dùng `clasp pull` để kéo thay đổi từ server về local, và dùng git để quản lý lịch sử local.
+
+Điều cần nhớ: Apps Script vẫn chạy trên server Google. VS Code không biến Apps Script thành Node.js local hoàn toàn. Bạn có thể test pure function local nếu tự setup, nhưng các service như `SpreadsheetApp`, `GmailApp`, `PropertiesService` vẫn cần môi trường Apps Script.
+
+## Cài clasp và clone project
+
+Bạn cần Node.js, sau đó cài clasp toàn cục và đăng nhập tài khoản Google dùng cho Apps Script.
+
+```bash
+npm install @google/clasp -g
+clasp login
+mkdir ai-apps-script-project
+cd ai-apps-script-project
+clasp clone PASTE_SCRIPT_ID_HERE
+code .
+```
+
+Nếu gặp lỗi Apps Script API chưa bật, hãy vào Apps Script dashboard hoặc Google account settings để bật Apps Script API cho tài khoản đang dùng. Đây là lỗi thường gặp khi cài clasp lần đầu.
+
+## File cần chú ý trong project clasp
+
+Sau khi clone, bạn thường thấy `.clasp.json` và `appsscript.json`. File `.clasp.json` trỏ folder local tới Script ID. File `appsscript.json` là manifest chứa timezone, runtime, scopes và một số cấu hình deploy.
+
+Ví dụ manifest tối giản:
+
+```json
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "runtimeVersion": "V8",
+  "exceptionLogging": "STACKDRIVER"
+}
+```
+
+Không tự thêm OAuth scopes quá rộng nếu chưa cần. Nếu AI đề xuất thêm nhiều scope, hãy kiểm tra lại từng scope có thật sự cần cho workflow không.
+
+## Push code từ VS Code lên Apps Script
+
+Workflow an toàn là pull trước khi sửa nếu có người khác cũng chỉnh trên editor, sửa local, xem diff, rồi push.
+
+```bash
+clasp pull
+git status
+git diff
+clasp push
+clasp open-script
+```
+
+Không nên dùng `clasp push --force` nếu chưa chắc chắn. Nếu bạn sửa local trong khi người khác sửa trên Apps Script editor, push sai có thể ghi đè thay đổi của họ.
+
+## Dùng git để review code AI sinh ra
+
+Khi dùng AI assistant trong VS Code, lợi ích lớn nhất là bạn nhìn được diff trước khi push. Hãy yêu cầu AI sửa phạm vi nhỏ, rồi kiểm tra từng file thay đổi.
+
+```javascript
+function runDebugPreview() {
+  const config = getRequiredAiConfig();
+  console.log({
+    message: 'Debug preview',
+    provider: config.provider,
+    model: config.model,
+    dryRun: config.dryRun,
+  });
+}
+```
+
+Nếu AI vô tình log `apiKey`, diff sẽ giúp bạn phát hiện trước khi push. Với dự án AI, review diff là bước bắt buộc, không phải tùy chọn.
+
+## Prompt cho AI assistant trong VS Code
+
+Khi mở project trong VS Code, hãy đưa context cụ thể thay vì yêu cầu chung chung. Ví dụ:
+
+```text
+Chỉ sửa file aiClient.js.
+Giữ nguyên interface generateAiText(prompt, options).
+Không log API key hoặc prompt đầy đủ.
+Thêm kiểm tra status code và JSON parse error.
+Không thay đổi function public trong jobs.js.
+```
+
+Ràng buộc file và interface giúp AI không lan sang phần khác. Nếu bạn không nói rõ, AI có thể đổi tên function đang được trigger gọi và làm job production ngừng chạy.
+
+## Quy tắc bảo mật khi dùng clasp
+
+- Không commit `.clasprc.json` hoặc token local.
+- Kiểm tra `.clasp.json` để tránh push nhầm Script ID.
+- Không lưu API key trong file code.
+- Không dán secret vào prompt AI assistant.
+- Review `appsscript.json` nếu AI thêm scopes mới.
+- Pull trước khi sửa nếu project có nhiều người cùng chỉnh.
+
+## Lỗi thường gặp với VS Code và clasp
+
+- Push nhầm project vì `.clasp.json` trỏ sai Script ID.
+- Sửa trên Apps Script editor và local cùng lúc nhưng không pull.
+- Commit API key, `.clasprc.json` hoặc file credential.
+- Nghĩ có thể debug mọi service Apps Script hoàn toàn local như Node.js.
+- Để AI đổi tên function public được menu, trigger hoặc web app gọi.
+- Không kiểm tra diff trước khi `clasp push`.
+
+## Bài tập thực hành
+
+Clone một Apps Script project test bằng clasp. Tạo file `aiClient.js`, thêm function `getRequiredAiConfig` hoặc `runDebugPreview`, xem `git diff`, push lên Apps Script và chạy function trong editor. Sau đó sửa một dòng log, pull/push lại để hiểu luồng đồng bộ.
+
+## Câu hỏi thường gặp về VS Code Apps Script
+
+### Có debug Apps Script trực tiếp trong VS Code không?
+
+Không giống Node.js thông thường. Bạn chủ yếu debug bằng pure function, log, Executions dashboard và chạy test function trong Apps Script editor.
+
+### Có nên dùng AI assistant trong VS Code không?
+
+Có, nhưng phải review diff. Hãy giao nhiệm vụ nhỏ, nêu rõ file được sửa và các interface không được đổi.
+
+### Có nên dùng TypeScript không?
+
+Có thể, nhưng khóa này ưu tiên JavaScript và JSDoc để tập trung vào AI integration. TypeScript thêm build step, phù hợp hơn khi bạn đã quen clasp.
+
+### Có cần git cho project cá nhân không?
+
+Nên dùng. Git giúp bạn quay lại phiên bản trước nếu AI sửa sai, và giúp so sánh thay đổi trước khi push.
+
+## Tóm tắt và bước tiếp theo
+
+VS Code và clasp giúp dự án AI Apps Script dễ quản lý, review và mở rộng hơn. Bạn vẫn chạy code trên Apps Script server, nhưng phát triển local để kiểm soát chất lượng. Bài tiếp theo sẽ học cách tổ chức project local để AI hiểu code tốt hơn.

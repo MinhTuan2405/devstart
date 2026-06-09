@@ -53,6 +53,18 @@ const courseColors: Record<string, { bg: string; border: string; iconBg: string;
     iconBg: 'bg-lime-100',
     btn: 'bg-lime-600 hover:bg-lime-700 shadow-lime-600/25',
   },
+  'apps-script': {
+    bg: 'from-orange-50 to-white',
+    border: 'border-orange-100 hover:border-orange-300',
+    iconBg: 'bg-orange-100',
+    btn: 'bg-orange-600 hover:bg-orange-700 shadow-orange-600/25',
+  },
+  'ai-apps-script': {
+    bg: 'from-indigo-50 to-white',
+    border: 'border-indigo-100 hover:border-indigo-300',
+    iconBg: 'bg-indigo-100',
+    btn: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/25',
+  },
 }
 
 export default function CourseCard({

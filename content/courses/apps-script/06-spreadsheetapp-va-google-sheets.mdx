@@ -1,0 +1,174 @@
+---
+title: "SpreadsheetApp là gì? Làm việc với Google Sheets bằng Apps Script"
+description: "Giới thiệu SpreadsheetApp, Spreadsheet, Sheet và Range để bắt đầu tự động hóa Google Sheets."
+slug: "spreadsheetapp-va-google-sheets"
+course: "apps-script"
+order: 6
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["SpreadsheetApp là gì", "Apps Script Google Sheets", "SpreadsheetApp Apps Script", "tự động hóa Google Sheets", "Google Sheets Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## SpreadsheetApp là gì?
+
+`SpreadsheetApp` là service trong Apps Script dùng để tạo, mở, đọc và chỉnh sửa Google Sheets. Khi tự động hóa bảng tính, bạn thường đi theo chuỗi: lấy spreadsheet, lấy sheet, lấy range, rồi đọc hoặc ghi giá trị trong range.
+
+Nếu Apps Script là công cụ tự động hóa Google Workspace, thì `SpreadsheetApp` là service bạn sẽ dùng nhiều nhất ở giai đoạn đầu. Lý do rất đơn giản: phần lớn dữ liệu vận hành nội bộ đang nằm trong Sheets. Bạn có thể dùng Sheets như nơi nhập liệu, nơi lưu cấu hình, nơi tạo báo cáo và nơi người dùng kiểm tra kết quả.
+
+## Mô hình Spreadsheet, Sheet và Range
+
+Khi làm việc với Google Sheets, bạn cần phân biệt ba lớp:
+
+- `Spreadsheet`: cả file bảng tính, có URL và nhiều tab.
+- `Sheet`: một tab bên trong spreadsheet, ví dụ `Orders`, `Report`, `Config`.
+- `Range`: một ô hoặc vùng ô, ví dụ `A1`, `A2:D100`.
+
+Mô hình tư duy là: bạn không đọc ghi trực tiếp vào file chung chung. Bạn phải đi từ file, tới tab, rồi tới vùng ô cụ thể. Nếu sai một lớp, code sẽ lỗi hoặc ghi nhầm dữ liệu.
+
+```javascript
+function inspectActiveSpreadsheet() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getActiveSheet();
+
+  Logger.log('Spreadsheet: ' + spreadsheet.getName());
+  Logger.log('Sheet: ' + sheet.getName());
+  Logger.log('Last row: ' + sheet.getLastRow());
+  Logger.log('Last column: ' + sheet.getLastColumn());
+}
+```
+
+Ví dụ này phù hợp với bound script gắn trong Google Sheets. Bạn mở file Sheets, vào Extensions > Apps Script, viết code rồi chạy. `getActiveSpreadsheet()` sẽ trỏ đến file đang mở.
+
+## Active spreadsheet và mở bằng ID
+
+`getActiveSpreadsheet()` tiện, nhưng không phải lúc nào cũng là lựa chọn tốt. Trong standalone script, hoặc khi bạn muốn automation làm việc với một file cố định, hãy mở spreadsheet bằng ID. Spreadsheet ID nằm trong URL Google Sheets, giữa `/d/` và `/edit`.
+
+```javascript
+function openSpreadsheetById() {
+  const spreadsheetId = 'PASTE_SPREADSHEET_ID_HERE';
+  const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+  const sheet = spreadsheet.getSheetByName('Data');
+
+  if (!sheet) {
+    Logger.log('Sheet Data not found');
+    return;
+  }
+
+  Logger.log('Opened: ' + spreadsheet.getName());
+  Logger.log('Rows: ' + sheet.getLastRow());
+}
+```
+
+Đây là pattern an toàn vì `getSheetByName()` có thể trả về `null`. Nếu bạn gọi `sheet.getLastRow()` ngay khi `sheet` là `null`, lỗi sẽ là `Cannot read properties of null`.
+
+## Tạo spreadsheet và sheet mới
+
+Ngoài việc mở file có sẵn, `SpreadsheetApp` cũng có thể tạo spreadsheet mới. Điều này hữu ích khi bạn muốn tạo báo cáo định kỳ, bản sao dữ liệu hoặc file theo từng khách hàng.
+
+```javascript
+function createMonthlyReportFile() {
+  const spreadsheet = SpreadsheetApp.create('Monthly Report');
+  const sheet = spreadsheet.getActiveSheet();
+  sheet.setName('Summary');
+
+  sheet.getRange('A1:C1').setValues([['Metric', 'Value', 'Note']]);
+  sheet.getRange('A2:C4').setValues([
+    ['New leads', 0, 'Update weekly'],
+    ['Paid orders', 0, 'From Orders sheet'],
+    ['Revenue', 0, 'VND'],
+  ]);
+
+  Logger.log(spreadsheet.getUrl());
+}
+```
+
+Ví dụ này tạo file mới, đổi tên tab đầu tiên và ghi dữ liệu mẫu. Chú ý `setValues()` nhận mảng hai chiều: ba dòng, ba cột, khớp với range `A2:C4`.
+
+## Khi nào dùng SpreadsheetApp?
+
+Bạn dùng `SpreadsheetApp` khi muốn nhập dữ liệu từ form hoặc API vào Sheets, tạo báo cáo định kỳ, chuẩn hóa dữ liệu, định dạng bảng, tạo custom menu cho người dùng, hoặc kết hợp Sheets với Gmail, Docs, Drive và Calendar.
+
+Một ví dụ thực tế là tạo hoặc lấy sheet `Report` trước khi ghi dữ liệu. Nếu sheet chưa tồn tại, script tự tạo để tránh lỗi.
+
+```javascript
+function getOrCreateReportSheet() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = spreadsheet.getSheetByName('Report');
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet('Report');
+  }
+
+  sheet.clearContents();
+  sheet.getRange('A1').setValue('Report updated at');
+  sheet.getRange('B1').setValue(new Date());
+}
+```
+
+Pattern `get or create` xuất hiện rất nhiều trong automation thật. Nó giúp script chạy được trên file mới, file thiếu tab hoặc file vừa được sao chép từ template.
+
+## Cú pháp quan trọng cần nhớ
+
+Một số lệnh bạn sẽ gặp thường xuyên:
+
+- `SpreadsheetApp.getActiveSpreadsheet()` lấy spreadsheet đang mở trong bound script.
+- `SpreadsheetApp.openById(id)` mở spreadsheet bằng ID.
+- `SpreadsheetApp.create(name)` tạo spreadsheet mới.
+- `spreadsheet.getSheetByName(name)` lấy sheet theo tên.
+- `spreadsheet.insertSheet(name)` tạo sheet mới.
+- `sheet.getRange(a1Notation)` chọn vùng bằng A1 notation.
+- `sheet.getRange(row, column, numRows, numColumns)` chọn vùng bằng số.
+
+Hãy luyện đọc code theo chuỗi đối tượng. Ví dụ `SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getRange('A1')` nghĩa là lấy file đang mở, lấy sheet đang active, rồi lấy ô A1.
+
+## Lỗi thường gặp với SpreadsheetApp
+
+- Dùng `getActiveSpreadsheet()` trong standalone script không có spreadsheet active.
+- Sao chép spreadsheet ID thiếu ký tự hoặc lấy nhầm toàn bộ URL.
+- Thiếu quyền truy cập file nên `openById` thất bại.
+- Sai tên sheet do thừa khoảng trắng, viết hoa khác hoặc đổi tên tab.
+- Gọi `getRange()` trên sheet `null`.
+- Đọc ghi từng ô trong vòng lặp lớn khiến script chậm và dễ đụng quota.
+
+## Bài tập thực hành
+
+Tạo Google Sheets có tab `Data`. Viết function mở file bằng ID, lấy tab `Data`, log tên file, tên tab, số dòng và số cột cuối cùng. Sau đó đổi tên tab `Data` thành `Data Old` và chạy lại để kiểm tra phần xử lý sheet không tồn tại.
+
+```javascript
+function practiceOpenDataSheet() {
+  const spreadsheet = SpreadsheetApp.openById('PASTE_SPREADSHEET_ID_HERE');
+  const sheet = spreadsheet.getSheetByName('Data');
+
+  if (!sheet) {
+    Logger.log('Please create a sheet named Data');
+    return;
+  }
+
+  Logger.log(spreadsheet.getName());
+  Logger.log(sheet.getLastRow());
+  Logger.log(sheet.getLastColumn());
+}
+```
+
+## Câu hỏi thường gặp về SpreadsheetApp
+
+### SpreadsheetApp có tạo file mới được không?
+
+Có. Dùng `SpreadsheetApp.create('File name')` để tạo một spreadsheet mới trong Google Drive. Sau đó bạn có thể lấy URL bằng `spreadsheet.getUrl()`.
+
+### getActiveSpreadsheet có luôn dùng được không?
+
+Không. Nó phù hợp nhất với bound script hoặc ngữ cảnh có spreadsheet active. Với standalone script, dùng `openById` thường rõ ràng và ổn định hơn.
+
+### Range là gì?
+
+Range là vùng ô như `A1`, `A1:C10` hoặc vùng được xác định bằng dòng, cột, số dòng và số cột. Hầu hết thao tác đọc, ghi, định dạng đều thực hiện trên Range.
+
+### Có nên lưu spreadsheet ID trong code không?
+
+Với bài học cơ bản thì được. Với project nghiêm túc, bạn có thể lưu ID trong PropertiesService hoặc một sheet cấu hình để dễ thay đổi mà không sửa code.
+
+## Tóm tắt
+
+`SpreadsheetApp` là cửa ngõ để Apps Script làm việc với Google Sheets. Bạn đã hiểu mô hình `Spreadsheet`, `Sheet`, `Range`, cách lấy file active, mở file bằng ID và tạo sheet an toàn. Bài tiếp theo sẽ học cách đọc dữ liệu hiệu quả bằng `getValues()`.

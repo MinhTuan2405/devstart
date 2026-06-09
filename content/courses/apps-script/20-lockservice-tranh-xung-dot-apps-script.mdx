@@ -1,0 +1,143 @@
+---
+title: "LockService trong Apps Script để tránh xung đột dữ liệu"
+description: "Học cách dùng LockService để tránh nhiều trigger hoặc người dùng ghi dữ liệu cùng lúc trong Apps Script."
+slug: "lockservice-tranh-xung-dot-apps-script"
+course: "apps-script"
+order: 20
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["LockService Apps Script", "tránh xung đột Apps Script", "script lock Apps Script", "concurrency Apps Script", "trigger ghi trùng Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`LockService` giúp Apps Script tránh xung đột khi nhiều lần chạy cùng thao tác trên một tài nguyên chung. Nếu hai trigger cùng ghi vào Sheets, cùng cập nhật properties hoặc cùng tạo số thứ tự, lock giúp chỉ một lần chạy đi qua đoạn quan trọng tại một thời điểm.
+
+## LockService trong Apps Script là gì?
+
+Apps Script có thể chạy song song nhiều execution. Điều này xảy ra khi nhiều người cùng submit form, nhiều người bấm custom menu, web app nhận nhiều request, hoặc time-driven trigger mới bắt đầu khi lần chạy trước chưa xong. Nếu các lần chạy chỉ đọc dữ liệu, thường không sao. Nhưng nếu chúng cùng ghi vào một sheet, cùng tăng bộ đếm, hoặc cùng cập nhật trạng thái, kết quả có thể sai.
+
+Mô hình tư duy của lock là “chìa khóa phòng kho”. Trước khi vào đoạn code ghi dữ liệu quan trọng, execution phải lấy chìa khóa. Khi một execution đang giữ chìa khóa, execution khác phải chờ hoặc bỏ qua. Sau khi ghi xong, execution thả chìa khóa để người khác vào. Lock không làm code đúng nếu logic sai, nhưng nó bảo vệ đoạn logic đúng khỏi bị chạy chồng lên nhau.
+
+## Khi nào thật sự cần lock?
+
+Bạn cần lock khi có tài nguyên dùng chung và có khả năng nhiều lần chạy ghi cùng lúc. Ví dụ:
+
+- Form submit ghi thêm dòng vào sheet `Leads` và cập nhật số thứ tự.
+- Web app nhận nhiều request cùng lúc và ghi vào sheet `Orders`.
+- Trigger theo giờ cập nhật `LAST_SYNC_AT` trong PropertiesService.
+- Nhiều người dùng bấm nút tạo báo cáo và cùng ghi vào sheet `Log`.
+
+Nếu function chỉ đọc dữ liệu hoặc ghi vào file riêng không liên quan nhau, lock có thể không cần. Dùng lock quá rộng sẽ làm script chậm vì các execution phải xếp hàng.
+
+## Cú pháp waitLock và finally
+
+Pattern an toàn nhất là lấy lock, chạy đoạn quan trọng trong `try`, và thả lock trong `finally`. `finally` đảm bảo lock được thả kể cả khi đoạn ghi dữ liệu gặp lỗi.
+
+```javascript
+function appendLeadSafely(name, email) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+    sheet.appendRow([new Date(), name, email]);
+  } finally {
+    lock.releaseLock();
+  }
+}
+```
+
+`waitLock(10000)` nghĩa là execution sẵn sàng chờ tối đa 10 giây để lấy lock. Nếu sau thời gian đó vẫn không lấy được, Apps Script sẽ ném lỗi. Với thao tác quan trọng như ghi đơn hàng hoặc phản hồi form, chờ một chút thường hợp lý hơn bỏ qua.
+
+## Ví dụ thực tế: tạo mã đơn không bị trùng
+
+Một lỗi concurrency dễ gặp là tạo mã đơn bằng cách đọc dòng cuối, cộng thêm 1, rồi ghi dòng mới. Nếu hai execution cùng đọc dòng cuối trước khi ai kịp ghi, chúng có thể tạo cùng một mã. Lock giúp bảo vệ toàn bộ đoạn đọc và ghi.
+
+```javascript
+function createOrder(orderName, customerEmail) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Orders');
+    const lastRow = sheet.getLastRow();
+    const lastOrderNumber = lastRow > 1 ? Number(sheet.getRange(lastRow, 1).getValue()) : 0;
+    const nextOrderNumber = lastOrderNumber + 1;
+
+    sheet.appendRow([nextOrderNumber, new Date(), orderName, customerEmail]);
+    return nextOrderNumber;
+  } finally {
+    lock.releaseLock();
+  }
+}
+```
+
+Đoạn cần lock chỉ là phần đọc mã cuối và ghi dòng mới. Không nên đặt các thao tác chậm như gọi API ngoài hoặc gửi email trong lock nếu không cần, vì chúng làm những execution khác phải chờ lâu.
+
+## Dùng tryLock khi có thể bỏ qua
+
+Không phải tác vụ nào cũng cần chờ bằng mọi giá. Với báo cáo định kỳ, nếu lần chạy trước vẫn đang cập nhật, lần chạy sau có thể bỏ qua để tránh chồng job.
+
+```javascript
+function updateReportWithTryLock() {
+  const lock = LockService.getScriptLock();
+
+  if (!lock.tryLock(5000)) {
+    Logger.log('Another run is active. Skip this run.');
+    return;
+  }
+
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Report');
+    sheet.getRange('A1').setValue(new Date());
+    sheet.getRange('B1').setValue('updated');
+  } finally {
+    lock.releaseLock();
+  }
+}
+```
+
+`tryLock` trả về `true` nếu lấy được lock, `false` nếu không. Bạn tự quyết định bỏ qua, ghi log, gửi cảnh báo hoặc thử lại ở lần sau.
+
+## Các loại lock thường gặp
+
+- Script lock: khóa ở mức toàn project, phù hợp khi tài nguyên dùng chung cho mọi người.
+- User lock: khóa theo từng người dùng, phù hợp khi mỗi người có vùng dữ liệu riêng.
+- Document lock: khóa theo document trong bound script, phù hợp khi tài nguyên là file hiện tại.
+
+Người mới nên bắt đầu với script lock vì nó rõ ràng và an toàn cho các ví dụ ghi vào cùng một spreadsheet. Khi hiểu rõ phạm vi dữ liệu, bạn có thể chọn user lock hoặc document lock để giảm chờ không cần thiết.
+
+## Lỗi thường gặp với LockService
+
+- Quên `releaseLock()` hoặc không đặt trong `finally`.
+- Khóa cả function quá dài, bao gồm cả gửi email hoặc gọi API không cần khóa.
+- Dùng lock nhưng vẫn đọc và ghi sai logic, ví dụ tính dòng sai.
+- Không xử lý trường hợp `tryLock` trả về `false`.
+- Dùng user lock cho tài nguyên thật ra dùng chung toàn project.
+- Nghĩ `appendRow` lúc nào cũng đủ an toàn cho mọi bài toán có số thứ tự hoặc trạng thái.
+
+## Bài tập thực hành
+
+Tạo sheet `Log` có cột `Time`, `Source`, `Message`. Viết function `appendLogSafely(source, message)` dùng `LockService.getScriptLock()` để ghi một dòng log. Viết hai function khác nhau cùng gọi `appendLogSafely`, ví dụ `logFromMenu()` và `logFromTrigger()`. Chạy nhiều lần liên tiếp rồi quan sát log không bị ghi thiếu hoặc lỗi do tranh chấp.
+
+## Câu hỏi thường gặp về LockService
+
+### Lock có làm script chậm không?
+
+Có thể, vì execution phải chờ nhau. Hãy chỉ khóa đoạn code thật sự cần bảo vệ, thường là đoạn đọc trạng thái chung và ghi trạng thái mới.
+
+### waitLock và tryLock khác gì nhau?
+
+`waitLock` chờ đến khi lấy được lock hoặc hết thời gian rồi ném lỗi. `tryLock` thử lấy lock trong thời gian cho phép và trả về `true` hoặc `false` để bạn tự xử lý.
+
+### Có cần lock khi chỉ appendRow không?
+
+Nếu chỉ thêm dòng độc lập, nhiều trường hợp `appendRow` đã đủ. Nhưng nếu bạn cần đọc dòng cuối, tạo số thứ tự, kiểm tra trùng hoặc cập nhật properties cùng lúc, hãy dùng lock.
+
+### Lock có bảo vệ được dữ liệu ngoài Apps Script không?
+
+Lock chỉ điều phối các execution trong Apps Script cùng dùng LockService. Nó không khóa người dùng đang sửa sheet thủ công hoặc hệ thống ngoài đang thay đổi dữ liệu.
+
+## Tóm tắt và chuyển tiếp
+
+`LockService` giúp automation an toàn hơn khi nhiều lần chạy có thể ghi cùng lúc. Hãy dùng lock đúng phạm vi, thả lock trong `finally`, và tránh khóa các thao tác chậm không cần thiết. Bài tiếp theo sẽ chuyển sang một use case rất phổ biến: gửi email tự động bằng `GmailApp` và `MailApp`.

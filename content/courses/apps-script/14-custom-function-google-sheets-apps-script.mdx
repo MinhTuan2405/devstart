@@ -1,0 +1,150 @@
+---
+title: "Custom function trong Google Sheets bằng Apps Script"
+description: "Học cách viết hàm tùy chỉnh trong Google Sheets bằng Apps Script và dùng như công thức spreadsheet."
+slug: "custom-function-google-sheets-apps-script"
+course: "apps-script"
+order: 14
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["custom function Apps Script", "hàm tùy chỉnh Google Sheets", "Apps Script custom function", "Google Sheets function Apps Script", "viết hàm trong Sheets"]
+publishedAt: "2026-06-09"
+---
+
+## Custom function trong Google Sheets là gì?
+
+Custom function là hàm bạn viết bằng Apps Script rồi dùng trực tiếp trong ô Google Sheets như công thức `=SUM()`. Ví dụ bạn có thể tạo `=FINAL_PRICE(A2, B2)` để tính giá sau giảm giá theo logic riêng của bảng tính.
+
+Custom function phù hợp khi bạn có công thức lặp lại nhiều lần nhưng công thức có sẵn của Sheets quá dài, khó đọc hoặc không diễn tả đúng nghiệp vụ. Thay vì viết công thức phức tạp ở từng ô, bạn đặt logic vào Apps Script và gọi bằng tên hàm rõ ràng.
+
+## Mô hình custom function
+
+Custom function nên là hàm tính toán thuần: nhận đầu vào, trả kết quả, không sửa dữ liệu nơi khác. Sheets sẽ gọi hàm khi ô cần tính lại. Function có thể nhận giá trị từ ô đơn, hoặc nhận cả range dưới dạng mảng hai chiều.
+
+Tên hàm nên dùng ASCII, viết hoa và có gạch dưới nếu cần. Không nên dùng tiếng Việt có dấu trong tên hàm. Không đặt tên trùng hàm có sẵn như `SUM`, `FILTER`, `DATE`.
+
+```javascript
+function FINAL_PRICE(price, discountRate) {
+  if (price === '' || discountRate === '') return '';
+  return Number(price) * (1 - Number(discountRate));
+}
+```
+
+Sau khi lưu, bạn có thể nhập vào ô Sheets:
+
+```text
+=FINAL_PRICE(A2, B2)
+```
+
+Nếu `A2` là `100000` và `B2` là `0.2`, kết quả là `80000`. Nếu một ô đầu vào rỗng, function trả chuỗi rỗng để bảng không hiện lỗi khó đọc.
+
+## Xử lý giá trị đơn trong custom function
+
+Custom function nhận giá trị giống cách Sheets truyền vào công thức. Nếu người dùng truyền một ô, function nhận giá trị của ô đó. Bạn nên xử lý dữ liệu rỗng, chuyển kiểu rõ ràng và trả về kết quả đơn giản như số, chuỗi hoặc boolean.
+
+```javascript
+function PASS_FAIL(score) {
+  if (score === '') return '';
+
+  const numericScore = Number(score);
+  if (Number.isNaN(numericScore)) {
+    return 'invalid';
+  }
+
+  return numericScore >= 50 ? 'pass' : 'fail';
+}
+```
+
+Trong Sheets, dùng `=PASS_FAIL(A2)`. Hàm này dễ đọc hơn một công thức `IF` dài, đặc biệt khi logic nghiệp vụ sau này phức tạp hơn.
+
+## Xử lý range trong custom function
+
+Khi người dùng truyền một vùng, custom function nhận mảng hai chiều. Nếu bạn trả về mảng hai chiều, Google Sheets sẽ đổ kết quả ra nhiều ô. Đây là cách rất mạnh để chuẩn hóa dữ liệu hàng loạt.
+
+```javascript
+function TO_UPPER_RANGE(values) {
+  return values.map(row => {
+    return row.map(cell => String(cell).toUpperCase());
+  });
+}
+```
+
+Trong Sheets, dùng công thức:
+
+```text
+=TO_UPPER_RANGE(A2:A10)
+```
+
+Nếu vùng đầu vào có 9 dòng và 1 cột, kết quả cũng là 9 dòng và 1 cột. Nếu vùng kết quả bị ô khác chặn, Sheets sẽ báo lỗi vì không thể mở rộng kết quả.
+
+## Ví dụ thực tế: chuẩn hóa mã khách hàng
+
+Giả sử mã khách hàng được nhập lẫn khoảng trắng và chữ thường. Bạn có thể viết custom function để làm sạch mã trước khi dùng cho báo cáo.
+
+```javascript
+function CLEAN_CODE(value) {
+  if (value === '') return '';
+
+  return String(value)
+    .trim()
+    .replace(/\s+/g, '-')
+    .toUpperCase();
+}
+
+function CLEAN_CODE_RANGE(values) {
+  return values.map(row => {
+    return row.map(cell => CLEAN_CODE(cell));
+  });
+}
+```
+
+Bạn có thể dùng `=CLEAN_CODE(A2)` cho một ô hoặc `=CLEAN_CODE_RANGE(A2:A100)` cho cả cột. Việc tách `CLEAN_CODE` và `CLEAN_CODE_RANGE` giúp tái sử dụng logic.
+
+## Giới hạn quan trọng của custom function
+
+Custom function không phải là nơi để chạy automation có side effect. Bạn không nên gửi email, sửa ô khác, tạo file Drive, gọi API mất nhiều thời gian, hoặc phụ thuộc dữ liệu thay đổi ngẫu nhiên. Sheets cần custom function có thể tính lại ổn định.
+
+Nếu bạn cần thao tác có tác động bên ngoài, hãy dùng custom menu, nút, trigger hoặc web app. Custom function phù hợp cho tính toán và biến đổi dữ liệu, không phù hợp cho workflow như gửi email hàng loạt.
+
+## Lỗi thường gặp với custom function
+
+- Đặt tên hàm trùng với hàm có sẵn của Sheets.
+- Hàm trả về object thay vì chuỗi, số, boolean hoặc mảng.
+- Gọi service cần quyền như Gmail, Drive trong custom function.
+- Không xử lý ô rỗng nên kết quả lỗi hoặc hiện `NaN`.
+- Truyền range nhưng code chỉ xử lý một giá trị.
+- Trả về mảng có kích thước không đều giữa các dòng.
+
+## Bài tập thực hành
+
+Viết custom function `VND(amount)` trả về chuỗi số tiền kèm `VND`. Sau đó viết `PASS_FAIL(score)` trả về `pass` nếu điểm từ 50 trở lên, ngược lại trả `fail`.
+
+```javascript
+function VND(amount) {
+  if (amount === '') return '';
+  return Number(amount).toLocaleString('en-US') + ' VND';
+}
+```
+
+Nâng cao nhẹ: viết thêm `VND_RANGE(values)` để áp dụng cho cả một cột số tiền và trả về mảng hai chiều.
+
+## Câu hỏi thường gặp về custom function
+
+### Custom function có tự cập nhật không?
+
+Có, khi ô đầu vào thay đổi, Sheets có thể tính lại. Nhưng không nên phụ thuộc vào dữ liệu ngoài thay đổi liên tục hoặc kết quả ngẫu nhiên, vì Sheets cần kiểm soát việc tính lại.
+
+### Có dùng được tiếng Việt trong tên hàm không?
+
+Không nên. Hãy dùng tên ASCII, in hoa, có gạch dưới nếu cần, ví dụ `FINAL_PRICE`, `PASS_FAIL`, `CLEAN_CODE`. Cách này ổn định hơn khi chia sẻ file.
+
+### Custom function có ghi dữ liệu sang ô khác được không?
+
+Không nên và thường bị hạn chế. Hãy trả về giá trị để Sheets tự hiển thị kết quả. Nếu cần ghi dữ liệu sang ô khác, dùng menu, nút hoặc trigger.
+
+### Custom function có dùng được với range không?
+
+Có. Khi truyền range, hàm nhận mảng hai chiều. Bạn nên trả về mảng hai chiều cùng kích thước hoặc kích thước có chủ đích để Sheets đổ kết quả ra vùng trống.
+
+## Tóm tắt
+
+Custom function giúp đưa logic riêng vào Google Sheets như công thức. Bạn đã học cách nhận giá trị đơn, nhận range, trả kết quả, xử lý ô rỗng và hiểu giới hạn của hàm tùy chỉnh. Bài tiếp theo sẽ học simple triggers như `onOpen` và `onEdit` để script tự chạy theo sự kiện.

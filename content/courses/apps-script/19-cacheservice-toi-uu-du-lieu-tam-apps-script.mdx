@@ -1,0 +1,159 @@
+---
+title: "CacheService trong Apps Script để tối ưu dữ liệu tạm"
+description: "Học cách dùng CacheService để lưu dữ liệu tạm, giảm gọi API và tăng tốc automation Apps Script."
+slug: "cacheservice-toi-uu-du-lieu-tam-apps-script"
+course: "apps-script"
+order: 19
+duration: "19 phút"
+difficulty: "Trung bình"
+keywords: ["CacheService Apps Script", "cache Apps Script", "tối ưu Apps Script", "Script Cache Apps Script", "giảm gọi API Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`CacheService` dùng để lưu dữ liệu tạm trong thời gian ngắn, giúp Apps Script tránh đọc Sheets, gọi API hoặc tính toán lại cùng một kết quả quá nhiều lần. Hãy xem cache là lớp tăng tốc, không phải nơi lưu dữ liệu chính. Cache có thể hết hạn hoặc biến mất trước khi bạn mong đợi.
+
+## CacheService trong Apps Script dùng để làm gì?
+
+Nhiều automation bị chậm không phải vì code phức tạp, mà vì lặp lại thao tác tốn thời gian. Ví dụ: mỗi request web app đều đọc sheet `Settings`, mỗi lần gửi báo cáo đều gọi API lấy danh mục sản phẩm, hoặc mỗi lần mở sidebar đều tính lại cùng một danh sách. Nếu dữ liệu đó không cần chính xác từng giây, bạn có thể cache trong vài phút để giảm tải.
+
+Mô hình tư duy là: trước khi làm việc tốn kém, hỏi cache trước. Nếu cache có dữ liệu, dùng ngay. Nếu cache không có, lấy dữ liệu từ nguồn thật, lưu vào cache với thời hạn ngắn, rồi trả kết quả. Trường hợp cache có dữ liệu gọi là cache hit. Trường hợp không có gọi là cache miss.
+
+## CacheService khác PropertiesService thế nào?
+
+`PropertiesService` phù hợp cho cấu hình tương đối bền như API token, email nhận báo cáo hoặc lần đồng bộ cuối. `CacheService` phù hợp cho dữ liệu tạm như kết quả API trong 5 phút, danh sách lựa chọn trên form, hoặc dữ liệu web app có thể tái sử dụng. Nếu mất properties, script mất cấu hình quan trọng. Nếu mất cache, script chỉ chậm hơn vì phải lấy lại dữ liệu.
+
+Vì vậy, đừng dùng cache để lưu dữ liệu bắt buộc phải tồn tại. Code dùng cache luôn phải có đường lấy lại dữ liệu từ nguồn chính.
+
+## Cú pháp lưu và đọc cache đơn giản
+
+Bạn thường dùng `CacheService.getScriptCache()` cho cache dùng chung trong project. Method chính là `put(key, value, expirationInSeconds)` và `get(key)`. Value trong cache là chuỗi, nên object cần chuyển sang JSON.
+
+```javascript
+function saveCacheExample() {
+  const cache = CacheService.getScriptCache();
+  cache.put('LAST_REPORT_STATUS', 'ready', 300);
+}
+
+function readCacheExample() {
+  const cache = CacheService.getScriptCache();
+  const status = cache.get('LAST_REPORT_STATUS');
+
+  if (status) {
+    Logger.log('Cache hit: ' + status);
+  } else {
+    Logger.log('Cache miss');
+  }
+}
+```
+
+Tham số `300` nghĩa là giá trị có thể tồn tại tối đa 300 giây. Bạn không nên hiểu là “chắc chắn tồn tại đúng 300 giây”. Trong thực tế, cache có thể bị xóa sớm tùy hệ thống.
+
+## Pattern cache dữ liệu từ sheet Settings
+
+Ví dụ thực tế: sheet `Settings` có hai cột `Key` và `Value`. Nhiều function cần đọc cấu hình này, nhưng đọc sheet liên tục làm script chậm. Ta cache kết quả trong 5 phút.
+
+```javascript
+function getSettings() {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get('SETTINGS_JSON');
+
+  if (cached) {
+    Logger.log('Settings cache hit');
+    return JSON.parse(cached);
+  }
+
+  Logger.log('Settings cache miss');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Settings');
+  const rows = sheet.getDataRange().getValues().slice(1);
+  const settings = {};
+
+  rows.forEach(function(row) {
+    const key = row[0];
+    const value = row[1];
+
+    if (key) {
+      settings[key] = value;
+    }
+  });
+
+  cache.put('SETTINGS_JSON', JSON.stringify(settings), 300);
+  return settings;
+}
+```
+
+Đây là pattern rất hữu ích cho web app và sidebar. Người dùng mở giao diện nhiều lần trong vài phút sẽ nhận dữ liệu nhanh hơn, nhưng nếu cache mất, script vẫn đọc lại từ sheet.
+
+## Cache response API để giảm gọi lặp
+
+Khi gọi API ngoài, cache còn giúp tránh rate limit. Ví dụ bạn có endpoint lấy tỷ giá hoặc danh sách sản phẩm, dữ liệu chỉ cần cập nhật vài phút một lần.
+
+```javascript
+function getCachedProducts() {
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'PRODUCTS_V1';
+  const cached = cache.get(cacheKey);
+
+  if (cached) {
+    return JSON.parse(cached);
+  }
+
+  const response = UrlFetchApp.fetch('https://api.example.com/products', {
+    muteHttpExceptions: true,
+  });
+
+  if (response.getResponseCode() !== 200) {
+    throw new Error('API error: ' + response.getContentText());
+  }
+
+  const products = JSON.parse(response.getContentText());
+  cache.put(cacheKey, JSON.stringify(products), 600);
+  return products;
+}
+```
+
+Key nên có ý nghĩa và có version như `PRODUCTS_V1`. Khi cấu trúc dữ liệu đổi, bạn có thể đổi key thành `PRODUCTS_V2` để tránh đọc cache cũ không còn đúng định dạng.
+
+## Khi nào nên dùng CacheService?
+
+- Dữ liệu được đọc nhiều lần nhưng chỉ cần mới trong vài phút.
+- Response API ngoài có rate limit hoặc mất thời gian.
+- Web app trả cùng một danh sách cho nhiều request.
+- Sidebar cần load nhanh danh mục từ Sheets.
+- Kết quả tính toán tốn thời gian nhưng không cần lưu lâu dài.
+
+Không nên dùng cache cho trạng thái thanh toán, dữ liệu đơn hàng quan trọng, hoặc dữ liệu mà mất đi sẽ làm sai nghiệp vụ. Với dữ liệu quan trọng, hãy lưu ở Sheets, Properties, Drive, database hoặc API chính.
+
+## Lỗi thường gặp với CacheService
+
+- Nghĩ cache là nơi lưu vĩnh viễn.
+- Không xử lý cache miss, làm function lỗi khi cache trống.
+- Lưu object trực tiếp mà không `JSON.stringify`.
+- Parse JSON mà không chắc dữ liệu trong cache đúng định dạng.
+- Đặt key quá chung như `DATA`, khiến nhiều function ghi đè nhau.
+- Cache dữ liệu nhạy cảm như token hoặc thông tin cá nhân không cần thiết.
+
+## Bài tập thực hành
+
+Tạo sheet `Settings` có cột `Key`, `Value`. Viết function `getCachedSettings()` đọc cache key `SETTINGS_JSON` trước. Nếu có cache, parse và trả object. Nếu không có, đọc từ sheet, lưu cache trong 5 phút và log `Cache miss`. Chạy function hai lần liên tiếp để quan sát lần đầu miss, lần sau hit.
+
+## Câu hỏi thường gặp về CacheService
+
+### CacheService có đảm bảo tồn tại đúng thời gian không?
+
+Không tuyệt đối. Thời gian bạn truyền vào là thời hạn tối đa. Cache có thể biến mất sớm hơn, nên code luôn phải lấy lại được dữ liệu từ nguồn chính.
+
+### Có mấy loại cache?
+
+Bạn thường gặp script cache, user cache và document cache. Script cache dùng chung cho project, user cache riêng theo người dùng, document cache gắn với document trong một số bound script.
+
+### Có nên cache dữ liệu từ Google Sheets không?
+
+Có, nếu dữ liệu ít thay đổi và được đọc nhiều lần. Nhưng nếu người dùng cần thấy thay đổi ngay lập tức, hãy giảm thời hạn cache hoặc cung cấp nút refresh.
+
+### Cache có thay thế được LockService không?
+
+Không. Cache giúp tăng tốc đọc dữ liệu tạm. LockService giúp tránh nhiều lần chạy ghi đè cùng lúc. Hai công cụ giải quyết hai vấn đề khác nhau.
+
+## Tóm tắt và chuyển tiếp
+
+`CacheService` giúp script nhanh hơn bằng cách tránh thao tác lặp trong thời gian ngắn. Hãy luôn thiết kế theo hướng cache có thể mất bất cứ lúc nào, dùng key rõ ràng và chỉ cache dữ liệu phù hợp. Bài tiếp theo sẽ học `LockService`, công cụ giúp automation an toàn hơn khi nhiều trigger hoặc người dùng cùng ghi dữ liệu.

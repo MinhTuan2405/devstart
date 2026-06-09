@@ -1,0 +1,186 @@
+---
+title: "RAG đơn giản với Google Sheets và Apps Script"
+description: "Học cách xây RAG cơ bản bằng Google Sheets làm knowledge base, tìm context và gọi AI trả lời."
+slug: "rag-don-gian-voi-google-sheets"
+course: "ai-apps-script"
+order: 32
+duration: "24 phút"
+difficulty: "Khó"
+keywords: ["RAG Apps Script", "Google Sheets knowledge base AI", "AI Q&A Apps Script", "retrieval Apps Script", "Sheets RAG Gemini"]
+publishedAt: "2026-06-09"
+---
+
+## RAG đơn giản với Google Sheets là gì?
+
+RAG đơn giản với Google Sheets là cách lưu knowledge base trong sheet, tìm vài dòng liên quan đến câu hỏi, đưa các dòng đó vào prompt và yêu cầu AI trả lời dựa trên nguồn. Đây là cách dễ học để xây trợ lý hỏi đáp nội bộ trước khi dùng embeddings hoặc vector database.
+
+RAG là viết tắt của Retrieval Augmented Generation. “Retrieval” là lấy ngữ cảnh liên quan; “Generation” là dùng AI tạo câu trả lời từ ngữ cảnh đó. Nếu bỏ retrieval, chatbot dễ trả lời bằng kiến thức chung và bịa chi tiết. Nếu retrieval kém, AI vẫn có thể trả lời sai vì context đưa vào không đúng.
+
+## Mental model: mỗi dòng là một đoạn kiến thức
+
+Google Sheets phù hợp cho knowledge base nhỏ vì dễ nhập, dễ review và dễ phân quyền. Mỗi dòng nên là một đoạn kiến thức độc lập, không quá dài, có title và tag rõ. Đừng nhét cả tài liệu dài vào một ô duy nhất.
+
+Sheet `Knowledge` nên có cột:
+
+- `Id`: mã nguồn như `faq_001`.
+- `Title`: tiêu đề ngắn.
+- `Content`: nội dung trả lời hoặc đoạn kiến thức.
+- `Tags`: từ khóa phân tách bằng dấu phẩy.
+- `UpdatedAt`: ngày cập nhật.
+- `Owner`: người chịu trách nhiệm nội dung.
+
+Khi AI trả lời, bạn nên hiển thị source dạng `[1]`, `[2]` để người dùng biết câu trả lời dựa trên dòng nào.
+
+## Đọc knowledge base từ Sheets
+
+Function này đọc sheet và chuyển mỗi dòng thành object. Giữ `rowNumber` để dễ sửa lại dòng nguồn khi phát hiện nội dung cũ.
+
+```javascript
+function readKnowledgeRows() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Knowledge');
+  if (!sheet) throw new Error('Missing Knowledge sheet');
+
+  const rows = sheet.getDataRange().getValues().slice(1);
+  return rows
+    .filter(function(row) { return row[0] && row[2]; })
+    .map(function(row, index) {
+      return {
+        rowNumber: index + 2,
+        id: row[0],
+        title: row[1],
+        content: row[2],
+        tags: row[3],
+        updatedAt: row[4],
+        owner: row[5],
+      };
+    });
+}
+```
+
+Nếu knowledge base có hàng nghìn dòng, đọc toàn bộ mỗi request sẽ chậm. Nhưng với 50-200 dòng FAQ nội bộ, cách này đủ để học và prototype.
+
+## Retrieval keyword có scoring đơn giản
+
+Tìm bằng `includes(query)` quá yếu vì câu hỏi thường dài. Cách tốt hơn một chút là tách từ, tính điểm khi title, tags hoặc content chứa từ đó.
+
+```javascript
+function searchKnowledgeByKeyword(query) {
+  const terms = String(query || '')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(function(term) { return term.length >= 3; });
+
+  return readKnowledgeRows()
+    .map(function(doc) {
+      const title = String(doc.title || '').toLowerCase();
+      const tags = String(doc.tags || '').toLowerCase();
+      const content = String(doc.content || '').toLowerCase();
+      let score = 0;
+
+      terms.forEach(function(term) {
+        if (title.includes(term)) score += 3;
+        if (tags.includes(term)) score += 2;
+        if (content.includes(term)) score += 1;
+      });
+
+      return Object.assign({}, doc, { score: score });
+    })
+    .filter(function(doc) { return doc.score > 0; })
+    .sort(function(a, b) { return b.score - a.score; })
+    .slice(0, 5);
+}
+```
+
+Đây vẫn là keyword retrieval, chưa hiểu từ đồng nghĩa. Nhưng nó tốt hơn tìm exact query và đủ để thấy RAG hoạt động.
+
+## Tạo prompt RAG có source
+
+Prompt phải yêu cầu AI trả lời theo context và nói không đủ dữ liệu nếu thiếu thông tin. Context nên đánh số nguồn.
+
+```javascript
+function buildRagPrompt(question, docs) {
+  const context = docs.map(function(doc, index) {
+    return '[' + (index + 1) + '] ' + doc.title + '\n' +
+      'Id: ' + doc.id + '\n' +
+      String(doc.content || '').slice(0, 3000);
+  }).join('\n\n');
+
+  return [
+    'Answer the question in Vietnamese using only the context.',
+    'If the context is not enough, say: Khong du du lieu trong knowledge base.',
+    'Cite sources like [1], [2] when using information.',
+    'Context:',
+    context,
+    'Question: ' + String(question || '').slice(0, 1000),
+  ].join('\n');
+}
+```
+
+Nếu `docs` rỗng, bạn có thể trả lời ngay “không tìm thấy nguồn liên quan” mà không cần gọi AI. Điều này tiết kiệm chi phí.
+
+## Ví dụ thực tế: answer function và log
+
+```javascript
+function answerQuestionWithSheetsRag(question) {
+  if (!question || question.length > 1000) {
+    throw new Error('Question is empty or too long');
+  }
+
+  const docs = searchKnowledgeByKeyword(question);
+  if (docs.length === 0) {
+    return 'Khong tim thay nguon lien quan trong Knowledge sheet.';
+  }
+
+  const answer = generateAiText(buildRagPrompt(question, docs), { temperature: 0 });
+  logRagAnswer(question, answer, docs);
+  return answer;
+}
+
+function logRagAnswer(question, answer, docs) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('QaLog');
+  if (!sheet) return;
+  sheet.appendRow([
+    new Date(),
+    question,
+    answer,
+    docs.map(function(doc) { return doc.id; }).join(','),
+  ]);
+}
+```
+
+Với dữ liệu nhạy cảm, không log toàn bộ question/answer. Bạn có thể log hash, độ dài hoặc source IDs thay thế.
+
+## Lỗi thường gặp với RAG đơn giản
+
+- Retrieval keyword bỏ sót câu trả lời khi người dùng dùng từ đồng nghĩa.
+- Context quá dài, làm prompt tốn tiền và câu trả lời loãng.
+- Không yêu cầu AI nói khi thiếu thông tin, dẫn đến bịa.
+- Không hiển thị source hoặc source ID.
+- Knowledge base không được cập nhật, owner không rõ.
+- Mỗi dòng knowledge quá dài, khó retrieve chính xác.
+
+## Bài tập thực hành
+
+Tạo sheet `Knowledge` với 10 dòng FAQ nội bộ. Viết `readKnowledgeRows`, `searchKnowledgeByKeyword`, `buildRagPrompt` và `answerQuestionWithSheetsRag`. Test 3 câu hỏi: một câu có câu trả lời rõ, một câu dùng từ gần nghĩa, và một câu hoàn toàn không có trong sheet. Ghi log source IDs vào `QaLog`.
+
+## Câu hỏi thường gặp về RAG bằng Sheets
+
+### Google Sheets có đủ làm knowledge base không?
+
+Đủ cho prototype, FAQ nhỏ và dữ liệu được review thủ công. Với dữ liệu lớn, nhiều tài liệu dài hoặc nhiều user, bạn cần search service hoặc vector database tốt hơn.
+
+### Có cần embeddings không?
+
+Không cho bản keyword đơn giản. Embeddings hữu ích khi câu hỏi dùng từ khác tài liệu, ví dụ hỏi “hoàn tiền” nhưng tài liệu ghi “refund”. Bài sau sẽ giới thiệu.
+
+### RAG có loại bỏ hallucination không?
+
+Không hoàn toàn. RAG giảm hallucination nếu retrieval tốt, context đúng và prompt yêu cầu trả lời theo nguồn. Người dùng vẫn nên thấy source để kiểm tra.
+
+### Nên chia knowledge base thế nào?
+
+Mỗi dòng nên trả lời một ý hoặc một câu hỏi cụ thể. Nếu một ô quá dài, hãy chia thành nhiều dòng theo chủ đề để retrieval chính xác hơn.
+
+## Tóm tắt và bước tiếp theo
+
+RAG bằng Sheets là cách dễ học để xây trợ lý hỏi đáp nội bộ: đọc knowledge, tìm context, tạo prompt có source và log kết quả. Bài tiếp theo nâng cấp retrieval bằng embeddings và cosine similarity để tìm theo ngữ nghĩa thay vì chỉ keyword.

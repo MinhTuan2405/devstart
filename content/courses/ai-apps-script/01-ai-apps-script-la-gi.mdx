@@ -1,0 +1,145 @@
+---
+title: "AI Apps Script là gì? Học tự động hóa Google Workspace với AI"
+description: "Giới thiệu AI Apps Script, cách dùng AI để viết, debug và tích hợp model vào Google Workspace automation."
+slug: "ai-apps-script-la-gi"
+course: "ai-apps-script"
+order: 1
+duration: "18 phút"
+difficulty: "Dễ"
+keywords: ["AI Apps Script", "học AI với Apps Script", "dùng AI để viết Apps Script", "Google Workspace AI automation", "Apps Script AI cho người mới"]
+publishedAt: "2026-06-09"
+---
+
+## AI Apps Script là gì?
+
+AI Apps Script là cách kết hợp Google Apps Script với mô hình AI để tự động hóa Google Workspace thông minh hơn: Sheets biết phân loại dữ liệu, Docs được tóm tắt tự động, Gmail có trợ lý soạn nháp, Drive có công cụ hỏi đáp, còn bạn dùng AI để viết và kiểm tra code nhanh hơn.
+
+Điểm quan trọng là AI Apps Script không phải một công nghệ hoàn toàn mới. Nó là lớp kỹ năng đặt lên nền Apps Script sẵn có. Bạn vẫn dùng `SpreadsheetApp`, `DocumentApp`, `GmailApp`, `UrlFetchApp`, trigger, PropertiesService và quyền OAuth. AI chỉ tham gia ở hai vai trò: trợ lý phát triển code và thành phần xử lý ngôn ngữ trong automation.
+
+Nếu đã từng viết script đọc Google Sheets rồi gửi email, bạn có thể hình dung AI Apps Script là phiên bản nâng cấp: thay vì chỉ kiểm tra `Status = "new"`, script có thể đọc nội dung phản hồi, hiểu khách hàng đang phàn nàn về lỗi nào, gán tag, viết tóm tắt và đề xuất email trả lời.
+
+## AI giúp gì khi phát triển Apps Script?
+
+AI giúp bạn ở hai tầng khác nhau. Tầng đầu tiên là trong quá trình lập trình. Bạn dùng AI để phân tích yêu cầu, tạo skeleton code, giải thích lỗi, refactor function dài, viết JSDoc, tạo test case và kiểm tra rủi ro bảo mật. Đây là cách dùng AI như một đồng đội kỹ thuật, nhưng bạn vẫn phải review kết quả.
+
+Tầng thứ hai là trong sản phẩm tự động hóa. Script của bạn gọi Gemini, Vertex AI, OpenAI hoặc một AI API khác để tóm tắt, phân loại, trích xuất, dịch, tạo nháp nội dung hoặc trả lời câu hỏi từ dữ liệu Google Workspace.
+
+Ví dụ prompt yêu cầu AI phân tích trước khi viết code:
+
+```text
+Bạn là senior Google Apps Script engineer.
+Tôi cần automation đọc sheet Feedback, phân loại từng phản hồi thành bug, billing, feature hoặc other,
+rồi ghi kết quả vào cột Tag.
+Trước khi viết code, hãy liệt kê:
+- Sheet schema cần có
+- Function chính cần viết
+- Apps Script services cần dùng
+- Rủi ro quota và bảo mật
+- Test cases tối thiểu
+```
+
+Prompt này tốt hơn câu "viết code phân loại feedback" vì nó buộc AI làm rõ dữ liệu, quyền và rủi ro trước khi sinh code.
+
+## Mô hình tư duy khi xây AI Apps Script
+
+Mô hình đơn giản nhất là: dữ liệu Workspace đi vào Apps Script, Apps Script chuẩn hóa dữ liệu, gửi phần cần thiết cho AI API, nhận response, validate response, rồi ghi kết quả hoặc thực hiện hành động trong Workspace.
+
+Bạn có thể nhớ luồng này bằng năm bước:
+
+- Lấy dữ liệu từ Sheets, Docs, Gmail, Drive hoặc form submission.
+- Làm sạch và giảm dữ liệu trước khi gửi cho model.
+- Gọi AI API qua `UrlFetchApp` hoặc service tương ứng.
+- Parse và validate output, đặc biệt nếu cần JSON.
+- Ghi kết quả, log lỗi và đánh dấu trạng thái đã xử lý.
+
+Skeleton tối giản của một request AI trong Apps Script thường giống thế này:
+
+```javascript
+function generateText(prompt) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('AI_API_KEY');
+  if (!apiKey) throw new Error('Missing AI_API_KEY');
+
+  const response = UrlFetchApp.fetch('https://api.example.com/generate', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + apiKey },
+    payload: JSON.stringify({ prompt: prompt }),
+    muteHttpExceptions: true,
+  });
+
+  if (response.getResponseCode() >= 300) {
+    throw new Error('AI API failed: ' + response.getContentText());
+  }
+
+  return response.getContentText();
+}
+```
+
+Đoạn code trên chưa phụ thuộc vào Sheets hay Gmail. Đây là ý tưởng quan trọng: hãy tách phần gọi AI thành helper riêng, sau đó các job cụ thể mới gọi helper này.
+
+## Ví dụ thực tế: phân loại phản hồi trong Google Sheets
+
+Giả sử sheet `Feedback` có cột `Customer`, `Message`, `Tag`, `ProcessedAt`. Script sẽ đọc các dòng chưa xử lý, gửi `Message` cho AI, nhận tag và ghi lại vào sheet.
+
+```javascript
+function classifyOneFeedback(message) {
+  const prompt = [
+    'Classify this customer feedback into one tag:',
+    'bug, billing, feature, other.',
+    'Return only the tag.',
+    '',
+    String(message || ''),
+  ].join('\n');
+
+  return generateText(prompt).trim().toLowerCase();
+}
+
+function previewFeedbackTag() {
+  const tag = classifyOneFeedback('The invoice amount is wrong this month.');
+  console.log({ tag: tag });
+}
+```
+
+Trong ví dụ này, AI chỉ nhận nội dung cần phân loại, không nhận email, số điện thoại hay toàn bộ bảng. Đây là thói quen tốt ngay từ đầu: gửi ít dữ liệu nhất có thể.
+
+## Khi nào nên dùng AI trong Apps Script?
+
+AI phù hợp nhất khi dữ liệu có tính ngôn ngữ tự nhiên hoặc yêu cầu suy luận mềm. Ví dụ: đọc phản hồi khách hàng, tóm tắt biên bản họp, trích xuất thông tin từ email, phân loại ticket support, viết nháp câu trả lời, chuẩn hóa mô tả lỗi hoặc tạo insight từ nhiều dòng ghi chú.
+
+AI không cần thiết cho logic xác định đơn giản. Nếu bạn chỉ cần kiểm tra ngày quá hạn, lọc status, tính tổng tiền hoặc gửi email theo template cố định, code thường là đủ. Dùng AI cho những việc đó có thể làm automation chậm hơn, tốn tiền hơn và khó kiểm soát hơn.
+
+## Lỗi thường gặp khi mới dùng AI Apps Script
+
+- Copy code AI sinh ra mà không kiểm tra quyền OAuth, quota và dữ liệu thật.
+- Đưa API key trực tiếp vào code, prompt hoặc log.
+- Gọi model cho từng ô trong Sheets mà không giới hạn số dòng mỗi lần chạy.
+- Tin output AI tuyệt đối, không validate JSON hoặc enum.
+- Không có `DRY_RUN`, nên test nhầm trên dữ liệu thật hoặc gửi email thật.
+- Không tách helper gọi AI, khiến cùng một logic API bị lặp trong nhiều file.
+- Không ghi trạng thái xử lý, dẫn đến trigger chạy lại cùng một dòng nhiều lần.
+
+## Bài tập thực hành
+
+Chọn một automation trong Google Workspace mà bạn muốn làm thông minh hơn bằng AI. Viết một mô tả ngắn gồm: dữ liệu đầu vào, kết quả mong muốn, Workspace service cần dùng, phần nào cần AI, phần nào chỉ cần code thường, dữ liệu nào không được gửi cho AI. Sau đó viết một prompt yêu cầu AI phân tích yêu cầu, chưa viết code.
+
+## Câu hỏi thường gặp về AI Apps Script
+
+### Có cần biết machine learning trước khi học AI Apps Script không?
+
+Không cần học thuật toán machine learning sâu. Bạn cần hiểu prompt, API request, JSON response, quota, bảo mật dữ liệu và cách kiểm tra kết quả. Với Apps Script, kỹ năng quan trọng hơn là thiết kế automation an toàn.
+
+### Có cần học Apps Script nền tảng trước không?
+
+Nên có nền tảng cơ bản. Nếu chưa biết `SpreadsheetApp`, trigger, PropertiesService hoặc `UrlFetchApp`, bạn vẫn có thể đọc bài này, nhưng sẽ khó debug khi AI sinh code sai hoặc API trả lỗi.
+
+### AI có thay lập trình viên Apps Script không?
+
+Không. AI giúp tăng tốc phân tích và viết code, nhưng người phát triển vẫn phải xác định yêu cầu, review logic, bảo vệ dữ liệu, test với dữ liệu thật và chịu trách nhiệm khi automation chạy sai.
+
+### Nên bắt đầu với use case nào?
+
+Hãy bắt đầu với use case nhỏ, ít rủi ro: tóm tắt phản hồi, gán tag dữ liệu mẫu hoặc tạo nháp nội dung. Tránh bắt đầu bằng workflow gửi email hàng loạt hoặc xử lý dữ liệu nhạy cảm.
+
+## Tóm tắt và bước tiếp theo
+
+AI Apps Script là sự kết hợp giữa automation của Google Workspace và khả năng xử lý ngôn ngữ của AI. Bạn sẽ dùng Apps Script để lấy dữ liệu, gọi model, kiểm tra output và ghi kết quả trở lại hệ sinh thái Google. Bài tiếp theo sẽ giúp bạn chọn mô hình AI phù hợp: Gemini API, Vertex AI, OpenAI hay provider khác.

@@ -1,0 +1,175 @@
+---
+title: "Embeddings và vector search cơ bản cho Apps Script AI"
+description: "Giới thiệu embeddings, cosine similarity và cách lưu vector nhỏ trong Google Sheets để tìm context tốt hơn."
+slug: "embeddings-va-vector-search-co-ban"
+course: "ai-apps-script"
+order: 33
+duration: "25 phút"
+difficulty: "Khó"
+keywords: ["embeddings Apps Script", "vector search Apps Script", "RAG embeddings Google Sheets", "cosine similarity JavaScript", "AI knowledge base Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+## Embeddings trong Apps Script AI là gì?
+
+Embeddings là vector số biểu diễn ý nghĩa của văn bản. Thay vì tìm keyword chính xác trong Google Sheets, bạn tạo vector cho câu hỏi và từng đoạn knowledge, rồi so sánh độ gần bằng cosine similarity để chọn context liên quan. Với Apps Script, bạn có thể học bản nhỏ bằng cách lưu vector JSON trong Sheets.
+
+Ví dụ người dùng hỏi “cách hoàn tiền”, nhưng tài liệu ghi “quy trình refund”. Keyword search tiếng Việt có thể bỏ sót vì không trùng từ. Embeddings có thể nhận ra hai câu gần nghĩa hơn, nếu model embedding đủ tốt và dữ liệu được chia chunk hợp lý.
+
+## Mental model: text thành điểm trong không gian số
+
+Hãy tưởng tượng mỗi đoạn văn được biến thành một điểm trong không gian nhiều chiều. Các đoạn có ý nghĩa gần nhau sẽ nằm gần nhau hơn. Khi người dùng đặt câu hỏi, bạn cũng biến câu hỏi thành vector và tìm các đoạn knowledge có vector gần nhất.
+
+Quy trình semantic retrieval:
+
+- Chia knowledge base thành đoạn nhỏ.
+- Tạo embedding cho từng đoạn bằng cùng một model.
+- Lưu vector, model name và version vào sheet.
+- Khi có câu hỏi, tạo embedding cho câu hỏi.
+- Tính similarity giữa query vector và từng document vector.
+- Lấy top 3-5 đoạn làm context cho prompt RAG.
+
+Điểm quan trọng: vector từ model khác nhau không nên so sánh với nhau. Nếu đổi model embedding, hãy tạo lại toàn bộ vector hoặc lưu version rõ ràng.
+
+## Tính cosine similarity
+
+Cosine similarity đo góc giữa hai vector. Kết quả càng gần 1 thì hai vector càng gần nghĩa. Function này là pure function, dễ test trong Apps Script editor.
+
+```javascript
+function cosineSimilarity(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    throw new Error('Vectors must have the same length');
+  }
+
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  if (normA === 0 || normB === 0) {
+    throw new Error('Vector norm must not be zero');
+  }
+
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+```
+
+Đừng bỏ qua kiểm tra vector rỗng. Một embedding lỗi nhưng vẫn lưu `[]` có thể làm toàn bộ retrieval fail.
+
+## Lưu vector trong Google Sheets
+
+Với dữ liệu nhỏ, bạn có thể lưu embedding JSON string trong cột `Embedding`. Sheet `KnowledgeEmbeddings` có thể gồm `Id`, `Title`, `Content`, `Embedding`, `EmbeddingModel`, `UpdatedAt`.
+
+```javascript
+function parseEmbedding(value) {
+  const vector = JSON.parse(String(value || '[]'));
+  if (!Array.isArray(vector) || vector.length === 0) {
+    throw new Error('Invalid embedding');
+  }
+  return vector.map(Number);
+}
+
+function serializeEmbedding(vector) {
+  if (!Array.isArray(vector) || vector.length === 0) {
+    throw new Error('Cannot serialize empty vector');
+  }
+  return JSON.stringify(vector);
+}
+```
+
+Sheets không phải vector database. Khi vector dài và số dòng lớn, file sẽ nặng, tính toán chậm và dễ chạm giới hạn Apps Script. Nhưng cho 20-100 đoạn học tập, đây là cách minh họa tốt.
+
+## Tạo embedding cho knowledge row
+
+Function `createEmbedding` phụ thuộc provider bạn dùng. Trong bài này, ta giả định đã có adapter trả vector số. Phần quan trọng là lưu model cùng vector.
+
+```javascript
+function updateEmbeddingForRow(rowNumber) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('KnowledgeEmbeddings');
+  if (!sheet) throw new Error('Missing KnowledgeEmbeddings sheet');
+
+  const row = sheet.getRange(rowNumber, 1, 1, 6).getValues()[0];
+  const id = row[0];
+  const title = row[1];
+  const content = row[2];
+  const embeddingModel = 'text-embedding-model-v1';
+
+  if (!id || !content) throw new Error('Missing id or content');
+
+  const vector = createEmbedding(title + '\n' + content);
+  sheet.getRange(rowNumber, 4, 1, 3).setValues([[
+    serializeEmbedding(vector),
+    embeddingModel,
+    new Date(),
+  ]]);
+}
+```
+
+Nếu content thay đổi, embedding cũ không còn chính xác. Hãy cập nhật `UpdatedAt` và có cách chạy lại embedding cho dòng thay đổi.
+
+## Tìm top matches bằng vector search trong Sheets
+
+Function này tạo embedding cho câu hỏi, đọc vector trong sheet, tính similarity và lấy top 5.
+
+```javascript
+function findTopKnowledgeByEmbedding(question) {
+  const queryVector = createEmbedding(String(question || '').slice(0, 1000));
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('KnowledgeEmbeddings');
+  const rows = sheet.getDataRange().getValues().slice(1);
+
+  return rows.map(function(row) {
+    const docVector = parseEmbedding(row[3]);
+    return {
+      id: row[0],
+      title: row[1],
+      content: row[2],
+      score: cosineSimilarity(queryVector, docVector),
+      model: row[4],
+    };
+  })
+  .sort(function(a, b) { return b.score - a.score; })
+  .slice(0, 5);
+}
+```
+
+Trong production, bạn cần lọc theo `EmbeddingModel` để chỉ so sánh vector cùng model. Nếu trộn model, điểm similarity không còn đáng tin.
+
+## Lỗi thường gặp với embeddings
+
+- Lưu quá nhiều vector lớn trong Sheets, làm script chậm.
+- Không version model embedding.
+- So sánh vector từ model khác nhau.
+- Không cập nhật embedding khi content thay đổi.
+- Quên kiểm tra vector rỗng hoặc khác chiều.
+- Tưởng embeddings tự đảm bảo câu trả lời đúng, trong khi retrieval chỉ là bước chọn context.
+
+## Bài tập thực hành
+
+Không cần gọi embedding API thật ngay. Tạo 3 vector giả cho 3 đoạn: billing, bug và feature request. Tạo một query vector giả, dùng `cosineSimilarity` để xếp hạng đoạn gần nhất. Sau đó thiết kế sheet `KnowledgeEmbeddings` với cột `Id`, `Title`, `Content`, `Embedding`, `EmbeddingModel`, `UpdatedAt`.
+
+## Câu hỏi thường gặp về embeddings
+
+### Có bắt buộc dùng embeddings cho RAG không?
+
+Không. Keyword search đủ cho prototype nhỏ. Embeddings hữu ích khi câu hỏi dùng từ khác tài liệu hoặc knowledge base lớn hơn.
+
+### Google Sheets có làm vector database được không?
+
+Chỉ phù hợp học và dữ liệu nhỏ. Production nên dùng vector database, search service hoặc backend chuyên dụng để index và truy vấn nhanh hơn.
+
+### Có cần lưu model embedding không?
+
+Có. Vector từ model khác nhau không nên trộn để so sánh. Lưu model giúp bạn biết khi nào cần tạo lại embeddings.
+
+### Similarity cao có nghĩa câu trả lời chắc chắn đúng không?
+
+Không. Similarity chỉ nói đoạn đó gần nghĩa với câu hỏi. Bạn vẫn cần prompt yêu cầu trả lời theo source và hiển thị nguồn cho người dùng kiểm tra.
+
+## Tóm tắt và bước tiếp theo
+
+Embeddings giúp retrieval theo ngữ nghĩa tốt hơn keyword search, nhưng cần quản lý vector, model version và giới hạn dữ liệu. Bài tiếp theo học agent workflow: planner, executor và reviewer, cách phối hợp nhiều bước AI và tool-use an toàn trong Apps Script.

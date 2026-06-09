@@ -1,0 +1,153 @@
+---
+title: "Advanced Google Services trong Apps Script"
+description: "Học khi nào dùng Advanced Google Services như Sheets API, Drive API và cách bật dịch vụ nâng cao trong Apps Script."
+slug: "advanced-google-services-apps-script"
+course: "apps-script"
+order: 36
+duration: "23 phút"
+difficulty: "Khó"
+keywords: ["Advanced Google Services Apps Script", "Sheets API Apps Script", "Drive API Apps Script", "dịch vụ nâng cao Apps Script", "Google APIs Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+Advanced Google Services cho phép Apps Script gọi trực tiếp nhiều Google APIs như Sheets API, Drive API, Gmail API hoặc Calendar API. Bạn dùng chúng khi service cơ bản như `SpreadsheetApp` hoặc `DriveApp` không đủ tính năng, cần batch request phức tạp, hoặc muốn làm việc gần với cấu trúc REST API.
+
+## Advanced Google Services là gì?
+
+Apps Script có hai lớp làm việc với Google Workspace. Lớp dễ dùng là built-in services như `SpreadsheetApp`, `DocumentApp`, `DriveApp`, `MailApp`. Chúng có cú pháp thân thiện, phù hợp phần lớn automation. Lớp nâng cao là Advanced Google Services, nơi Apps Script tạo global service như `Sheets`, `Drive`, `Gmail` để bạn gọi API gần giống tài liệu REST.
+
+Mental model nên nhớ: built-in service ưu tiên đơn giản, advanced service ưu tiên độ đầy đủ của API. Nếu bạn chỉ đọc ghi ô trong Sheets, `SpreadsheetApp` thường dễ hơn. Nếu bạn cần `batchUpdate` nhiều thao tác format, metadata, filter view, developer metadata hoặc endpoint chưa có trong `SpreadsheetApp`, Sheets advanced service đáng dùng.
+
+Advanced service không tự nhiên mạnh hơn trong mọi tình huống. Nó đòi hỏi bật service, hiểu resource JSON, truyền đúng thứ tự tham số và khai báo scope phù hợp. Vì vậy người mới nên học built-in service trước.
+
+## Khi nào nên dùng advanced service?
+
+Dùng advanced service khi có lý do cụ thể. Ví dụ:
+
+- Cần gọi tính năng mới của Google API chưa có wrapper trong Apps Script service cơ bản.
+- Cần batch nhiều thao tác cấu trúc Sheets trong một request.
+- Cần đọc metadata chi tiết hoặc query file theo field cụ thể.
+- Muốn code giống tài liệu REST API để dễ chuyển sang backend khác.
+- Cần kiểm soát request/response ở mức API resource.
+
+Không nên dùng advanced service chỉ vì nghe có vẻ chuyên nghiệp. Code sẽ dài hơn, khó đọc hơn và lỗi thường khó hiểu hơn nếu bạn chưa quen tài liệu API.
+
+## Bật Advanced Google Services
+
+Trong Apps Script editor, mở phần Services, thêm service cần dùng, ví dụ Google Sheets API. Một số project cũng cần bật API tương ứng trong Google Cloud project. Sau đó, global object như `Sheets` mới tồn tại khi chạy code.
+
+Nếu bạn thấy lỗi `ReferenceError: Sheets is not defined`, nguyên nhân thường là chưa bật service trong editor, không phải sai cú pháp JavaScript. Nếu thấy lỗi authorization, kiểm tra scopes trong manifest và consent screen.
+
+## Đọc dữ liệu bằng Sheets API
+
+Ví dụ sau đọc hai vùng dữ liệu bằng `batchGet`. So với gọi `getValues()` nhiều lần, API này gom nhiều range vào một request Sheets API.
+
+```javascript
+function readReportRangesWithSheetsApi() {
+  const spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId();
+  const ranges = ['Sales!A1:D20', 'Config!A1:B10'];
+
+  const result = Sheets.Spreadsheets.Values.batchGet(spreadsheetId, {
+    ranges: ranges,
+    valueRenderOption: 'UNFORMATTED_VALUE',
+    dateTimeRenderOption: 'FORMATTED_STRING',
+  });
+
+  const valueRanges = result.valueRanges || [];
+  valueRanges.forEach(function(valueRange) {
+    Logger.log(valueRange.range);
+    Logger.log(JSON.stringify(valueRange.values || []));
+  });
+}
+```
+
+Chú ý resource trả về không giống `SpreadsheetApp`. Bạn nhận object JSON theo tài liệu Sheets API, thường có field `range`, `majorDimension`, `values`. Hãy log response khi học để hiểu cấu trúc thật.
+
+## Ghi dữ liệu và format bằng batchUpdate
+
+Ví dụ này dùng Sheets API để freeze dòng đầu và tô nền header trong một request `batchUpdate`. Đây là kiểu thao tác advanced service thể hiện rõ lợi thế: nhiều request cấu trúc được gom lại.
+
+```javascript
+function formatReportSheetWithSheetsApi() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const spreadsheetId = spreadsheet.getId();
+  const sheet = spreadsheet.getSheetByName('Report');
+  const sheetId = sheet.getSheetId();
+
+  const request = {
+    requests: [
+      {
+        updateSheetProperties: {
+          properties: {
+            sheetId: sheetId,
+            gridProperties: { frozenRowCount: 1 },
+          },
+          fields: 'gridProperties.frozenRowCount',
+        },
+      },
+      {
+        repeatCell: {
+          range: {
+            sheetId: sheetId,
+            startRowIndex: 0,
+            endRowIndex: 1,
+          },
+          cell: {
+            userEnteredFormat: {
+              backgroundColor: { red: 0.9, green: 0.95, blue: 1 },
+              textFormat: { bold: true },
+            },
+          },
+          fields: 'userEnteredFormat(backgroundColor,textFormat)',
+        },
+      },
+    ],
+  };
+
+  Sheets.Spreadsheets.batchUpdate(request, spreadsheetId);
+}
+```
+
+Khi dùng `batchUpdate`, lỗi nhỏ trong field name hoặc range index có thể làm request thất bại. Hãy bắt đầu với request nhỏ, chạy thử, rồi mới thêm nhiều thao tác.
+
+## So sánh với SpreadsheetApp
+
+Nếu cùng một việc có thể làm rõ ràng bằng `SpreadsheetApp`, hãy ưu tiên cách đó. Ví dụ đọc một sheet nhỏ bằng `getDataRange().getValues()` dễ hiểu hơn gọi Sheets API. Nhưng nếu bạn đã cần nhiều thao tác cấu trúc, advanced service giúp code gần API chính thức và có thể gom request tốt hơn.
+
+Một cách thực dụng là dùng kết hợp: lấy `spreadsheetId` và `sheetId` bằng `SpreadsheetApp`, sau đó dùng `Sheets.Spreadsheets.batchUpdate` cho phần API nâng cao. Điều này giúp code ngắn hơn và tránh hardcode ID sheet.
+
+## Lỗi thường gặp với Advanced Google Services
+
+- Chưa bật service trong Apps Script editor.
+- Chưa bật API tương ứng trong Google Cloud project nếu project yêu cầu.
+- Gọi sai tên global service, ví dụ dùng `Sheet` thay vì `Sheets`.
+- Truyền sai thứ tự tham số so với tài liệu Apps Script advanced service.
+- Dùng index dòng/cột 0-based trong Sheets API nhưng lại nghĩ giống `getRange` 1-based.
+- Quên scope trong `appsscript.json` khi đã khai báo thủ công.
+- Dùng advanced service cho bài toán đơn giản khiến code khó bảo trì.
+
+## Bài tập thực hành
+
+Bật Google Sheets API trong Advanced Google Services. Tạo sheet `Report` có header ở dòng 1. Viết một function dùng `Sheets.Spreadsheets.Values.update` để ghi dữ liệu mẫu vào `Report!A1:C3`, rồi viết function khác dùng `batchUpdate` để freeze dòng 1 và in đậm header. So sánh độ dài code với cách làm bằng `SpreadsheetApp`.
+
+## Câu hỏi thường gặp về Advanced Google Services
+
+### Advanced Google Services có miễn phí quota không?
+
+Không. Bạn vẫn chịu quota của Apps Script và quota API liên quan. Gọi API nhiều hoặc chạy trigger dày vẫn có thể bị giới hạn.
+
+### Có cần OAuth scope riêng khi dùng advanced service không?
+
+Có thể có. Nếu manifest tự suy luận, Apps Script cố thêm scope cần thiết. Nếu bạn khai báo `oauthScopes` thủ công, bạn phải thêm scope phù hợp với API đang gọi.
+
+### Nên học SpreadsheetApp hay Sheets API trước?
+
+Nên học `SpreadsheetApp` trước vì dễ hiểu và đủ cho đa số automation. Học Sheets API khi bạn gặp nhu cầu mà service cơ bản không giải quyết tốt.
+
+### Advanced service có giống gọi UrlFetchApp đến Google API không?
+
+Về bản chất đều gọi Google API, nhưng advanced service giúp bạn không phải tự xây URL, header Authorization và parse một số chi tiết. Dù vậy, bạn vẫn cần hiểu request resource của API.
+
+## Tóm tắt và bước tiếp theo
+
+Advanced Google Services mở khóa nhiều tính năng mạnh của Google APIs nhưng đi kèm cấu hình, scope và độ phức tạp cao hơn. Hãy dùng khi có nhu cầu rõ, bắt đầu bằng request nhỏ và đọc kỹ tài liệu API. Bài tiếp theo sẽ đi vào `appsscript.json`, file manifest kiểm soát runtime, timezone, scopes và các cấu hình quan trọng của project.

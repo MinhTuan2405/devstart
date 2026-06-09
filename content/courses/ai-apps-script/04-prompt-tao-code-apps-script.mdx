@@ -1,0 +1,169 @@
+---
+title: "Prompt tạo code Apps Script bằng AI đúng ngữ cảnh"
+description: "Học cách viết prompt để AI tạo Apps Script có batch read/write, logging, dry run và xử lý lỗi."
+slug: "prompt-tao-code-apps-script"
+course: "ai-apps-script"
+order: 4
+duration: "20 phút"
+difficulty: "Dễ"
+keywords: ["prompt tạo Apps Script", "dùng AI viết Apps Script", "AI code Apps Script", "prompt engineering Apps Script", "Apps Script batch read write"]
+publishedAt: "2026-06-09"
+---
+
+## Prompt tạo Apps Script cần có gì?
+
+Prompt tạo Apps Script tốt cần có ngữ cảnh, dữ liệu mẫu, ràng buộc kỹ thuật, tiêu chuẩn output và cách test. Nếu bạn chỉ viết "hãy tạo Apps Script gửi email", AI có thể sinh code chạy được nhưng đọc từng ô, thiếu dry run, gửi lặp hoặc không xử lý lỗi.
+
+Hãy coi prompt như một bản spec nhỏ. Một prompt tốt không chỉ mô tả bạn muốn gì, mà còn nói rõ AI không được làm gì: không hardcode secret, không dùng `setValue` trong vòng lặp nếu có thể batch, không đổi tên function public, không gửi email thật khi `DRY_RUN = true`, không log dữ liệu nhạy cảm.
+
+## Cấu trúc prompt tạo code
+
+Một prompt tạo code Apps Script nên có sáu phần:
+
+- Vai trò của AI, ví dụ senior Google Apps Script engineer.
+- Môi trường chạy: bound script, standalone script, V8, Google Sheets, Gmail, Docs.
+- Schema dữ liệu: tên sheet, tên cột, dữ liệu mẫu.
+- Hành vi mong muốn: đọc gì, xử lý gì, ghi gì.
+- Ràng buộc kỹ thuật: batch read/write, dry run, logging, error handling, quota.
+- Format trả lời: code hoàn chỉnh, cách chạy, quyền cần cấp, test cases.
+
+Template sau phù hợp cho nhiều automation Sheets:
+
+```text
+Bạn là senior Google Apps Script engineer.
+Hãy viết code cho bound script trong Google Sheets, runtime V8.
+
+Sheet: Leads
+Cột: Name, Email, Status, OwnerEmail, SentAt, Error
+Dữ liệu mẫu:
+Name=An, Email=an@example.com, Status=new, OwnerEmail=owner@example.com
+
+Yêu cầu:
+- Gửi email cho dòng có Status = "new"
+- Sau khi gửi, cập nhật Status = "sent" và SentAt
+- Nếu email rỗng, cập nhật Status = "error" và Error
+
+Ràng buộc:
+- Dùng getValues và setValues khi có thể
+- Có DRY_RUN để test không gửi email thật
+- Có console.log số dòng xử lý
+- Không hardcode secret
+- Không dùng thư viện ngoài
+
+Trả về: code hoàn chỉnh, cách chạy lần đầu, quyền cần cấp và test cases.
+```
+
+Prompt này làm rõ cả nghiệp vụ và tiêu chuẩn kỹ thuật. Khi AI trả code, bạn có thể so sánh từng điểm với prompt để phát hiện thiếu sót.
+
+## Yêu cầu AI dùng batch read/write
+
+Một lỗi rất phổ biến trong Apps Script là gọi `getValue()` hoặc `setValue()` trong vòng lặp hàng nghìn lần. Với Google Sheets, cách đúng thường là đọc cả range bằng `getValues()`, xử lý trong mảng, rồi ghi lại một lần.
+
+Bạn có thể yêu cầu AI viết theo pattern này:
+
+```javascript
+function updateLeadStatusesPreview() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads');
+  if (!sheet) throw new Error('Missing sheet: Leads');
+
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0];
+  const statusIndex = headers.indexOf('Status');
+  const sentAtIndex = headers.indexOf('SentAt');
+
+  const updates = values.slice(1).map(function (row) {
+    if (row[statusIndex] === 'new') {
+      row[statusIndex] = 'sent';
+      row[sentAtIndex] = new Date();
+    }
+    return row;
+  });
+
+  if (updates.length > 0) {
+    sheet.getRange(2, 1, updates.length, headers.length).setValues(updates);
+  }
+}
+```
+
+Đây chưa phải job gửi email hoàn chỉnh, nhưng nó minh họa điều bạn muốn AI tuân thủ: xử lý trong mảng trước, ghi batch sau. Khi prompt không nhắc điều này, AI rất dễ sinh code đơn giản nhưng chậm.
+
+## Prompt yêu cầu output có cấu trúc
+
+Đừng để AI trả lời lan man. Hãy yêu cầu format cố định để bạn review nhanh hơn.
+
+```text
+Trả lời theo đúng format sau:
+1. Code Apps Script hoàn chỉnh
+2. Các function public và cách chạy
+3. Quyền Google có thể cần cấp
+4. Test cases với dữ liệu mẫu
+5. Các rủi ro còn lại
+6. Những giả định bạn đã dùng
+
+Nếu thiếu thông tin, hãy liệt kê câu hỏi thay vì tự đoán.
+```
+
+Phần "giả định" rất quan trọng. Nếu AI nói nó giả định sheet tên `Leads`, bạn biết cần xác nhận. Nếu AI không nói gì nhưng tự bịa cột `Phone`, bạn có thể yêu cầu sửa.
+
+## Ví dụ prompt cho code gọi AI từ Sheets
+
+Khi prompt yêu cầu AI tạo code tích hợp model, hãy thêm ràng buộc bảo mật và validate output:
+
+```text
+Viết Apps Script đọc sheet Feedback có cột Message, Tag, Status, Error.
+Chỉ xử lý tối đa 20 dòng Status = "pending".
+Gọi function generateAiText(prompt) đã tồn tại, không tự viết API key.
+Prompt AI phải yêu cầu trả một tag trong bug, billing, feature, other.
+Validate tag trước khi ghi vào sheet.
+Nếu output không hợp lệ, ghi Status = "error" và Error ngắn.
+Không gửi Email hoặc dữ liệu định danh cho AI.
+```
+
+Lưu ý cách prompt này không yêu cầu AI viết mọi thứ. Nó nói rõ `generateAiText` đã tồn tại. Nhờ vậy AI tập trung vào logic Sheets và không tạo thêm wrapper API trùng lặp.
+
+## Checklist review code AI tạo
+
+- Code có đúng tên sheet và tên cột không.
+- Có kiểm tra sheet hoặc cột bị thiếu không.
+- Có đọc ghi theo batch không.
+- Có tránh gửi email hoặc gọi AI lặp lại không.
+- Có `DRY_RUN` cho hành động rủi ro không.
+- Có logging vừa đủ và không log secret không.
+- Có validate output AI trước khi dùng không.
+- Có test cases cho input rỗng, dữ liệu sai và lỗi API không.
+
+## Lỗi thường gặp khi prompt AI viết code
+
+- Không nói rõ bạn dùng Apps Script V8.
+- Không cung cấp dữ liệu mẫu nên AI đoán sai thứ tự cột.
+- Không yêu cầu cập nhật trạng thái sau khi xử lý.
+- Không yêu cầu test mode hoặc dry run.
+- Không nói rõ function nào đã tồn tại trong project.
+- Yêu cầu AI viết toàn bộ dự án một lần, khiến code dài và khó review.
+- Không yêu cầu AI nêu giả định.
+
+## Bài tập thực hành
+
+Viết prompt yêu cầu AI tạo function gửi email từ sheet `Leads`. Sau đó sửa prompt để thêm `DRY_RUN`, batch update, xử lý email rỗng, logging và test cases. So sánh hai phiên bản code AI trả về, ghi lại ít nhất ba điểm chất lượng được cải thiện nhờ prompt rõ hơn.
+
+## Câu hỏi thường gặp về prompt tạo code
+
+### Có nên đưa dữ liệu mẫu vào prompt không?
+
+Có. Dữ liệu mẫu giúp AI hiểu kiểu dữ liệu, thứ tự cột, giá trị status và edge cases. Một dòng mẫu tốt có thể giảm nhiều lỗi mapping.
+
+### Có nên yêu cầu AI viết toàn bộ dự án một lần không?
+
+Không nên. Hãy chia thành đọc dữ liệu, mapping, build prompt, gọi AI, validate output, ghi kết quả và test. Code nhỏ dễ review hơn.
+
+### Có cần yêu cầu batch read/write không?
+
+Có, đặc biệt với Google Sheets. Đây là lỗi hiệu năng phổ biến nhất của code Apps Script do AI sinh ra.
+
+### Prompt càng dài càng tốt không?
+
+Không hẳn. Prompt nên đủ rõ nhưng không lộn xộn. Hãy ưu tiên schema, yêu cầu, ràng buộc và format output thay vì mô tả quá nhiều chi tiết không liên quan.
+
+## Tóm tắt và bước tiếp theo
+
+Prompt tốt là bản spec kỹ thuật ngắn gọn. Nó giúp AI tạo Apps Script đúng ngữ cảnh, có batch read/write, dry run, logging và test cases. Bài tiếp theo sẽ học prompt refactor và debug code Apps Script đã có.

@@ -1,0 +1,142 @@
+---
+title: "Gửi email tự động bằng GmailApp và MailApp"
+description: "Học cách gửi email tự động trong Apps Script bằng GmailApp, MailApp và dữ liệu từ Google Sheets."
+slug: "gui-email-bang-gmailapp-mailapp"
+course: "apps-script"
+order: 21
+duration: "20 phút"
+difficulty: "Trung bình"
+keywords: ["GmailApp Apps Script", "MailApp Apps Script", "gửi email tự động Apps Script", "Google Sheets gửi email", "Apps Script email"]
+publishedAt: "2026-06-09"
+---
+
+Apps Script có thể gửi email tự động bằng `MailApp` hoặc `GmailApp`. Nếu bạn chỉ cần gửi thông báo đơn giản, `MailApp` thường đủ. Nếu cần làm việc sâu với Gmail như tạo draft, tìm thread, đọc label hoặc thao tác hộp thư, hãy dùng `GmailApp`.
+
+## Gửi email trong Apps Script hoạt động như thế nào?
+
+Khi script gửi email, nó chạy dưới quyền tài khoản đã cấp quyền cho project hoặc người tạo trigger. Vì vậy email đi ra từ tài khoản đó, chịu quota của tài khoản đó và bị kiểm soát bởi chính sách Google Workspace nếu có. Đây là điểm rất quan trọng: Apps Script không phải dịch vụ gửi email marketing hàng loạt. Nó phù hợp cho thông báo nội bộ, xác nhận form, báo cáo tự động, nhắc lịch, hoặc gửi tài liệu cho một nhóm vừa phải.
+
+Mô hình tư duy nên nhớ là: dữ liệu nguồn thường nằm trong Sheets, function lọc những dòng cần gửi, `MailApp` hoặc `GmailApp` gửi email, sau đó script ghi trạng thái đã gửi. Nếu không có cột trạng thái, bạn rất dễ gửi lặp khi chạy lại function hoặc khi trigger bị tạo trùng.
+
+## MailApp và GmailApp khác nhau ra sao?
+
+`MailApp` tập trung vào gửi email. API của nó gọn, ít liên quan tới hộp thư Gmail. Dùng `MailApp` khi bạn chỉ cần `to`, `subject`, `body`, `htmlBody`, `cc`, `bcc`, attachment. `GmailApp` có nhiều quyền hơn vì làm việc với Gmail: tạo draft, tìm email theo query, lấy thread, label, reply, mark read. Vì quyền rộng hơn, đôi khi dùng `GmailApp` làm người dùng lo hơn khi cấp quyền.
+
+Quy tắc thực tế: bắt đầu bằng `MailApp`. Chỉ chuyển sang `GmailApp` khi bạn thật sự cần tính năng Gmail.
+
+## Gửi email đơn giản bằng MailApp
+
+Ví dụ đầu tiên nên gửi cho chính bạn. Nội dung code dùng chuỗi ASCII để tránh lỗi copy, nhưng khi viết nội dung thật bạn có thể dùng tiếng Việt.
+
+```javascript
+function sendSimpleEmail() {
+  MailApp.sendEmail({
+    to: 'user@example.com',
+    subject: 'Notification from Apps Script',
+    body: 'This is a simple email sent by Apps Script.',
+  });
+}
+```
+
+Khi chạy lần đầu, Apps Script sẽ yêu cầu cấp quyền gửi email. Sau khi cấp quyền, kiểm tra hộp thư đến và cả thư mục spam. Nếu gửi trong Google Workspace, hãy cân nhắc chính sách nội bộ trước khi gửi cho nhiều người.
+
+## Gửi email từ Google Sheets có trạng thái
+
+Automation thực tế thường đọc danh sách người nhận từ sheet `Recipients`. Cấu trúc nên có `Name`, `Email`, `Status`, `SentAt`. Chỉ gửi dòng có `Status` là `ready`, sau khi gửi thì cập nhật `sent` và thời gian gửi.
+
+```javascript
+function sendEmailsFromSheet() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Recipients');
+  const values = sheet.getDataRange().getValues();
+  const rows = values.slice(1);
+
+  rows.forEach(function(row, index) {
+    const sheetRow = index + 2;
+    const name = row[0];
+    const email = row[1];
+    const status = row[2];
+
+    if (status !== 'ready' || !email) return;
+
+    MailApp.sendEmail({
+      to: email,
+      subject: 'Welcome ' + name,
+      body: 'Hi ' + name + ', thank you for registering.',
+    });
+
+    sheet.getRange(sheetRow, 3).setValue('sent');
+    sheet.getRange(sheetRow, 4).setValue(new Date());
+  });
+}
+```
+
+Pattern này giúp bạn chạy lại function an toàn hơn. Nếu dòng đã gửi có `sent`, script bỏ qua. Nếu có lỗi giữa chừng, bạn nhìn cột trạng thái để biết dòng nào đã xử lý và dòng nào chưa.
+
+## Kiểm tra email và quota trước khi gửi
+
+Trước khi gửi thật, hãy validate email cơ bản và kiểm tra quota còn lại bằng `MailApp.getRemainingDailyQuota()`. Quota thay đổi theo loại tài khoản, nên code nên log số còn lại khi gửi nhiều.
+
+```javascript
+function canSendEmail(email) {
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email));
+}
+
+function logRemainingQuota() {
+  const remaining = MailApp.getRemainingDailyQuota();
+  Logger.log('Remaining email quota: ' + remaining);
+}
+```
+
+Validate bằng regex đơn giản không đảm bảo email tồn tại, nhưng giúp loại bỏ ô rỗng hoặc giá trị sai rõ ràng. Với danh sách lớn, nên gửi thử cho một vài dòng trước, sau đó mới bật gửi toàn bộ.
+
+## GmailApp dùng khi nào?
+
+`GmailApp` hữu ích khi bạn muốn tạo draft để người dùng kiểm tra trước khi gửi, hoặc cần tìm thread liên quan. Ví dụ tạo draft cho từng người nhận thay vì gửi ngay:
+
+```javascript
+function createGmailDraft() {
+  GmailApp.createDraft(
+    'user@example.com',
+    'Draft from Apps Script',
+    'This draft was created by Apps Script.'
+  );
+}
+```
+
+Draft rất hữu ích khi nội dung nhạy cảm, ví dụ gửi hợp đồng, báo giá hoặc thông báo quan trọng. Bạn để script chuẩn bị nội dung, còn con người kiểm tra lần cuối trong Gmail.
+
+## Lỗi thường gặp khi gửi email
+
+- Không có cột trạng thái, dẫn tới gửi lặp khi chạy lại.
+- Không kiểm tra quota email hằng ngày.
+- Gửi danh sách thật trước khi test bằng email cá nhân.
+- Không validate email rỗng hoặc sai định dạng.
+- Dùng `GmailApp` dù chỉ cần `MailApp`, làm scope quyền rộng hơn cần thiết.
+- Gửi nội dung quá giống spam: subject mơ hồ, body thiếu ngữ cảnh, quá nhiều link.
+- Không ghi log hoặc `SentAt`, khiến khó điều tra khi người nhận nói chưa nhận được.
+
+## Bài tập thực hành
+
+Tạo sheet `Recipients` có cột `Name`, `Email`, `Status`, `SentAt`. Viết function gửi email cho các dòng `ready`, chỉ gửi nếu email hợp lệ, sau khi gửi thì ghi `sent` và thời gian gửi. Trước khi gửi, log quota còn lại. Chạy thử với email của bạn trước rồi mới thêm người nhận khác.
+
+## Câu hỏi thường gặp về email Apps Script
+
+### MailApp và GmailApp nên dùng cái nào?
+
+Nếu chỉ gửi email, dùng `MailApp` là đủ và scope quyền gọn hơn. Nếu cần tạo draft, đọc thread, tìm email hoặc thao tác Gmail, dùng `GmailApp`.
+
+### Có gửi email HTML được không?
+
+Có. Bạn truyền thêm `htmlBody` trong options. Tuy nhiên vẫn nên có `body` dạng text làm fallback. Bài tiếp theo sẽ học kỹ email HTML và template.
+
+### Có giới hạn số email không?
+
+Có. Apps Script áp dụng quota theo loại tài khoản và service. Hãy kiểm tra quota hiện tại trước khi gửi số lượng lớn và không dùng Apps Script như hệ thống email marketing.
+
+### Có thể gửi file đính kèm không?
+
+Có, bạn có thể truyền `attachments` bằng Blob từ Drive hoặc file tạo ra trong script. Khi mới học, hãy thành thạo gửi email text và trạng thái trước.
+
+## Tóm tắt và chuyển tiếp
+
+Gửi email là một trong những use case mạnh nhất của Apps Script, nhưng phải kiểm soát quota, trạng thái đã gửi và nội dung. Hãy bắt đầu với `MailApp`, thêm cột `Status`, test bằng email cá nhân và chỉ dùng `GmailApp` khi cần tính năng Gmail. Bài tiếp theo sẽ nâng cấp nội dung email bằng HTML và template.

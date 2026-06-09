@@ -1,0 +1,151 @@
+---
+title: "appsscript.json manifest trong Apps Script"
+description: "Học cách dùng appsscript.json để cấu hình timezone, runtime, scopes, web app và add-on trong Apps Script."
+slug: "appsscript-json-manifest"
+course: "apps-script"
+order: 37
+duration: "22 phút"
+difficulty: "Khó"
+keywords: ["appsscript.json", "manifest Apps Script", "Apps Script runtime V8", "oauthScopes Apps Script", "cấu hình Apps Script"]
+publishedAt: "2026-06-09"
+---
+
+`appsscript.json` là file manifest mô tả cấu hình của Apps Script project: timezone, runtime, OAuth scopes, dependencies, advanced services, web app và một số thiết lập khác. Khi dự án lớn hơn bài thử nghiệm, manifest giúp bạn kiểm soát project bằng cấu hình rõ ràng thay vì để Apps Script tự suy luận mọi thứ.
+
+## appsscript.json nằm ở đâu và dùng để làm gì?
+
+Trong Apps Script editor, file manifest có thể bị ẩn. Bạn cần bật tùy chọn hiển thị manifest trong Project Settings. Khi dùng clasp, `appsscript.json` thường nằm ngay trong thư mục local cùng các file `.js` hoặc `.html`.
+
+Mental model nên nhớ: code nói script làm gì, manifest nói môi trường chạy và quyền/cấu hình của script là gì. Nếu code gọi `MailApp`, manifest có thể khai báo scope gửi email. Nếu bạn dùng Sheets advanced service, manifest có thể ghi dependency cho service đó. Nếu timezone sai, trigger theo giờ có thể chạy lệch dù code không đổi.
+
+Manifest là JSON thật, không phải JavaScript. Vì vậy không dùng comment, không để dấu phẩy thừa cuối object hoặc array, và phải dùng dấu ngoặc kép cho key.
+
+## Manifest tối thiểu cho dự án Apps Script
+
+Một manifest cơ bản thường có timezone và runtime V8. Với người dùng Việt Nam, timezone `Asia/Ho_Chi_Minh` giúp trigger, ngày giờ và log nhất quán hơn.
+
+```json
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "runtimeVersion": "V8"
+}
+```
+
+`runtimeVersion: "V8"` cho phép dùng cú pháp JavaScript hiện đại hơn như `const`, `let`, arrow function, class và nhiều API ES mới. Hầu hết project mới nên dùng V8 trừ khi bạn có lý do tương thích đặc biệt.
+
+## Khai báo OAuth scopes trong manifest
+
+Nếu không khai báo `oauthScopes`, Apps Script tự suy luận scope từ code. Khi bạn muốn kiểm soát rõ quyền, thêm mảng `oauthScopes`.
+
+```json
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets.currentonly",
+    "https://www.googleapis.com/auth/script.send_mail"
+  ],
+  "exceptionLogging": "STACKDRIVER"
+}
+```
+
+`exceptionLogging` giúp lỗi được ghi vào Google Cloud Logging trong những cấu hình phù hợp. Với project có trigger hoặc web app, logging có cấu trúc sẽ hữu ích hơn chỉ nhìn execution transcript ngắn.
+
+Khi khai báo thủ công, bạn chịu trách nhiệm thêm đủ scope. Nếu code cần Drive nhưng manifest không có Drive scope, script có thể lỗi khi authorize hoặc chạy.
+
+## Manifest cho Advanced Google Services
+
+Khi dùng advanced service với clasp hoặc muốn cấu hình rõ trong source control, phần `dependencies.enabledAdvancedServices` cho biết service nào được bật. Ví dụ bật Google Sheets API với symbol `Sheets`.
+
+```json
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "runtimeVersion": "V8",
+  "dependencies": {
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "Sheets",
+        "serviceId": "sheets",
+        "version": "v4"
+      }
+    ]
+  },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets"
+  ]
+}
+```
+
+Sau khi push manifest bằng clasp, vẫn nên mở Apps Script editor để kiểm tra service đã xuất hiện đúng. Nếu API cần bật trong Google Cloud project, manifest một mình chưa chắc đủ.
+
+## Manifest cho web app và add-on
+
+Một số cấu hình web app có thể xuất hiện trong manifest, ví dụ `executeAs` và `access`. Tuy nhiên, deployment trên giao diện Apps Script vẫn là nơi bạn cần kiểm tra cuối cùng vì quyền web app là phần nhạy cảm.
+
+```json
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "runtimeVersion": "V8",
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "DOMAIN"
+  }
+}
+```
+
+Với add-on, manifest còn có các block riêng cho Docs, Sheets, Gmail hoặc Calendar add-on. Những cấu hình đó khá dài và phải theo tài liệu chính thức. Trong khóa này, mục tiêu là bạn hiểu manifest là nguồn cấu hình, không chỉ là file phụ.
+
+## Ví dụ manifest cho dự án lead tracker
+
+Giả sử dự án nhận lead bằng web app, ghi vào spreadsheet hiện tại, gửi email xác nhận và dùng V8. Manifest có thể bắt đầu như sau:
+
+```json
+{
+  "timeZone": "Asia/Ho_Chi_Minh",
+  "runtimeVersion": "V8",
+  "exceptionLogging": "STACKDRIVER",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/spreadsheets.currentonly",
+    "https://www.googleapis.com/auth/script.send_mail",
+    "https://www.googleapis.com/auth/script.external_request"
+  ]
+}
+```
+
+Scope `script.external_request` chỉ cần nếu code gọi `UrlFetchApp`. Nếu dự án không gọi API ngoài, đừng thêm. Đây là ví dụ của nguyên tắc cấu hình tối thiểu đủ dùng.
+
+## Lỗi thường gặp với appsscript.json
+
+- File manifest bị ẩn nên bạn không biết project đang có cấu hình gì.
+- JSON sai cú pháp vì thêm comment hoặc dấu phẩy cuối.
+- Timezone sai làm trigger daily chạy lệch giờ.
+- Copy scope quá rộng từ dự án khác.
+- Khai báo `oauthScopes` nhưng thiếu scope cho service đang dùng.
+- Sửa manifest local nhưng quên `clasp push`.
+- Tin rằng manifest đã thay thế hoàn toàn việc kiểm tra deployment trên giao diện.
+
+## Bài tập thực hành
+
+Bật hiển thị manifest trong Apps Script editor. Đặt timezone `Asia/Ho_Chi_Minh`, runtime `V8`, thêm `exceptionLogging: "STACKDRIVER"`. Viết function gửi email test và ghi vào spreadsheet hiện tại, sau đó khai báo đúng hai scope tương ứng. Chạy lại function để quan sát Apps Script yêu cầu authorize như thế nào.
+
+## Câu hỏi thường gặp về appsscript.json
+
+### Có bắt buộc sửa manifest không?
+
+Không bắt buộc với project nhỏ. Nhưng khi dự án có scopes, advanced services, clasp, web app hoặc team workflow, manifest rõ ràng giúp kiểm soát thay đổi tốt hơn.
+
+### Sửa manifest có làm người dùng phải cấp quyền lại không?
+
+Có thể có nếu bạn thêm hoặc đổi scope. Người dùng chỉ cần cấp quyền lại khi quyền yêu cầu thay đổi, không phải mọi thay đổi manifest đều gây consent mới.
+
+### Manifest có được commit vào git không?
+
+Thường là có, vì đây là cấu hình project cần review. Nhưng hãy kiểm tra không có thông tin nhạy cảm. Secret không nên nằm trong manifest.
+
+### Có thể dùng manifest để bật mọi API không?
+
+Không hoàn toàn. Manifest có thể khai báo advanced service, nhưng một số API vẫn cần bật trong Google Cloud project hoặc có yêu cầu OAuth riêng.
+
+## Tóm tắt và bước tiếp theo
+
+`appsscript.json` là nơi kiểm soát môi trường chạy, quyền và dependency quan trọng của Apps Script. Hãy giữ JSON hợp lệ, dùng scope tối thiểu và review manifest như review code. Bài tiếp theo sẽ nối manifest với quy trình phát hành: version, deployment và release an toàn cho web app hoặc automation đang có người dùng thật.
